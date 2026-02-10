@@ -1,0 +1,2 @@
+<?php
+// yummy.php
