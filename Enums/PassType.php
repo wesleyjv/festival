@@ -1,0 +1,2 @@
+<?php
+// PassType.php

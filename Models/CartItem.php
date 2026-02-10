@@ -1,0 +1,2 @@
+<?php
+// CartItem.php
