@@ -64,4 +64,28 @@ class UserController
         header('Location: /login');
         exit;
     }
+
+    public function login($vars = [])
+    {
+        $errors = $_SESSION['login_errors'] ?? [];
+        $old = $_SESSION['login_old'] ?? [];
+        $success = $_SESSION['register_success'] ?? '';
+        unset($_SESSION['login_errors'], $_SESSION['login_old'], $_SESSION['register_success']);
+
+        require __DIR__ . '/../views/auth/login.php';
+    }
+
+    public function handleLogin($vars = [])
+    {
+        // Stub — will be made functional in the next step
+        header('Location: /login');
+        exit;
+    }
+
+    public function logout($vars = [])
+    {
+        // Stub — will be made functional in the next step
+        header('Location: /');
+        exit;
+    }
 }
