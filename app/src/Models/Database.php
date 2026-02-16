@@ -12,6 +12,21 @@ class Database
     public static function getConnection(): PDO
     {
         if (self::$instance === null) {
+            // Load environment variables from .env file
+            $envFile = __DIR__ . '/../../../.env';
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos($line, '#') === 0) continue; // Skip comments
+                    if (strpos($line, '=') === false) continue; // Skip invalid lines
+                    
+                    list($key, $value) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $value = trim($value);
+                    $_ENV[$key] = $value;
+                }
+            }
+            
             $host = $_ENV['DB_HOST'] ?? 'haarlem-festival-dev-haarlemfestival123.i.aivencloud.com';
             $port = $_ENV['DB_PORT'] ?? '17152';
             $dbname = $_ENV['DB_DATABASE'] ?? 'defaultdb';
