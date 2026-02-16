@@ -116,12 +116,68 @@ class UserController
         $_SESSION['user_email'] = $user->email;
         $_SESSION['user_role'] = $user->role;
 
-        header('Location: /');
+        // Handle "Remember me" cookie
+        $remember = $_POST['remember'] ?? '';
+        if ($remember) {
+            $token = bin2hex(random_bytes(32));
+            $tokenHash = hash('sha256', $token);
+            $userRepository->saveRememberToken($user->id, $tokenHash);
+
+            $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+            setcookie('remember_token', $token, [
+                'expires' => time() + (30 * 24 * 60 * 60), // 30 days
+                'path' => '/',
+                'domain' => '',
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            setcookie('remember_user', (string) $user->id, [
+                'expires' => time() + (30 * 24 * 60 * 60),
+                'path' => '/',
+                'domain' => '',
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        // Redirect admins to the admin dashboard, everyone else to homepage
+        if ($user->role === 'admin') {
+            header('Location: /admin');
+        } else {
+            header('Location: /');
+        }
         exit;
     }
 
     public function logout($vars = [])
     {
+        // Clear remember me token from database
+        if (!empty($_SESSION['user_id'])) {
+            $userRepository = new UserRepository();
+            $userRepository->clearRememberToken($_SESSION['user_id']);
+        }
+
+        // Clear remember me cookies
+        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        setcookie('remember_token', '', [
+            'expires' => time() - 42000,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        setcookie('remember_user', '', [
+            'expires' => time() - 42000,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
         // Clear all session data
         $_SESSION = [];
 

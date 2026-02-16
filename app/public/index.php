@@ -50,6 +50,25 @@ ini_set('session.cookie_httponly', '1');
 
 session_start();
 
+/**
+ * Auto-login via "Remember me" cookie.
+ * If the user has no active session but carries a valid remember token cookie,
+ * look up the user, verify the token hash, and restore the session.
+ */
+if (empty($_SESSION['user_id']) && !empty($_COOKIE['remember_token']) && !empty($_COOKIE['remember_user'])) {
+    $tokenHash = hash('sha256', $_COOKIE['remember_token']);
+    $userRepo = new App\Repositories\UserRepository();
+    $user = $userRepo->findById((int) $_COOKIE['remember_user']);
+
+    if ($user && !empty($user->passwordHash) && hash_equals($tokenHash, $userRepo->getRememberToken($user->id) ?? '')) {
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_name'] = $user->name;
+        $_SESSION['user_email'] = $user->email;
+        $_SESSION['user_role'] = $user->role;
+    }
+}
+
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
@@ -68,6 +87,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/login', ['App\\Controllers\\UserController', 'login']);
     $r->addRoute('POST', '/login', ['App\\Controllers\\UserController', 'handleLogin']);
     $r->addRoute('GET', '/logout', ['App\\Controllers\\UserController', 'logout']);
+    $r->addRoute('GET', '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
 });
 
 /**
