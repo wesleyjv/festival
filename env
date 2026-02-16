@@ -1,0 +1,11 @@
+# Database Configuration (Aiven)
+DB_HOST=haarlem-festival-dev-haarlemfestival123.i.aivencloud.com
+DB_PORT=17152
+DB_DATABASE=defaultdb
+DB_USERNAME=avnadmin
+DB_PASSWORD=AVNS_SzVg-JB6UsaKcS1pDWY
+
+# (Optional) If your PHP code needs these
+DB_CONNECTION=mysql
+APP_ENV=local
+APP_DEBUG=true
