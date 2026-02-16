@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Repositories\EventRepository;
+
 class EventsController
 {
     private EventRepository $eventRepository;
