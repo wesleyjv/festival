@@ -77,14 +77,70 @@ class UserController
 
     public function handleLogin($vars = [])
     {
-        // Stub — will be made functional in the next step
-        header('Location: /login');
+        $identity = trim($_POST['identity'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        $validator = new Validator();
+        $validator
+            ->validateRequired($identity, 'Username or Email')
+            ->validateRequired($password, 'Password');
+
+        if ($validator->hasErrors()) {
+            $_SESSION['login_errors'] = $validator->getErrors();
+            $_SESSION['login_old'] = ['identity' => $identity];
+            header('Location: /login');
+            exit;
+        }
+
+        $userRepository = new UserRepository();
+
+        // Determine if the identity is an email or username
+        if (str_contains($identity, '@')) {
+            $user = $userRepository->findByEmail($identity);
+        } else {
+            $user = $userRepository->findByName($identity);
+        }
+
+        if (!$user || !password_verify($password, $user->passwordHash)) {
+            $_SESSION['login_errors'] = ['Invalid username/email or password.'];
+            $_SESSION['login_old'] = ['identity' => $identity];
+            header('Location: /login');
+            exit;
+        }
+
+        // Regenerate session ID to prevent session fixation attacks
+        session_regenerate_id(true);
+
+        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_name'] = $user->name;
+        $_SESSION['user_email'] = $user->email;
+        $_SESSION['user_role'] = $user->role;
+
+        header('Location: /');
         exit;
     }
 
     public function logout($vars = [])
     {
-        // Stub — will be made functional in the next step
+        // Clear all session data
+        $_SESSION = [];
+
+        // Delete the session cookie
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+
+        session_destroy();
+
         header('Location: /');
         exit;
     }

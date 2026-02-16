@@ -26,6 +26,28 @@ if (file_exists($envPath)) {
     }
 }
 
+/**
+ * Secure session configuration.
+ * - cookie_httponly: prevents JavaScript access to session cookie (XSS protection)
+ * - cookie_samesite: prevents CSRF by restricting cross-site cookie sending
+ * - use_strict_mode: rejects uninitialized session IDs
+ * - use_only_cookies: prevents session fixation via URL parameters
+ * - cookie_secure: only send cookie over HTTPS (disabled for local dev)
+ */
+$isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'domain' => '',
+    'secure' => $isSecure,
+    'httponly' => true,
+    'samesite' => 'Lax',
+]);
+
+ini_set('session.use_strict_mode', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.cookie_httponly', '1');
+
 session_start();
 
 use FastRoute\RouteCollector;

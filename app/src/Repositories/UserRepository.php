@@ -25,7 +25,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
     }
 
     public function findByName(string $name): ?User
@@ -38,7 +38,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
     }
 
     public function emailExists(string $email): bool
