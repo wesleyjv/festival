@@ -17,8 +17,34 @@ class EventsController
     public function stories($vars = [])
     {
         try {
-            // Get database connection
-            $db = \App\Models\Database::getConnection();
+            // Load environment variables from .env file
+            $envFile = __DIR__ . '/../../.env';
+            if (file_exists($envFile)) {
+                $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos($line, '#') === 0) continue; // Skip comments
+                    if (strpos($line, '=') === false) continue; // Skip invalid lines
+                    
+                    list($key, $value) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $value = trim($value);
+                    $_ENV[$key] = $value;
+                }
+            }
+            
+            // Create database connection directly
+            $host = $_ENV['DB_HOST'] ?? '';
+            $port = $_ENV['DB_PORT'] ?? '';
+            $dbname = $_ENV['DB_DATABASE'] ?? '';
+            $username = $_ENV['DB_USERNAME'] ?? '';
+            $password = $_ENV['DB_PASSWORD'] ?? '';
+            
+            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
+            $db = new PDO($dsn, $username, $password, [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]);
             
             // Initialize storytelling event model
             $storytellingModel = new \App\Models\StorytellingEvent($db);
