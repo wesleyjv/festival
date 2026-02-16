@@ -27,11 +27,11 @@ class Database
                 }
             }
             
-            $host = $_ENV['DB_HOST'] ?? 'haarlem-festival-dev-haarlemfestival123.i.aivencloud.com';
-            $port = $_ENV['DB_PORT'] ?? '17152';
-            $dbname = $_ENV['DB_DATABASE'] ?? 'defaultdb';
-            $username = $_ENV['DB_USERNAME'] ?? 'avnadmin';
-            $password = $_ENV['DB_PASSWORD'] ?? 'AVNS_SzVg-JB6UsaKcS1pDWY';
+            $host = $_ENV['DB_HOST'] ?? '';
+            $port = $_ENV['DB_PORT'] ?? '';
+            $dbname = $_ENV['DB_DATABASE'] ?? '';
+            $username = $_ENV['DB_USERNAME'] ?? '';
+            $password = $_ENV['DB_PASSWORD'] ?? '';
             
             try {
                 $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
