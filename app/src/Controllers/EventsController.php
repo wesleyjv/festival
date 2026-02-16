@@ -4,8 +4,17 @@ namespace App\Controllers;
 
 class EventsController
 {
-    public function history($vars = [])
+    private EventRepository $eventRepository;
+
+    public function __construct()
     {
+        $this->eventRepository = new EventRepository();
+    }
+
+    public function history()
+    {
+        $events = $this->eventRepository->getHistoryEvents();
+
         require __DIR__ . '/../views/events/history/overview.php';
     }
 
