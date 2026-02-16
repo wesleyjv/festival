@@ -9,6 +9,25 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+/**
+ * Load environment variables from the .env file at the project root.
+ * This makes getenv() work regardless of how the app is started.
+ */
+$envPath = __DIR__ . '/../../.env';
+if (file_exists($envPath)) {
+    $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with(trim($line), '#')) {
+            continue;
+        }
+        if (strpos($line, '=') !== false) {
+            putenv(trim($line));
+        }
+    }
+}
+
+session_start();
+
 use FastRoute\RouteCollector;
 use function FastRoute\simpleDispatcher;
 
@@ -22,6 +41,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/jazz', ['App\\Controllers\\EventsController', 'jazz']);
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
+    $r->addRoute('GET', '/register', ['App\\Controllers\\UserController', 'register']);
+    $r->addRoute('POST', '/register', ['App\\Controllers\\UserController', 'handleRegister']);
 });
 
 /**
