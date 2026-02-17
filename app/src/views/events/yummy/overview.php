@@ -1,5 +1,9 @@
 <?php require __DIR__ . '/../../partials/header.php'; ?>
 
+<link rel="stylesheet" href="/assets/yummy/css/globals.css" />
+<link rel="stylesheet" href="/assets/yummy/css/styleguide.css" />
+<link rel="stylesheet" href="/assets/yummy/css/style.css" />
+
 <h1>Yummy Events</h1>
 <p>Taste the finest culinary experiences in Haarlem.</p>
 
