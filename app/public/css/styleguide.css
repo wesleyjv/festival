@@ -1,0 +1,61 @@
+:root {
+  /* Font Families */
+  --font-inter: 'Inter', sans-serif;
+  --font-josefin: 'Josefin Sans', sans-serif;
+  --font-poppins: 'Poppins', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+  --font-wix: 'Wix Madefor Display', sans-serif;
+  --font-arimo: 'Arimo', sans-serif;
+  --font-lora: 'Lora', serif;
+  --font-roboto: 'Roboto', sans-serif;
+
+  /* Colors */
+  --primary-dark: #1a2a3a;
+  --primary-orange: #e09145;
+  --primary-light: #fff8f0;
+  --accent-purple: #d3bdff;
+  --accent-gray: #4b556380;
+  --accent-orange: #edaa66;
+  --accent-dark-purple: #bb4d00e6;
+  --text-light: #e0e7e9;
+  --text-dark: #000000;
+
+  /* Typography Scale */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 48px;
+  --text-5xl: 60px;
+  --text-6xl: 64px;
+  --text-7xl: 128px;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 30px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0px 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0px 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0px 8px 10px -6px rgba(0, 0, 0, 0.1), 0px 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, rgba(255, 248, 240, 1) 47%, rgba(229, 155, 66, 1) 100%);
+  --gradient-overlay: linear-gradient(0deg, rgba(224, 145, 69, 0.6) 0%, rgba(224, 145, 69, 0) 50%, rgba(224, 145, 69, 0) 100%);
+}
