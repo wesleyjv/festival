@@ -7,12 +7,12 @@ class Session
     public int $id;
     public \DateTime $startTime;
     public \DateTime $endTime;
+    public float $price;
     public int $totalCapacity;
     public int $bookedCount;
 
     public function checkAvailability(): int
     {
-        // Simple availability calculation based on UML fields.
         return max(0, $this->totalCapacity - $this->bookedCount);
     }
 }
