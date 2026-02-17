@@ -1,316 +1,173 @@
 <?php
-// Festival Homepage Implementation
+// app\src\views\main\homepage.php
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta charset="utf-8" />
-    <title>The Haarlem Festival - 2026</title>
-    <link rel="stylesheet" href="/css/globals.css" />
-    <link rel="stylesheet" href="/css/styleguide.css" />
-    <link rel="stylesheet" href="/css/style.css" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Josefin+Sans:wght@400;700&family=Poppins:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700&family=Wix+Madefor+Display:wght@400;600;700;800&family=Arimo:wght@400;700&family=Lora:wght@700&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haarlem Festival</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
-<body>
-    <div class="festival-homepage">
-        <!-- Hero Section with Navigation -->
-        <header class="hero-section">
-            <img class="hero-image" src="/img/78dace7c-a56b-4ac5-a7fb-471cfe2bfebc.png" alt="Haarlem Festival" />
-            
-            <!-- Navigation Bar -->
-            <nav class="navigation-bar" role="navigation" aria-label="Main navigation">
-                <a href="/" class="nav-brand">
-                    <div class="brand-icon">
-                        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-                            <path d="M17 2L20.09 8.26L27 9.27L22 14.14L23.18 21.02L17 17.77L10.82 21.02L12 14.14L7 9.27L13.91 8.26L17 2Z" fill="url(#brand-gradient)"/>
-                            <defs>
-                                <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="47%" style="stop-color:#FFF8F0"/>
-                                    <stop offset="100%" style="stop-color:#E59B42"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm sticky-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">
+            <i class="bi bi-music-note-beamed me-1"></i> Haarlem Festival
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/events/yummy"><i class="bi bi-egg-fried me-1"></i>Yummy</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/events/stories"><i class="bi bi-book me-1"></i>Stories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/events/jazz"><i class="bi bi-vinyl me-1"></i>Jazz</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/events/history"><i class="bi bi-bank me-1"></i>History</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/cart"><i class="bi bi-cart3"></i> Cart</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-light btn-sm ms-2 my-1" href="/login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-warning btn-sm ms-2 my-1 fw-semibold" href="/register">Register</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero -->
+<section class="bg-dark text-white py-5">
+    <div class="container text-center py-5">
+        <p class="text-warning fw-semibold text-uppercase mb-3">July 24 – 30, 2025</p>
+        <h1 class="display-3 fw-bold mb-4">Welcome to<br>The Haarlem Festival</h1>
+        <p class="lead mx-auto mb-5 col-lg-6 opacity-75">
+            Discover the best of food, music, stories, and history in the heart of Haarlem.
+            Seven days of unforgettable experiences await you.
+        </p>
+        <div class="d-flex justify-content-center gap-3 flex-wrap">
+            <a href="#events" class="btn btn-warning btn-lg px-4 fw-semibold">
+                <i class="bi bi-calendar-event me-2"></i>Explore Events
+            </a>
+            <a href="/register" class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-person-plus me-2"></i>Get Tickets
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Events Section -->
+<section id="events" class="py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Our Events</h2>
+            <p class="text-muted col-lg-6 mx-auto">
+                Four unique experiences across the city — there's something for everyone.
+            </p>
+        </div>
+        <div class="row g-4">
+            <!-- Yummy -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 h-100 shadow-sm rounded-4">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-warning bg-opacity-10 text-warning rounded-3 d-inline-flex align-items-center justify-content-center fs-1 p-3 mb-3">
+                            <i class="bi bi-egg-fried"></i>
+                        </div>
+                        <h5 class="fw-bold">Yummy</h5>
+                        <p class="text-muted small">Taste Haarlem's finest restaurants and street food in a culinary adventure.</p>
+                        <a href="/events/yummy" class="btn btn-outline-warning btn-sm mt-2">Discover</a>
                     </div>
-                    <div class="brand-text">THE HAARLEM<br/>FESTIVAL</div>
-                </a>
-                
-                <div class="nav-menu">
-                    <a href="/events/yummy" class="nav-item">
-                        <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true">
-                            <path d="M6 0C4.34 0 3 1.34 3 3V5H2C0.9 5 0 5.9 0 7V12C0 13.1 0.9 14 2 14H10C11.1 14 12 13.1 12 12V7C12 5.9 11.1 5 10 5H9V3C9 1.34 7.66 0 6 0ZM5 3C5 2.45 5.45 2 6 2C6.55 2 7 2.45 7 3V5H5V3Z"/>
-                        </svg>
-                        YUMMY
-                    </a>
-                    <a href="/events/jazz" class="nav-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-                            <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12ZM7 3C6.45 3 6 3.45 6 4V7C6 7.55 6.45 8 7 8C7.55 8 8 7.55 8 7V4C8 3.45 7.55 3 7 3Z"/>
-                        </svg>
-                        JAZZ
-                    </a>
-                    <a href="/events/history" class="nav-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-                            <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12ZM7 3V7L10 9L11 8L8 6V3H7Z"/>
-                        </svg>
-                        HISTORY
-                    </a>
-                    <a href="/events/stories" class="nav-item">
-                        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
-                            <path d="M14 0H2C0.9 0 0 0.9 0 2V10C0 11.1 0.9 12 2 12H14C15.1 12 16 11.1 16 10V2C16 0.9 15.1 0 14 0ZM14 10H2V2H14V10Z"/>
-                        </svg>
-                        STORYTELLING
-                    </a>
-                </div>
-                
-                <div class="nav-actions">
-                    <div class="language-selector" role="group" aria-label="Language selection">
-                        <button class="lang-btn active" aria-pressed="true">EN</button>
-                        <span>|</span>
-                        <button class="lang-btn">NL</button>
-                    </div>
-                    <button class="my-program-btn">
-                        <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor" aria-hidden="true">
-                            <path d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM8 3V8L12 10L11 11.5L8 10V3Z"/>
-                        </svg>
-                        My Program
-                    </button>
-                </div>
-            </nav>
-        </header>
-
-        <!-- Welcome Section -->
-        <main class="main-content">
-            <section class="welcome-section" aria-labelledby="welcome-title">
-                <div class="container">
-                    <div class="welcome-content">
-                        <h1 id="welcome-title" class="welcome-title">Welcome to The Haarlem Festival</h1>
-                        <p class="welcome-description">
-                            Discover what the city of Haarlem has to offer at the Haarlem Festival. From jazz to food, there is
-                            something for everyone.
-                        </p>
-                    </div>
-                    
-                    <article class="festival-intro">
-                        <header class="festival-header">
-                            <div class="discover-section">
-                                <div class="divider"></div>
-                                <div class="discover-text">DISCOVER</div>
-                            </div>
-                            <h2 class="festival-title">The Haarlem Festival</h2>
-                        </header>
-                        
-                        <div class="festival-main">
-                            <div class="festival-visual">
-                                <div class="festival-image-container">
-                                    <div class="festival-image"></div>
-                                    <div class="image-overlay"></div>
-                                </div>
-                                <div class="date-badge">
-                                    <div class="year">2026</div>
-                                    <div class="dates">JULY 23-26</div>
-                                </div>
-                            </div>
-                            
-                            <div class="festival-content">
-                                <div class="festival-description">
-                                    <p class="main-description">
-                                        Experience four unforgettable days where Haarlem transforms into a vibrant celebration of music,
-                                        culinary artistry, and cultural heritage. The Haarlem Festival brings together world-class
-                                        performances, intimate dining experiences, and the timeless beauty of one of the Netherlands'
-                                        most enchanting cities.
-                                    </p>
-                                    <p class="secondary-description">
-                                        From jazz echoing through historic venues to innovative cuisine in centuries-old buildings, every
-                                        moment is crafted to inspire and delight. Join thousands of culture enthusiasts in discovering what
-                                        makes Haarlem a destination where tradition meets contemporary creativity.
-                                    </p>
-                                </div>
-                                
-                                <div class="festival-actions">
-                                    <button class="btn-primary">
-                                        <span>DISCOVER THE FESTIVAL</span>
-                                        <svg width="14" height="16" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
-                                            <path d="M7 0L6 1L10 5H0V7H10L6 11L7 12L13 6L7 0Z"/>
-                                        </svg>
-                                    </button>
-                                    <button class="btn-secondary">
-                                        <svg width="14" height="16" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
-                                            <path d="M7 0L1 6L7 12L6 11L2 7H12V5H2L6 1L7 0Z"/>
-                                        </svg>
-                                        <span>VIEW SCHEDULE</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-            </section>
-
-            <!-- Events Section -->
-            <section class="events-section" aria-labelledby="events-title">
-                <div class="container">
-                    <h2 id="events-title" class="visually-hidden">Festival Events</h2>
-                    
-                    <?php 
-                    // Debug: Show if events data exists
-                    if (isset($eventsData) && !empty($eventsData)): 
-                        foreach ($eventsData as $event): 
-                    ?>
-                    <article class="event-card <?= htmlspecialchars($event['type'] ?? '') ?>-event">
-                        <?php if ($event['image_position'] ?? 'left' === 'left'): ?>
-                            <img class="event-image" src="<?= htmlspecialchars($event['image'] ?? '') ?>" alt="<?= htmlspecialchars($event['alt_text'] ?? '') ?>" />
-                        <?php endif; ?>
-                        
-                        <div class="event-content">
-                            <div class="event-info">
-                                <h3 class="event-title"><?= htmlspecialchars($event['title'] ?? '') ?></h3>
-                                <p class="event-description">
-                                    <?= htmlspecialchars($event['description'] ?? '') ?>
-                                </p>
-                            </div>
-                            <a href="<?= htmlspecialchars($event['link'] ?? '') ?>" class="event-btn">View Details...</a>
-                        </div>
-                        
-                        <?php if (($event['image_position'] ?? 'left') === 'right'): ?>
-                            <img class="event-image" src="<?= htmlspecialchars($event['image'] ?? '') ?>" alt="<?= htmlspecialchars($event['alt_text'] ?? '') ?>" />
-                        <?php endif; ?>
-                    </article>
-                    <?php 
-                        endforeach; 
-                    else: 
-                        // Fallback static events if dynamic data fails
-                    ?>
-                    <!-- Jazz Event -->
-                    <article class="event-card jazz-event">
-                        <img class="event-image" src="/img/jazz-festival.jpg" alt="Haarlem Jazz" />
-                        <div class="event-content">
-                            <div class="event-info">
-                                <h3 class="event-title">Haarlem Jazz</h3>
-                                <p class="event-description">
-                                    Welcome to Haarlem Jazz – where the city resonates with the soulful notes of jazz. Explore the artists,
-                                    events, and the dynamic vibe of this enchanting Dutch festival right here on our Haarlem Jazz page. Get
-                                    ready for a musical journey that defines the spirit of jazz in the heart of Haarlem!
-                                </p>
-                            </div>
-                            <a href="/events/jazz" class="event-btn">View Details...</a>
-                        </div>
-                    </article>
-
-                    <!-- Storytelling Event -->
-                    <article class="event-card storytelling-event">
-                        <img class="event-image" src="/img/storytelling.jpg" alt="Storytelling Event" />
-                        <div class="event-content">
-                            <div class="event-info">
-                                <h3 class="event-title">Storytelling</h3>
-                                <p class="event-description">
-                                    Step into the world of one of our featured storytellers and discover what makes their voice unique. This
-                                    page invites you to explore their craft, their stories, and the experiences they bring to the festival.
-                                </p>
-                            </div>
-                            <a href="/events/stories" class="event-btn">View Details...</a>
-                        </div>
-                    </article>
-
-                    <!-- Yummy Event -->
-                    <article class="event-card yummy-event">
-                        <img class="event-image" src="/img/food-festival.jpg" alt="Yummy Food Festival" />
-                        <div class="event-content">
-                            <div class="event-info">
-                                <h3 class="event-title">Yummy!</h3>
-                                <p class="event-description">
-                                    Get excited for the festival! Check out all the tasty restaurants and stay tuned for a closer look at
-                                    two of them, including pics, chef info, and a sneak peek at their delicious dishes. It's foodie
-                                    heaven coming your way!
-                                </p>
-                            </div>
-                            <a href="/events/yummy" class="event-btn">View Details...</a>
-                        </div>
-                    </article>
-
-                    <!-- History Event -->
-                    <article class="event-card history-event">
-                        <img class="event-image" src="/img/history-tour.jpg" alt="History Tour" />
-                        <div class="event-content">
-                            <div class="event-info">
-                                <h3 class="event-title">Stroll Through History</h3>
-                                <p class="event-description">
-                                    Participate in an amazing historical tour through the beautiful city of Haarlem. From July 28th to July
-                                    31st you can participate in such a tour.<br/>
-                                    In a duration of 2.5 hours you will be able to visit 9 venues which will surely impress you!
-                                </p>
-                            </div>
-                            <a href="/events/history" class="event-btn">View Details...</a>
-                        </div>
-                    </article>
-                    <?php endif; ?>
-                </div>
-            </section>
-        </main>
-
-        <!-- Footer -->
-        <footer class="festival-footer" role="contentinfo">
-            <div class="container">
-                <div class="footer-content">
-                    <div class="footer-brand">
-                        <div class="brand-icon">
-                            <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-                                <path d="M17 2L20.09 8.26L27 9.27L22 14.14L23.18 21.02L17 17.77L10.82 21.02L12 14.14L7 9.27L13.91 8.26L17 2Z" fill="url(#footer-brand-gradient)"/>
-                                <defs>
-                                    <linearGradient id="footer-brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="47%" style="stop-color:#FFF8F0"/>
-                                        <stop offset="100%" style="stop-color:#E59B42"/>
-                                    </linearGradient>
-                                </defs>
-                            </svg>
-                        </div>
-                        <div class="brand-text">THE HAARLEM<br/>FESTIVAL</div>
-                    </div>
-                    
-                    <nav class="footer-links" aria-label="Footer navigation">
-                        <div class="footer-column">
-                            <h4>Festival</h4>
-                            <ul>
-                                <li><a href="/events/yummy">Yummy Food Event</a></li>
-                                <li><a href="/events/jazz">Jazz Event</a></li>
-                                <li><a href="/events/history">History Event</a></li>
-                                <li><a href="/events/stories">Storytelling Event</a></li>
-                            </ul>
-                        </div>
-                        
-                        <div class="footer-column">
-                            <h4>Information</h4>
-                            <ul>
-                                <li><a href="/about">About</a></li>
-                                <li><a href="/accessibility">Accessibility</a></li>
-                                <li><a href="/contact">Contact</a></li>
-                            </ul>
-                        </div>
-                        
-                        <div class="footer-column">
-                            <h4>Support</h4>
-                            <ul>
-                                <li><a href="/customer-service">Customer Service</a></li>
-                                <li><a href="/booking-help">Booking Help</a></li>
-                                <li><a href="/cancellation">Cancellation</a></li>
-                            </ul>
-                        </div>
-                        
-                        <div class="footer-column">
-                            <h4>Follow Us</h4>
-                            <div class="social-links">
-                                <!-- Social media icons would go here -->
-                            </div>
-                        </div>
-                    </nav>
-                </div>
-                
-                <div class="footer-bottom">
-                    <p>&copy; 2025 The Festival Haarlem. All rights reserved. • Privacy Policy • Terms of Service</p>
                 </div>
             </div>
-        </footer>
+            <!-- Stories -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 h-100 shadow-sm rounded-4">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-info bg-opacity-10 text-info rounded-3 d-inline-flex align-items-center justify-content-center fs-1 p-3 mb-3">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <h5 class="fw-bold">Stories</h5>
+                        <p class="text-muted small">Immerse yourself in captivating tales told throughout the historic city.</p>
+                        <a href="/events/stories" class="btn btn-outline-info btn-sm mt-2">Discover</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Jazz -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 h-100 shadow-sm rounded-4">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-3 d-inline-flex align-items-center justify-content-center fs-1 p-3 mb-3">
+                            <i class="bi bi-vinyl"></i>
+                        </div>
+                        <h5 class="fw-bold">Jazz</h5>
+                        <p class="text-muted small">Enjoy world-class jazz performances at stunning venues across Haarlem.</p>
+                        <a href="/events/jazz" class="btn btn-outline-primary btn-sm mt-2">Discover</a>
+                    </div>
+                </div>
+            </div>
+            <!-- History -->
+            <div class="col-md-6 col-lg-3">
+                <div class="card border-0 h-100 shadow-sm rounded-4">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-3 d-inline-flex align-items-center justify-content-center fs-1 p-3 mb-3">
+                            <i class="bi bi-bank"></i>
+                        </div>
+                        <h5 class="fw-bold">History</h5>
+                        <p class="text-muted small">Walk through centuries of history with expert guides in multiple languages.</p>
+                        <a href="/events/history" class="btn btn-outline-danger btn-sm mt-2">Discover</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
+
+<!-- CTA -->
+<section class="bg-dark text-white py-5">
+    <div class="container text-center py-4">
+        <h3 class="fw-bold mb-3">Ready to experience Haarlem?</h3>
+        <p class="mb-4 opacity-75">Secure your spot at the festival's most popular events before they sell out.</p>
+        <a href="/register" class="btn btn-warning btn-lg px-5 fw-semibold">Get Your Tickets</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white border-top border-secondary py-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <h6 class="fw-bold"><i class="bi bi-music-note-beamed me-1"></i> Haarlem Festival</h6>
+                <small class="text-white-50">&copy; <?= date('Y') ?> All rights reserved.</small>
+            </div>
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+                <a href="/events/yummy" class="link-secondary text-decoration-none me-3">Yummy</a>
+                <a href="/events/stories" class="link-secondary text-decoration-none me-3">Stories</a>
+                <a href="/events/jazz" class="link-secondary text-decoration-none me-3">Jazz</a>
+                <a href="/events/history" class="link-secondary text-decoration-none">History</a>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="#" class="link-secondary text-decoration-none me-2"><i class="bi bi-facebook"></i></a>
+                <a href="#" class="link-secondary text-decoration-none me-2"><i class="bi bi-instagram"></i></a>
+                <a href="#" class="link-secondary text-decoration-none"><i class="bi bi-twitter-x"></i></a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
