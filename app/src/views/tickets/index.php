@@ -3,7 +3,7 @@
 <h1>Tickets</h1>
 <p>Browse available tickets.</p>
 
-<?php require __DIR__ . '/../partials/footer.php'; ?>
+
 <?php
 ?>
 <!DOCTYPE html>
@@ -41,4 +41,6 @@
         <?php endif; ?>
     </div>
 </body>
+
+<?php require __DIR__ . '/../partials/footer.php'; ?>
 </html>

@@ -29,7 +29,7 @@
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.25);
         }
 
-        /* Inner bar row — always 56px */
+        /* Inner bar row ï¿½ always 56px */
         .navbar-bar {
             display: flex;
             align-items: center;
@@ -160,7 +160,7 @@
             color: #fff;
         }
 
-        /* Toggler — hidden on desktop */
+        /* Toggler ï¿½ hidden on desktop */
         .navbar-toggler-f {
             display: none;
             background: none;
@@ -180,7 +180,7 @@
             transition: 0.3s;
         }
 
-        /* Collapse panel — hidden on desktop */
+        /* Collapse panel ï¿½ hidden on desktop */
         .navbar-collapse-f {
             display: none;
         }

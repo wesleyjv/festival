@@ -1,4 +1,6 @@
 </main>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
 <footer class="mt-5" style="background: #1e1e1e; color: rgba(255,255,255,0.85);">
     <div class="container">
