@@ -53,7 +53,7 @@
 <!-- Hero -->
 <section class="bg-dark text-white py-5">
     <div class="container text-center py-5">
-        <p class="text-warning fw-semibold text-uppercase mb-3">July 24 – 30, 2025</p>
+        <p class="text-warning fw-semibold text-uppercase mb-3">July 24 â€“ 30, 2025</p>
         <h1 class="display-3 fw-bold mb-4">Welcome to<br>The Haarlem Festival</h1>
         <p class="lead mx-auto mb-5 col-lg-6 opacity-75">
             Discover the best of food, music, stories, and history in the heart of Haarlem.
@@ -76,7 +76,7 @@
         <div class="text-center mb-5">
             <h2 class="fw-bold">Our Events</h2>
             <p class="text-muted col-lg-6 mx-auto">
-                Four unique experiences across the city — there's something for everyone.
+                Four unique experiences across the city â€” there's something for everyone.
             </p>
         </div>
         <div class="row g-4">

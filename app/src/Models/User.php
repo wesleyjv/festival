@@ -11,13 +11,15 @@ class User
     public string $name;
     public string $email;
     public string $passwordHash;
+    public string $role;
 
-    public function __construct(int $id, string $name, string $email, string $passwordHash)
+    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer')
     {
         $this->id = $id;
         $this->name = $name;
         $this->email = $email;
         $this->passwordHash = $passwordHash;
+        $this->role = $role;
     }
 
     public function login(): void
