@@ -64,4 +64,140 @@ class UserController
         header('Location: /login');
         exit;
     }
+
+    public function login($vars = [])
+    {
+        $errors = $_SESSION['login_errors'] ?? [];
+        $old = $_SESSION['login_old'] ?? [];
+        $success = $_SESSION['register_success'] ?? '';
+        unset($_SESSION['login_errors'], $_SESSION['login_old'], $_SESSION['register_success']);
+
+        require __DIR__ . '/../views/auth/login.php';
+    }
+
+    public function handleLogin($vars = [])
+    {
+        $identity = trim($_POST['identity'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        $validator = new Validator();
+        $validator
+            ->validateRequired($identity, 'Username or Email')
+            ->validateRequired($password, 'Password');
+
+        if ($validator->hasErrors()) {
+            $_SESSION['login_errors'] = $validator->getErrors();
+            $_SESSION['login_old'] = ['identity' => $identity];
+            header('Location: /login');
+            exit;
+        }
+
+        $userRepository = new UserRepository();
+
+        // Determine if the identity is an email or username
+        if (str_contains($identity, '@')) {
+            $user = $userRepository->findByEmail($identity);
+        } else {
+            $user = $userRepository->findByName($identity);
+        }
+
+        if (!$user || !password_verify($password, $user->passwordHash)) {
+            $_SESSION['login_errors'] = ['Invalid username/email or password.'];
+            $_SESSION['login_old'] = ['identity' => $identity];
+            header('Location: /login');
+            exit;
+        }
+
+        // Regenerate session ID to prevent session fixation attacks
+        session_regenerate_id(true);
+
+        $_SESSION['user_id'] = $user->id;
+        $_SESSION['user_name'] = $user->name;
+        $_SESSION['user_email'] = $user->email;
+        $_SESSION['user_role'] = $user->role;
+
+        // Handle "Remember me" cookie
+        $remember = $_POST['remember'] ?? '';
+        if ($remember) {
+            $token = bin2hex(random_bytes(32));
+            $tokenHash = hash('sha256', $token);
+            $userRepository->saveRememberToken($user->id, $tokenHash);
+
+            $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+            setcookie('remember_token', $token, [
+                'expires' => time() + (30 * 24 * 60 * 60), // 30 days
+                'path' => '/',
+                'domain' => '',
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+            setcookie('remember_user', (string) $user->id, [
+                'expires' => time() + (30 * 24 * 60 * 60),
+                'path' => '/',
+                'domain' => '',
+                'secure' => $isSecure,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        // Redirect admins to the admin dashboard, everyone else to homepage
+        if ($user->role === 'admin') {
+            header('Location: /admin');
+        } else {
+            header('Location: /');
+        }
+        exit;
+    }
+
+    public function logout($vars = [])
+    {
+        // Clear remember me token from database
+        if (!empty($_SESSION['user_id'])) {
+            $userRepository = new UserRepository();
+            $userRepository->clearRememberToken($_SESSION['user_id']);
+        }
+
+        // Clear remember me cookies
+        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+        setcookie('remember_token', '', [
+            'expires' => time() - 42000,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+        setcookie('remember_user', '', [
+            'expires' => time() - 42000,
+            'path' => '/',
+            'domain' => '',
+            'secure' => $isSecure,
+            'httponly' => true,
+            'samesite' => 'Lax',
+        ]);
+
+        // Clear all session data
+        $_SESSION = [];
+
+        // Delete the session cookie
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
+        }
+
+        session_destroy();
+
+        header('Location: /');
+        exit;
+    }
 }

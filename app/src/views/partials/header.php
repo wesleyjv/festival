@@ -284,8 +284,13 @@
             <li><a class="nav-link-f nav-lang" href="#">EN</a></li>
             <li><span class="lang-divider">|</span></li>
             <li><a class="nav-link-f nav-lang" href="#">NL</a></li>
-            <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
-            <li><a class="nav-link-f nav-link-auth" href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
+            <?php if (!empty($_SESSION['user_id'])): ?>
+                <li><a class="nav-link-f nav-link-auth" href="#"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li><a class="nav-link-f nav-link-auth" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            <?php else: ?>
+                <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
+                <li><a class="nav-link-f nav-link-auth" href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
+            <?php endif; ?>
             <li><a class="btn-program" href="#"><i class="bi bi-calendar-event"></i> My Program</a></li>
         </ul>
 
@@ -310,8 +315,13 @@
         </ul>
         <div class="mobile-divider"></div>
         <ul class="mobile-nav">
-            <li><a href="/login"><i class="bi bi-person"></i> Login</a></li>
-            <li><a href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
+            <?php if (!empty($_SESSION['user_id'])): ?>
+                <li><a href="#"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li><a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+            <?php else: ?>
+                <li><a href="/login"><i class="bi bi-person"></i> Login</a></li>
+                <li><a href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
+            <?php endif; ?>
         </ul>
         <a class="btn-program-mobile" href="#"><i class="bi bi-calendar-event"></i> My Program</a>
     </div>

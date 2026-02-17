@@ -42,3 +42,4 @@ node_modules/
 # Docker overrides (optional local overrides)
 docker-compose.override.yml
 
+app/migrations/add_remember_token_to_users.php

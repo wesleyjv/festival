@@ -25,7 +25,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
     }
 
     public function findByName(string $name): ?User
@@ -38,7 +38,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
     }
 
     public function emailExists(string $email): bool
@@ -68,5 +68,52 @@ class UserRepository
         ]);
 
         return (int) $this->db->lastInsertId();
+    }
+
+    public function findById(int $id): ?User
+    {
+        $stmt = $this->db->prepare('SELECT * FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+    }
+
+    public function saveRememberToken(int $userId, string $tokenHash): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET remember_token = :token WHERE id = :id');
+        $stmt->execute(['token' => $tokenHash, 'id' => $userId]);
+    }
+
+    public function clearRememberToken(int $userId): void
+    {
+        $stmt = $this->db->prepare('UPDATE users SET remember_token = NULL WHERE id = :id');
+        $stmt->execute(['id' => $userId]);
+    }
+
+    public function findByRememberToken(string $tokenHash): ?User
+    {
+        $stmt = $this->db->prepare('SELECT * FROM users WHERE remember_token = :token LIMIT 1');
+        $stmt->execute(['token' => $tokenHash]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+    }
+
+    public function getRememberToken(int $userId): ?string
+    {
+        $stmt = $this->db->prepare('SELECT remember_token FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $userId]);
+        $token = $stmt->fetchColumn();
+
+        return $token ?: null;
     }
 }
