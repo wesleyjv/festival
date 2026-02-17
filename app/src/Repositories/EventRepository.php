@@ -30,14 +30,14 @@ class EventRepository
 
         $events = [];
         foreach ($stmt as $row) {
-            $event = new HistoryEvent(
-                (int)$row['event_id'],
-                $row['guide_name'],
-                '',
-                ''
-            );
+            $event = new HistoryEvent([
+                'id' => (int)$row['event_id'],
+                'title' => $row['guide_name'] ?? '',
+                'description' => '',
+                'image' => '',
+            ]);
 
-            $event->guide = $row['guide_name'] ?? 'TBA'; 
+            $event->guide = $row['guide_name'] ?? 'TBA';
             $event->language = $row['language'] ?? 'English';
 
             $events[] = $event;
