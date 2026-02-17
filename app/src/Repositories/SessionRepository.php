@@ -4,8 +4,20 @@ namespace App\Repositories;
 use App\DB;
 use App\Models\Session;
 
+/**
+ * Repository class responsible for retrieving Session data from the database.
+ */
 class SessionRepository
 {
+    /**
+     * Retrieve a single Session by its ID.
+     *
+     * Queries the `sessions` table using a prepared statement and maps
+     * the resulting row to a {@see Session} model instance.
+     *
+     * @param int $id The unique identifier of the session.
+     * @return Session|null The corresponding Session object, or null if no matching record is found.
+     */
     public function getById(int $id): ?Session
     {
         $db = DB::getConnection();
