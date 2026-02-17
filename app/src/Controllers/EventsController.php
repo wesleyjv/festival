@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use PDO;
+
 class EventsController
 {
     public function history($vars = [])
