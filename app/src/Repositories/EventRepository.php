@@ -22,26 +22,24 @@ class EventRepository
     public function getHistoryEvents(): array
     {
         $db = DB::getConnection();
-        
-        $sql = "SELECT e.*, h.guide_name, h.language 
-                FROM events e 
-                JOIN history_events h ON e.id = h.event_id 
-                WHERE e.type = 'history'";
+
+        $sql = "SELECT * FROM history_events";
 
         $stmt = $db->prepare($sql);
         $stmt->execute();
 
         $events = [];
         foreach ($stmt as $row) {
-            $event = new HistoryEvent();
-            $event->id = (int)$row['id'];
-            $event->name = $row['name'];
-            $event->description = $row['description'];
-            $event->image = $row['image'] ?? '';
+            $event = new HistoryEvent([
+                'id' => (int)$row['event_id'],
+                'title' => $row['guide_name'] ?? '',
+                'description' => '',
+                'image' => '',
+            ]);
 
-            $event->guide = $row['guide_name'] ?? 'TBA'; 
+            $event->guide = $row['guide_name'] ?? 'TBA';
             $event->language = $row['language'] ?? 'English';
-            
+
             $events[] = $event;
         }
 

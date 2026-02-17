@@ -3,7 +3,6 @@
 <h1>Storytelling Events</h1>
 <p>Experience the captivating stories of Haarlem.</p>
 
-<?php require __DIR__ . '/../../partials/footer.php'; ?>
 <?php
 // Storytelling Event Page Implementation
 ?>
@@ -44,68 +43,9 @@
 </head>
 <body>
     <div class="storytelling-page">
-        <!-- Hero Section with Navigation -->
+        <!-- Hero Section -->
         <header class="storytelling-hero">
             <img class="storytelling-hero-image" src="/img/storytelling-hero.jpg" alt="Storytelling Event" />
-            
-            <!-- Navigation Bar (Same as Homepage) -->
-            <nav class="navigation-bar" role="navigation" aria-label="Main navigation">
-                <a href="/" class="nav-brand">
-                    <div class="brand-icon">
-                        <svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true">
-                            <path d="M17 2L20.09 8.26L27 9.27L22 14.14L23.18 21.02L17 17.77L10.82 21.02L12 14.14L7 9.27L13.91 8.26L17 2Z" fill="url(#brand-gradient)"/>
-                            <defs>
-                                <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                    <stop offset="47%" style="stop-color:#FFF8F0"/>
-                                    <stop offset="100%" style="stop-color:#E59B42"/>
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                    <div class="brand-text">THE HAARLEM<br/>FESTIVAL</div>
-                </a>
-                
-                <div class="nav-menu">
-                    <a href="/events/yummy" class="nav-item">
-                        <svg width="12" height="14" viewBox="0 0 12 14" fill="currentColor" aria-hidden="true">
-                            <path d="M6 0C4.34 0 3 1.34 3 3V5H2C0.9 5 0 5.9 0 7V12C0 13.1 0.9 14 2 14H10C11.1 14 12 13.1 12 12V7C12 5.9 11.1 5 10 5H9V3C9 1.34 7.66 0 6 0ZM5 3C5 2.45 5.45 2 6 2C6.55 2 7 2.45 7 3V5H5V3Z"/>
-                        </svg>
-                        YUMMY
-                    </a>
-                    <a href="/events/jazz" class="nav-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-                            <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12ZM7 3V8L12 10L11 11.5L8 10V3Z"/>
-                        </svg>
-                        JAZZ
-                    </a>
-                    <a href="/events/history" class="nav-item">
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
-                            <path d="M7 0C3.13 0 0 3.13 0 7C0 10.87 3.13 14 7 14C10.87 14 14 10.87 14 7C14 3.13 10.87 0 7 0ZM7 12C4.24 12 2 9.76 2 7C2 4.24 4.24 2 7 2C9.76 2 12 4.24 12 7C12 9.76 9.76 12 7 12ZM7 3V7L10 9L11 8L8 6V3H7Z"/>
-                        </svg>
-                        HISTORY
-                    </a>
-                    <a href="/events/stories" class="nav-item active">
-                        <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor" aria-hidden="true">
-                            <path d="M14 0H2C0.9 0 0 0.9 0 2V10C0 11.1 0.9 12 2 12H14C15.1 12 16 11.1 16 10V2C16 0.9 15.1 0 14 0ZM14 10H2V2H14V10Z"/>
-                        </svg>
-                        STORYTELLING
-                    </a>
-                </div>
-                
-                <div class="nav-actions">
-                    <div class="language-selector" role="group" aria-label="Language selection">
-                        <button class="lang-btn active" aria-pressed="true">EN</button>
-                        <span>|</span>
-                        <button class="lang-btn">NL</button>
-                    </div>
-                    <button class="my-program-btn">
-                        <svg width="16" height="14" viewBox="0 0 16 14" fill="currentColor" aria-hidden="true">
-                            <path d="M8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C12.42 16 16 12.42 16 8C16 3.58 12.42 0 8 0ZM8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C11.31 2 14 4.69 14 8C14 11.31 11.31 14 8 14ZM8 3V8L12 10L11 11.5L8 10V3Z"/>
-                        </svg>
-                        My Program
-                    </button>
-                </div>
-            </nav>
             
             <!-- Hero Content -->
             <div class="storytelling-hero-overlay">
