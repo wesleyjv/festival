@@ -21,6 +21,7 @@ composer.phar
 .env.*
 !.env.example
 !/app/.env.example
+Database.php
 
 # Logs and caches
 *.log
