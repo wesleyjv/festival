@@ -6,51 +6,127 @@ foreach ($cart->items as $item) {
 ?>
 <?php require __DIR__ . '/../partials/header.php'; ?>
 
-<h1 class="fw-bold mb-4"><i class="bi bi-cart3 me-2"></i>Shopping Cart</h1>
+<div class="container py-5">
 
-<?php if (empty($cart->items)): ?>
-    <div class="alert alert-info"><i class="bi bi-info-circle me-1"></i> Your cart is empty.</div>
-    <a href="/" class="btn btn-primary">Continue Browsing</a>
-<?php else: ?>
-    <table class="table table-striped align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Session</th>
-                <th>Price</th>
-                <th>Qty</th>
-                <th class="text-end">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php foreach ($cart->items as $item): ?>
-                <tr>
-                    <td>
-                        <?php if ($item->session): ?>
-                            <?= htmlspecialchars($item->session->startTime->format('D, d M Y H:i')) ?>
-                            &ndash;
-                            <?= htmlspecialchars($item->session->endTime->format('H:i')) ?>
-                        <?php else: ?>
-                            &mdash;
-                        <?php endif; ?>
-                    </td>
-                    <td>&euro;<?= number_format($item->price, 2) ?></td>
-                    <td><?= $item->quantity ?></td>
-                    <td class="text-end">&euro;<?= number_format($item->price * $item->quantity, 2) ?></td>
-                </tr>
-            <?php endforeach; ?>
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="3" class="text-end fw-bold">Total</td>
-                <td class="text-end fw-bold">&euro;<?= number_format($total, 2) ?></td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <div class="d-flex justify-content-between">
-        <a href="/" class="btn btn-outline-secondary">Continue Browsing</a>
-        <a href="/checkout" class="btn btn-success">Proceed to Checkout</a>
+    <!-- Hero -->
+    <div class="text-center mb-5">
+        <div class="bg-light rounded-4 p-4 p-md-5 shadow-sm">
+            <h1 class="fw-bold mb-2">
+                <i class="bi bi-cart3 me-2"></i>Shopping Cart
+            </h1>
+            <p class="text-muted mb-0">
+                Review your selected tickets before proceeding to checkout.
+            </p>
+        </div>
     </div>
-<?php endif; ?>
+
+    <?php if (empty($cart->items)): ?>
+        <div class="text-center py-5">
+            <i class="bi bi-cart-x text-muted fs-1"></i>
+            <h5 class="text-muted mt-3">Your cart is empty</h5>
+            <p class="text-muted">Browse our events and add tickets to get started.</p>
+            <a href="/" class="btn btn-outline-dark mt-2">
+                <i class="bi bi-arrow-left me-1"></i>Continue Browsing
+            </a>
+        </div>
+    <?php else: ?>
+
+        <!-- Info bar -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-1">Your Items</h3>
+                <p class="text-muted mb-0">
+                    <?= count($cart->items) ?> item<?= count($cart->items) !== 1 ? 's' : '' ?> in your cart
+                </p>
+            </div>
+        </div>
+
+        <!-- Cart items -->
+        <div class="row g-4 mb-4">
+            <?php foreach ($cart->items as $index => $item): ?>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 h-100 shadow-sm rounded-4">
+                        <div class="card-body d-flex flex-column p-4">
+
+                            <!-- Ticket name -->
+                            <div class="mb-3">
+                                <h5 class="fw-bold mb-1">
+                                    <?php if ($item->ticket): ?>
+                                        <?= htmlspecialchars($item->ticket->name) ?>
+                                    <?php else: ?>
+                                        &mdash;
+                                    <?php endif; ?>
+                                </h5>
+                                <span class="badge bg-primary-subtle text-primary">
+                                    <i class="bi bi-ticket-perforated me-1"></i>Ticket
+                                </span>
+                            </div>
+
+                            <!-- Details -->
+                            <div class="d-flex flex-column gap-2 mb-3 flex-grow-1">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center p-2 me-2">
+                                        <i class="bi bi-currency-euro"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Price</small>
+                                        <span class="fw-semibold">&euro;<?= number_format($item->price, 2) ?></span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center p-2 me-2">
+                                        <i class="bi bi-stack"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Quantity</small>
+                                        <span class="fw-semibold"><?= $item->quantity ?></span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center p-2 me-2">
+                                        <i class="bi bi-receipt"></i>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted d-block">Subtotal</small>
+                                        <span class="fw-semibold">&euro;<?= number_format($item->price * $item->quantity, 2) ?></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Remove -->
+                            <form action="/cart/remove" method="POST">
+                                <input type="hidden" name="item_index" value="<?= $index ?>">
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="bi bi-trash me-1"></i>Remove
+                                </button>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Total & actions -->
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted d-block">Total</small>
+                    <h4 class="fw-bold mb-0">&euro;<?= number_format($total, 2) ?></h4>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-outline-dark">
+                        <i class="bi bi-arrow-left me-1"></i>Continue Browsing
+                    </a>
+                    <a href="/checkout" class="btn btn-danger">
+                        <i class="bi bi-bag-check me-1"></i>Proceed to Checkout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    <?php endif; ?>
+
+</div>
 
 <?php require __DIR__ . '/../partials/footer.php'; ?>

@@ -2,11 +2,17 @@
 
 namespace App\Controllers;
 
-use App\DB;
-use App\Models\Session;
+use App\Services\TicketService;
 
 class TicketController
 {
+    private TicketService $ticketService;
+
+    public function __construct()
+    {
+        $this->ticketService = new TicketService();
+    }
+
     public function index()
     {
         $eventId = $_GET['event_id'] ?? null;
@@ -15,26 +21,7 @@ class TicketController
             exit;
         }
 
-        $db = DB::getConnection();
-        $stmt = $db->prepare("
-            SELECT s.*, l.name as location_name 
-            FROM sessions s
-            JOIN locations l ON s.location_id = l.id
-            WHERE s.event_id = :id 
-            ORDER BY s.start_time ASC
-        ");
-        $stmt->execute(['id' => $eventId]);
-
-        $sessions = [];
-        foreach ($stmt as $row) {
-            $session = new Session();
-            $session->id = (int)$row['id'];
-            $session->startTime = new \DateTime($row['start_time']);
-            $session->endTime = new \DateTime($row['end_time']);
-            $session->price = (float)$row['price'];
-            $session->totalCapacity = (int)$row['capacity'];
-            $sessions[] = $session;
-        }
+        $tickets = $this->ticketService->getTicketsByEventId((int)$eventId);
 
         require __DIR__ . '/../views/tickets/index.php';
     }

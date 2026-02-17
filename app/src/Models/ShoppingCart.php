@@ -9,12 +9,13 @@ class ShoppingCart
     /** @var CartItem[] */
     public array $items = [];
 
-    public function addItem(Session $session, int $qty): void
+    public function addItem(Ticket $ticket, int $qty): void
     {
         // Domain rules for adding items live in a service; keep this simple.
         $item = new CartItem();
+        $item->ticket = $ticket;
         $item->quantity = $qty;
-        $item->price = 0.0;
+        $item->price = $ticket->price;
         $this->items[] = $item;
     }
 

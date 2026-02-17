@@ -77,6 +77,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
     
     $r->addRoute('POST', '/cart/add', ['App\\Controllers\\CartController', 'add']);
+    $r->addRoute('POST', '/cart/remove', ['App\\Controllers\\CartController', 'remove']);
     $r->addRoute('GET', '/cart', ['App\\Controllers\\CartController', 'index']);
     $r->addRoute('GET', '/register', ['App\\Controllers\\UserController', 'register']);
     $r->addRoute('POST', '/register', ['App\\Controllers\\UserController', 'handleRegister']);
