@@ -5,6 +5,7 @@ namespace App\Controllers;
 use PDO;
 
 use App\Repositories\EventRepository;
+use App\Services\ContentService;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -39,6 +40,9 @@ class EventsController
     {
         $events = $this->eventRepository->getHistoryEvents();
 
+        $contentService = new ContentService();
+        $historyContent = $contentService->getPageContent('history');
+
         require __DIR__ . '/../views/events/history/overview.php';
     }
 
@@ -50,6 +54,9 @@ class EventsController
      */
     public function jazz($vars = [])
     {
+        $contentService = new ContentService();
+        $jazzContent = $contentService->getPageContent('jazz');
+
         require __DIR__ . '/../views/events/jazz/overview.php';
     }
 
@@ -113,6 +120,9 @@ class EventsController
             // Get additional data
             $featuredStoryteller = $storytellingModel->getFeaturedStoryteller();
             $locations = $storytellingModel->getStorytellingLocations();
+
+            $contentService = new ContentService();
+            $storiesContent = $contentService->getPageContent('stories');
             
             // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';

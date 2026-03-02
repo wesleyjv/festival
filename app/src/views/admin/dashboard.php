@@ -191,6 +191,16 @@
                 <span>Orders</span>
             </button>
         </li>
+        <li class="nav-item">
+            <button
+                class="nav-link w-100 text-start"
+                data-page="content"
+                type="button"
+            >
+                <i class="bi bi-file-earmark-text"></i>
+                <span>Content</span>
+            </button>
+        </li>
     </ul>
 </nav>
 
@@ -212,7 +222,7 @@
             aria-label="Close"
         ></button>
     </div>
-    <div class="offcanvas-body pt-3">
+        <div class="offcanvas-body pt-3">
         <div class="mb-3 small text-uppercase text-secondary fw-semibold">
             Navigation
         </div>
@@ -259,6 +269,17 @@
                 >
                     <i class="bi bi-receipt"></i>
                     <span>Orders</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button
+                    class="nav-link w-100 text-start"
+                    data-page="content"
+                    type="button"
+                    data-bs-dismiss="offcanvas"
+                >
+                    <i class="bi bi-file-earmark-text"></i>
+                    <span>Content</span>
                 </button>
             </li>
         </ul>
@@ -761,11 +782,184 @@
                 </div>
             </section>
         </section>
+
+        <!-- Content Management Page -->
+        <section id="page-content" class="page-section d-none">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h4 page-title mb-1">Content</h1>
+                    <p class="text-muted small mb-0">
+                        Manage homepage, Story, Yummy, History, and Jazz page copy.
+                    </p>
+                </div>
+            </div>
+
+            <?php if (!empty($_GET['saved'])): ?>
+                <div class="alert alert-success alert-sm py-2">
+                    <small class="mb-0">Content saved successfully.</small>
+                </div>
+            <?php endif; ?>
+
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-homepage" data-bs-toggle="tab" data-bs-target="#content-homepage" type="button" role="tab">
+                        Homepage
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-stories" data-bs-toggle="tab" data-bs-target="#content-stories" type="button" role="tab">
+                        Story
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-yummy" data-bs-toggle="tab" data-bs-target="#content-yummy" type="button" role="tab">
+                        Yummy
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-history" data-bs-toggle="tab" data-bs-target="#content-history" type="button" role="tab">
+                        History
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-jazz" data-bs-toggle="tab" data-bs-target="#content-jazz" type="button" role="tab">
+                        Jazz
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Homepage -->
+                <div class="tab-pane fade show active" id="content-homepage" role="tabpanel" aria-labelledby="tab-homepage">
+                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="page" value="homepage">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero title (supports HTML)</label>
+                                <textarea name="hero_title" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero subtitle</label>
+                                <textarea name="hero_subtitle" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['hero_subtitle'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">CTA heading</label>
+                                <textarea name="cta_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($homepageContent['cta_heading'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">CTA text</label>
+                                <textarea name="cta_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['cta_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Save Homepage Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Stories -->
+                <div class="tab-pane fade" id="content-stories" role="tabpanel" aria-labelledby="tab-stories">
+                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="page" value="stories">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero title</label>
+                                <textarea name="hero_title" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($storiesContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero description</label>
+                                <textarea name="hero_description" class="form-control wysiwyg" rows="5"><?= htmlspecialchars($storiesContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Additional information text</label>
+                                <textarea name="info_paragraph" class="form-control wysiwyg" rows="4"><?= htmlspecialchars($storiesContent['info_paragraph'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Save Story Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Yummy -->
+                <div class="tab-pane fade" id="content-yummy" role="tabpanel" aria-labelledby="tab-yummy">
+                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="page" value="yummy">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Intro heading</label>
+                                <textarea name="intro_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($yummyContent['intro_heading'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Intro text</label>
+                                <textarea name="intro_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($yummyContent['intro_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Save Yummy Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- History -->
+                <div class="tab-pane fade" id="content-history" role="tabpanel" aria-labelledby="tab-history">
+                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="page" value="history">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero title</label>
+                                <textarea name="hero_title" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($historyContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero description</label>
+                                <textarea name="hero_description" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($historyContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Save History Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Jazz -->
+                <div class="tab-pane fade" id="content-jazz" role="tabpanel" aria-labelledby="tab-jazz">
+                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
+                        <div class="card-body">
+                            <input type="hidden" name="page" value="jazz">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Intro heading</label>
+                                <textarea name="intro_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($jazzContent['intro_heading'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Intro text</label>
+                                <textarea name="intro_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($jazzContent['intro_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-save me-1"></i>Save Jazz Content
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
     </main>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- TinyMCE WYSIWYG editor -->
+<script src="https://cdn.tiny.cloud/1/rmqh6zpkull0b6qquqsqfol8clwt2hcni7cikkt0vy5f96ij/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
 
 <script>
     (function () {
@@ -812,6 +1006,56 @@
 
         const initialHash = window.location.hash.replace('#', '');
         showPage(initialHash || 'dashboard');
+
+        // Initialize TinyMCE for all WYSIWYG fields
+        tinymce.init({
+            selector: 'textarea.wysiwyg',
+            plugins: 'link lists code image media table',
+            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+            menubar: false,
+            height: 260,
+            images_upload_url: '/admin/upload-image',
+            automatic_uploads: true,
+            images_upload_credentials: true,
+            images_upload_handler: function (blobInfo, success, failure, progress) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/admin/upload-image');
+                xhr.withCredentials = true;
+
+                xhr.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        progress(e.loaded / e.total * 100);
+                    }
+                };
+
+                xhr.onload = function () {
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        failure('HTTP Error: ' + xhr.status);
+                        return;
+                    }
+                    let json;
+                    try {
+                        json = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        failure('Invalid JSON: ' + xhr.responseText);
+                        return;
+                    }
+                    if (!json || typeof json.location !== 'string') {
+                        failure('Invalid response: ' + xhr.responseText);
+                        return;
+                    }
+                    success(json.location);
+                };
+
+                xhr.onerror = function () {
+                    failure('Image upload failed due to a XHR transport error.');
+                };
+
+                const formData = new FormData();
+                formData.append('file', blobInfo.blob(), blobInfo.filename());
+                xhr.send(formData);
+            }
+        });
     })();
 </script>
 </body>

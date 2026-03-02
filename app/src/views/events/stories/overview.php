@@ -51,11 +51,16 @@
             <div class="storytelling-hero-overlay">
                 <div class="storytelling-hero-content">
                     <h1 class="storytelling-hero-title">
-                        The Art of <span class="highlight">Storytelling</span>
+                        <?php
+                        $heroTitle = $storiesContent['hero_title'] ?? 'The Art of <span class="highlight">Storytelling</span>';
+                        echo $heroTitle;
+                        ?>
                     </h1>
                     <p class="storytelling-hero-description">
-                        Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. 
-                        From ancient myths to contemporary narratives, discover the power of stories that connect us all.
+                        <?php
+                        $heroDescription = $storiesContent['hero_description'] ?? 'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.';
+                        echo $heroDescription;
+                        ?>
                     </p>
                     <a href="#schedule" class="storytelling-hero-cta">View Event Schedule</a>
                 </div>
@@ -184,9 +189,10 @@
                 <div class="info-content">
                     <h3 id="info-title">Additional Information</h3>
                     <p>
-                        All storytelling events are suitable for ages 12 and above unless specifically marked as children's events. 
-                        Tickets can be purchased online or at the venue 30 minutes before each performance. 
-                        In case of rain, outdoor events will be moved to covered locations nearby.
+                        <?php
+                        $infoParagraph = $storiesContent['info_paragraph'] ?? "All storytelling events are suitable for ages 12 and above unless specifically marked as children's events. Tickets can be purchased online or at the venue 30 minutes before each performance. In case of rain, outdoor events will be moved to covered locations nearby.";
+                        echo $infoParagraph;
+                        ?>
                     </p>
                 </div>
             </section>

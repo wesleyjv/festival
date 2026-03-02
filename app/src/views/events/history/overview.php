@@ -7,13 +7,18 @@
     <div class="container py-5">
 
         <!-- Hero -->
+        <?php
+        /** @var array<string,string> $historyContent */
+        $heroTitle = $historyContent['hero_title'] ?? 'Historic Haarlem';
+        $heroDescription = $historyContent['hero_description'] ?? "Walk through centuries of rich history with expert guides. Explore Haarlem's most iconic landmarks and hidden gems.";
+        ?>
         <div class="text-center mb-5">
             <div class="bg-light rounded-4 p-4 p-md-5 shadow-sm">
                 <h1 class="fw-bold mb-2">
-                    <i class="bi bi-bank me-2"></i>Historic Haarlem
+                    <i class="bi bi-bank me-2"></i><?= $heroTitle ?>
                 </h1>
                 <p class="text-muted mb-0">
-                    Walk through centuries of rich history with expert guides. Explore Haarlem's most iconic landmarks and hidden gems.
+                    <?= $heroDescription ?>
                 </p>
             </div>
         </div>

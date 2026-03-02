@@ -2,11 +2,15 @@
 
 namespace App\Controllers;
 
+use App\Services\ContentService;
+
 class HomeController
 {
     public function home($vars = [])
     {
-        // Render the homepage view
+        $contentService = new ContentService();
+        $homepageContent = $contentService->getPageContent('homepage');
+
         require __DIR__ . '/../views/main/homepage.php';
     }
 }
