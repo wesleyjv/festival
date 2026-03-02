@@ -15,7 +15,7 @@ class UserController
         $errors = $_SESSION['register_errors'] ?? [];
         $old = $_SESSION['register_old'] ?? [];
         unset($_SESSION['register_errors'], $_SESSION['register_old']);
-
+        //Make utility of this
         $recaptchaSiteKey = self::RECAPTCHA_SITE_KEY;
         require __DIR__ . '/../views/auth/register.php';
     }
@@ -91,7 +91,7 @@ class UserController
             header('Location: /login');
             exit;
         }
-
+        //Use PHP hashing
         $userRepository = new UserRepository();
 
         // Determine if the identity is an email or username
