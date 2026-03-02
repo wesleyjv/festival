@@ -6,15 +6,27 @@ use App\DB;
 use App\Models\Ticket;
 
 /**
- * Repository class responsible for retrieving Ticket data from the database.
+ * TicketRepository – data-access layer for the `tickets` table.
+ *
+ * This class is responsible for all direct database interactions related to
+ * tickets. It uses PDO prepared statements to prevent SQL injection and
+ * converts raw database rows into Ticket model objects via `mapRowToTicket()`.
+ *
+ * The repository is consumed by TicketService; controllers should never
+ * call repository methods directly.
  */
 class TicketRepository
 {
+
     /**
-     * Retrieve all tickets for a given event.
+     * Retrieve every ticket that belongs to a specific event.
      *
-     * @param int $eventId The event identifier.
-     * @return Ticket[] An array of Ticket objects.
+     * Executes a prepared SELECT query filtered by `event_id` and ordered
+     * alphabetically by ticket name so the results can be displayed in a
+     * consistent order on the front-end.
+     *
+     * @param  int   $eventId  The event’s primary key.
+     * @return Ticket[]        An array of Ticket models (empty when none found).
      */
     public function getByEventId(int $eventId): array
     {
@@ -31,10 +43,10 @@ class TicketRepository
     }
 
     /**
-     * Retrieve a single Ticket by its ID.
+     * Retrieve a single ticket by its primary key.
      *
-     * @param int $id The unique identifier of the ticket.
-     * @return Ticket|null The corresponding Ticket object, or null if not found.
+     * @param  int         $id  The ticket’s primary key.
+     * @return Ticket|null      The matching Ticket model, or null when not found.
      */
     public function getById(int $id): ?Ticket
     {
@@ -48,6 +60,15 @@ class TicketRepository
         return $this->mapRowToTicket($row);
     }
 
+    /**
+     * Convert an associative database row into a Ticket model.
+     *
+     * Handles type-casting (int, float, bool) and nullable columns so that
+     * the rest of the application can work with strongly-typed properties.
+     *
+     * @param  array  $row  An associative array fetched from the `tickets` table.
+     * @return Ticket       A fully populated Ticket model instance.
+     */
     private function mapRowToTicket(array $row): Ticket
     {
         $ticket = new Ticket();
