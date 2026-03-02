@@ -1,0 +1,88 @@
+<?php
+
+namespace App\Repositories;
+
+use App\DB;
+use App\Models\Ticket;
+
+/**
+ * TicketRepository – data-access layer for the `tickets` table.
+ *
+ * This class is responsible for all direct database interactions related to
+ * tickets. It uses PDO prepared statements to prevent SQL injection and
+ * converts raw database rows into Ticket model objects via `mapRowToTicket()`.
+ *
+ * The repository is consumed by TicketService; controllers should never
+ * call repository methods directly.
+ */
+class TicketRepository
+{
+
+    /**
+     * Retrieve every ticket that belongs to a specific event.
+     *
+     * Executes a prepared SELECT query filtered by `event_id` and ordered
+     * alphabetically by ticket name so the results can be displayed in a
+     * consistent order on the front-end.
+     *
+     * @param  int   $eventId  The event’s primary key.
+     * @return Ticket[]        An array of Ticket models (empty when none found).
+     */
+    public function getByEventId(int $eventId): array
+    {
+        $db = DB::getConnection();
+        $stmt = $db->prepare("SELECT * FROM tickets WHERE event_id = :eventId ORDER BY name ASC");
+        $stmt->execute(['eventId' => $eventId]);
+
+        $tickets = [];
+        foreach ($stmt as $row) {
+            $tickets[] = $this->mapRowToTicket($row);
+        }
+
+        return $tickets;
+    }
+
+    /**
+     * Retrieve a single ticket by its primary key.
+     *
+     * @param  int         $id  The ticket’s primary key.
+     * @return Ticket|null      The matching Ticket model, or null when not found.
+     */
+    public function getById(int $id): ?Ticket
+    {
+        $db = DB::getConnection();
+        $stmt = $db->prepare("SELECT * FROM tickets WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        if (!$row) return null;
+
+        return $this->mapRowToTicket($row);
+    }
+
+    /**
+     * Convert an associative database row into a Ticket model.
+     *
+     * Handles type-casting (int, float, bool) and nullable columns so that
+     * the rest of the application can work with strongly-typed properties.
+     *
+     * @param  array  $row  An associative array fetched from the `tickets` table.
+     * @return Ticket       A fully populated Ticket model instance.
+     */
+    private function mapRowToTicket(array $row): Ticket
+    {
+        $ticket = new Ticket();
+        $ticket->id = (int)$row['id'];
+        $ticket->orderId = isset($row['order_id']) ? (int)$row['order_id'] : null;
+        $ticket->eventId = (int)$row['event_id'];
+        $ticket->userId = isset($row['user_id']) ? (int)$row['user_id'] : null;
+        $ticket->name = $row['name'];
+        $ticket->price = (float)$row['price'];
+        $ticket->ticketCode = $row['ticket_code'];
+        $ticket->qrCodePath = $row['qr_code_path'] ?? null;
+        $ticket->isScanned = (bool)$row['is_scanned'];
+        $ticket->scannedAt = !empty($row['scanned_at']) ? new \DateTime($row['scanned_at']) : null;
+
+        return $ticket;
+    }
+}

@@ -111,6 +111,9 @@ class UserController
         // Regenerate session ID to prevent session fixation attacks
         session_regenerate_id(true);
 
+        // Clear cart from previous session so it doesn't carry over
+        unset($_SESSION['cart']);
+
         $_SESSION['user_id'] = $user->id;
         $_SESSION['user_name'] = $user->name;
         $_SESSION['user_email'] = $user->email;
