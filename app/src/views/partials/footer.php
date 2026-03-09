@@ -34,6 +34,7 @@
                 <h6 style="text-transform: uppercase; font-size: 0.72rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 16px;">Account</h6>
                 <ul style="list-style: none; padding: 0; margin: 0;">
                     <?php if (!empty($_SESSION['user_id'])): ?>
+                        <li style="margin-bottom: 10px;"><a href="/profile" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Profile</a></li>
                         <li style="margin-bottom: 10px;"><a href="/logout" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Logout</a></li>
                     <?php else: ?>
                         <li style="margin-bottom: 10px;"><a href="/login" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Login</a></li>

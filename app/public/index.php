@@ -91,6 +91,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/login', ['App\\Controllers\\UserController', 'login']);
     $r->addRoute('POST', '/login', ['App\\Controllers\\UserController', 'handleLogin']);
     $r->addRoute('GET', '/logout', ['App\\Controllers\\UserController', 'logout']);
+    $r->addRoute('GET', '/profile', ['App\\Controllers\\UserController', 'profile']);
+    $r->addRoute('POST', '/profile/update', ['App\\Controllers\\UserController', 'handleUpdateProfile']);
     $r->addRoute('GET', '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
     $r->addRoute('POST', '/admin/content/save', ['App\\Controllers\\AdminController', 'saveContent']);
     $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);

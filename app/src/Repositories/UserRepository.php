@@ -25,7 +25,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
     }
 
     public function findByName(string $name): ?User
@@ -38,7 +38,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
     }
 
     public function emailExists(string $email): bool
@@ -80,7 +80,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
     }
 
     public function saveRememberToken(int $userId, string $tokenHash): void
@@ -105,7 +105,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role']);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
     }
 
     public function getRememberToken(int $userId): ?string
@@ -115,5 +115,44 @@ class UserRepository
         $token = $stmt->fetchColumn();
 
         return $token ?: null;
+    }
+
+    public function updateProfile(int $id, string $name, string $email, ?string $passwordHash, ?string $profileImage): void
+    {
+        if ($passwordHash !== null && $profileImage !== null) {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET name = :name, email = :email, password_hash = :password_hash, profile_image = :profile_image WHERE id = :id'
+            );
+            $stmt->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'profile_image' => $profileImage, 'id' => $id]);
+        } elseif ($passwordHash !== null) {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET name = :name, email = :email, password_hash = :password_hash WHERE id = :id'
+            );
+            $stmt->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'id' => $id]);
+        } elseif ($profileImage !== null) {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET name = :name, email = :email, profile_image = :profile_image WHERE id = :id'
+            );
+            $stmt->execute(['name' => $name, 'email' => $email, 'profile_image' => $profileImage, 'id' => $id]);
+        } else {
+            $stmt = $this->db->prepare(
+                'UPDATE users SET name = :name, email = :email WHERE id = :id'
+            );
+            $stmt->execute(['name' => $name, 'email' => $email, 'id' => $id]);
+        }
+    }
+
+    public function emailExistsForOtherUser(string $email, int $excludeId): bool
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM users WHERE email = :email AND id != :id');
+        $stmt->execute(['email' => $email, 'id' => $excludeId]);
+        return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function nameExistsForOtherUser(string $name, int $excludeId): bool
+    {
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM users WHERE name = :name AND id != :id');
+        $stmt->execute(['name' => $name, 'id' => $excludeId]);
+        return (int) $stmt->fetchColumn() > 0;
     }
 }

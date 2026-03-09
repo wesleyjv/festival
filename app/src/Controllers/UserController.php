@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Repositories\UserRepository;
 use App\Services\Validator;
+use App\Services\MailService;
 
 class UserController
 {
@@ -15,7 +16,7 @@ class UserController
         $errors = $_SESSION['register_errors'] ?? [];
         $old = $_SESSION['register_old'] ?? [];
         unset($_SESSION['register_errors'], $_SESSION['register_old']);
-
+        //Make utility of this
         $recaptchaSiteKey = self::RECAPTCHA_SITE_KEY;
         require __DIR__ . '/../views/auth/register.php';
     }
@@ -91,7 +92,7 @@ class UserController
             header('Location: /login');
             exit;
         }
-
+        //Use PHP hashing
         $userRepository = new UserRepository();
 
         // Determine if the identity is an email or username
@@ -201,6 +202,111 @@ class UserController
         session_destroy();
 
         header('Location: /');
+        exit;
+    }
+
+    public function profile($vars = [])
+    {
+        if (empty($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        $userRepository = new UserRepository();
+        $user = $userRepository->findById((int) $_SESSION['user_id']);
+
+        $errors = $_SESSION['profile_errors'] ?? [];
+        $success = $_SESSION['profile_success'] ?? '';
+        $old = $_SESSION['profile_old'] ?? [];
+        unset($_SESSION['profile_errors'], $_SESSION['profile_success'], $_SESSION['profile_old']);
+
+        require __DIR__ . '/../views/profile/edit.php';
+    }
+
+    public function handleUpdateProfile($vars = [])
+    {
+        if (empty($_SESSION['user_id'])) {
+            header('Location: /login');
+            exit;
+        }
+
+        $userId = (int) $_SESSION['user_id'];
+        $name = trim($_POST['name'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $passwordConfirmation = $_POST['password_confirmation'] ?? '';
+
+        $validator = new Validator();
+        $validator
+            ->validateRequired($name, 'Name')
+            ->validateNameLength($name)
+            ->validateRequired($email, 'Email')
+            ->validateEmail($email);
+
+        if (!empty($password)) {
+            $validator
+                ->validatePasswordStrength($password)
+                ->validatePasswordConfirmation($password, $passwordConfirmation);
+        }
+
+        $userRepository = new UserRepository();
+
+        if (!$validator->hasErrors()) {
+            if ($userRepository->emailExistsForOtherUser($email, $userId)) {
+                $validator->addError('An account with this email address already exists.');
+            }
+            if ($userRepository->nameExistsForOtherUser($name, $userId)) {
+                $validator->addError('This username is already taken.');
+            }
+        }
+
+        // Handle profile image upload
+        $profileImagePath = null;
+        if (!empty($_FILES['profile_image']['name'])) {
+            $file = $_FILES['profile_image'];
+            $allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($file['tmp_name']);
+
+            if (!in_array($mimeType, $allowedMimes, true)) {
+                $validator->addError('Profile picture must be a JPEG, PNG, GIF, or WebP image.');
+            } elseif ($file['size'] > 2 * 1024 * 1024) {
+                $validator->addError('Profile picture must be smaller than 2MB.');
+            } else {
+                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'profile_' . $userId . '_' . time() . '.' . $ext;
+                $uploadDir = __DIR__ . '/../../public/uploads/profiles/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                    $profileImagePath = '/uploads/profiles/' . $filename;
+                } else {
+                    $validator->addError('Failed to upload profile picture. Please try again.');
+                }
+            }
+        }
+
+        if ($validator->hasErrors()) {
+            $_SESSION['profile_errors'] = $validator->getErrors();
+            $_SESSION['profile_old'] = ['name' => $name, 'email' => $email];
+            header('Location: /profile');
+            exit;
+        }
+
+        $passwordHash = !empty($password) ? password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]) : null;
+        $userRepository->updateProfile($userId, $name, $email, $passwordHash, $profileImagePath);
+
+        // Refresh session data
+        $_SESSION['user_name'] = $name;
+        $_SESSION['user_email'] = $email;
+
+        // Send confirmation email (best-effort)
+        $mailService = new MailService();
+        $mailService->sendProfileUpdateEmail($email, $name);
+
+        $_SESSION['profile_success'] = 'Your profile has been updated successfully.';
+        header('Location: /profile');
         exit;
     }
 }
