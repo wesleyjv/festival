@@ -119,6 +119,7 @@ class UserController
         $_SESSION['user_name'] = $user->name;
         $_SESSION['user_email'] = $user->email;
         $_SESSION['user_role'] = $user->role;
+        $_SESSION['user_profile_image'] = $user->profileImage;
 
         // Handle "Remember me" cookie
         $remember = $_POST['remember'] ?? '';
@@ -215,6 +216,9 @@ class UserController
         $userRepository = new UserRepository();
         $user = $userRepository->findById((int) $_SESSION['user_id']);
 
+        // Keep session in sync with DB (covers stale sessions from before profile_image was added)
+        $_SESSION['user_profile_image'] = $user->profileImage;
+
         $errors = $_SESSION['profile_errors'] ?? [];
         $success = $_SESSION['profile_success'] ?? '';
         $old = $_SESSION['profile_old'] ?? [];
@@ -300,6 +304,9 @@ class UserController
         // Refresh session data
         $_SESSION['user_name'] = $name;
         $_SESSION['user_email'] = $email;
+        if ($profileImagePath !== null) {
+            $_SESSION['user_profile_image'] = $profileImagePath;
+        }
 
         // Send confirmation email (best-effort)
         $mailService = new MailService();

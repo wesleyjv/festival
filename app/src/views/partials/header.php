@@ -138,6 +138,27 @@
             letter-spacing: 1px !important;
         }
 
+        /* Navbar avatar */
+        .nav-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.5);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .nav-avatar-mobile {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.4);
+            display: inline-block;
+            vertical-align: middle;
+        }
+
         /* My Program button */
         .btn-program {
             background-color: #1e2a38;
@@ -288,7 +309,16 @@
             <li><span class="lang-divider">|</span></li>
             <li><a class="nav-link-f nav-lang" href="#">NL</a></li>
             <?php if (!empty($_SESSION['user_id'])): ?>
-                <li><a class="nav-link-f nav-link-auth" href="/profile"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li>
+                    <a class="nav-link-f nav-link-auth" href="/profile">
+                        <?php if (!empty($_SESSION['user_profile_image'])): ?>
+                            <img src="<?= htmlspecialchars($_SESSION['user_profile_image'], ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar" alt="avatar">
+                        <?php else: ?>
+                            <i class="bi bi-person-circle"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>
+                    </a>
+                </li>
                 <li><a class="nav-link-f nav-link-auth" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
             <?php else: ?>
                 <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
@@ -319,7 +349,16 @@
         <div class="mobile-divider"></div>
         <ul class="mobile-nav">
             <?php if (!empty($_SESSION['user_id'])): ?>
-                <li><a href="/profile"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li>
+                    <a href="/profile">
+                        <?php if (!empty($_SESSION['user_profile_image'])): ?>
+                            <img src="<?= htmlspecialchars($_SESSION['user_profile_image'], ENT_QUOTES, 'UTF-8') ?>" class="nav-avatar-mobile" alt="avatar">
+                        <?php else: ?>
+                            <i class="bi bi-person-circle"></i>
+                        <?php endif; ?>
+                        <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?>
+                    </a>
+                </li>
                 <li><a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
             <?php else: ?>
                 <li><a href="/login"><i class="bi bi-person"></i> Login</a></li>
