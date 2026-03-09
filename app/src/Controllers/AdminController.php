@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\ContentService;
+use App\Repositories\UserRepository;
 
 class AdminController
 {
@@ -15,10 +16,20 @@ class AdminController
 
         $contentService = new ContentService();
         $homepageContent = $contentService->getPageContent('homepage');
-        $storiesContent = $contentService->getPageContent('stories');
-        $yummyContent = $contentService->getPageContent('yummy');
-        $historyContent = $contentService->getPageContent('history');
-        $jazzContent = $contentService->getPageContent('jazz');
+        $storiesContent  = $contentService->getPageContent('stories');
+        $yummyContent    = $contentService->getPageContent('yummy');
+        $historyContent  = $contentService->getPageContent('history');
+        $jazzContent     = $contentService->getPageContent('jazz');
+
+        $userRepo   = new UserRepository();
+        $userSearch = $_GET['search'] ?? '';
+        $userRole   = $_GET['role']   ?? '';
+        $userSort   = $_GET['sort']   ?? 'id';
+        $userDir    = $_GET['dir']    ?? 'ASC';
+        $users      = $userRepo->getAllUsers($userSearch, $userRole, $userSort, $userDir);
+        $totalUsers = $userRepo->countAll();
+        $userError  = $_GET['user_error']  ?? '';
+        $userSaved  = $_GET['user_saved']  ?? '';
 
         require __DIR__ . '/../views/admin/dashboard.php';
     }
@@ -108,5 +119,100 @@ class AdminController
 
         header('Content-Type: application/json');
         echo json_encode(['location' => $uploadUrlBase . $filename]);
+    }
+
+    public function createUser($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#users');
+            exit;
+        }
+
+        $name     = trim($_POST['name']     ?? '');
+        $email    = trim($_POST['email']    ?? '');
+        $password = trim($_POST['password'] ?? '');
+        $role     = $_POST['role']          ?? 'customer';
+
+        $allowedRoles = ['customer', 'employee', 'admin'];
+        if ($name === '' || $email === '' || $password === '' || !in_array($role, $allowedRoles, true)) {
+            header('Location: /admin?user_error=invalid_data#users');
+            exit;
+        }
+
+        $repo = new UserRepository();
+
+        if ($repo->emailExists($email)) {
+            header('Location: /admin?user_error=email_exists#users');
+            exit;
+        }
+
+        $repo->adminCreateUser($name, $email, password_hash($password, PASSWORD_BCRYPT), $role);
+        header('Location: /admin?user_saved=1#users');
+        exit;
+    }
+
+    public function updateUser($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#users');
+            exit;
+        }
+
+        $id    = (int) ($vars['id'] ?? 0);
+        $name  = trim($_POST['name']  ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $role  = $_POST['role']       ?? '';
+
+        $allowedRoles = ['customer', 'employee', 'admin'];
+        if ($id <= 0 || $name === '' || $email === '' || !in_array($role, $allowedRoles, true)) {
+            header('Location: /admin?user_error=invalid_data#users');
+            exit;
+        }
+
+        $repo = new UserRepository();
+
+        if ($repo->emailExistsForOtherUser($email, $id)) {
+            header('Location: /admin?user_error=email_exists#users');
+            exit;
+        }
+
+        $repo->adminUpdateUser($id, $name, $email, $role);
+        header('Location: /admin?user_saved=1#users');
+        exit;
+    }
+
+    public function deleteUser($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#users');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        if ($id <= 0 || $id === (int) ($_SESSION['user_id'] ?? 0)) {
+            header('Location: /admin?user_error=invalid_id#users');
+            exit;
+        }
+
+        $repo = new UserRepository();
+        $repo->deleteById($id);
+        header('Location: /admin?user_saved=1#users');
+        exit;
     }
 }

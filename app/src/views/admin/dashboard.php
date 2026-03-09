@@ -134,8 +134,11 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="d-none d-md-flex ms-auto align-items-center">
-            <span class="text-light small me-3">
+        <div class="d-none d-md-flex ms-auto align-items-center gap-2">
+            <a href="/" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-arrow-left-circle me-1"></i> Back to Site
+            </a>
+            <span class="text-light small">
               <i class="bi bi-person-circle me-1"></i> Admin
             </span>
         </div>
@@ -311,7 +314,7 @@
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h2 class="h6 text-muted text-uppercase mb-1">Total Users</h2>
-                                <p class="h4 mb-0">1,248</p>
+                                <p class="h4 mb-0"><?= $totalUsers ?></p>
                                 <small class="text-success">
                                     <i class="bi bi-arrow-up-right me-1"></i>12% vs last month
                                 </small>
@@ -397,43 +400,63 @@
                 <div>
                     <h1 class="h4 page-title mb-1">Users</h1>
                     <p class="text-muted small mb-0">
-                        Manage registered users. This is a placeholder layout.
+                        Manage registered users &mdash; <?= $totalUsers ?> total.
                     </p>
                 </div>
                 <div class="mt-3 mt-md-0">
-                    <button class="btn btn-primary btn-sm">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
                         <i class="bi bi-plus-lg me-1"></i> New User
                     </button>
                 </div>
             </div>
 
+            <?php if ($userSaved): ?>
+                <div class="alert alert-success alert-sm py-2 mb-3">
+                    <small>User saved successfully.</small>
+                </div>
+            <?php endif; ?>
+            <?php if ($userError): ?>
+                <div class="alert alert-danger alert-sm py-2 mb-3">
+                    <small>
+                        <?php if ($userError === 'email_exists'): ?>Email is already in use.
+                        <?php elseif ($userError === 'invalid_id'): ?>Cannot delete that user.
+                        <?php else: ?>Invalid data. Please check all fields.
+                        <?php endif; ?>
+                    </small>
+                </div>
+            <?php endif; ?>
+
             <article class="card stat-card">
                 <div class="card-body">
-                    <form class="row g-2 g-md-3 align-items-end mb-3">
+                    <form method="get" action="/admin" class="row g-2 g-md-3 align-items-end mb-3">
+                        <input type="hidden" name="sort" value="<?= htmlspecialchars($userSort, ENT_QUOTES) ?>">
+                        <input type="hidden" name="dir"  value="<?= htmlspecialchars($userDir,  ENT_QUOTES) ?>">
                         <div class="col-sm-6 col-md-4">
                             <label class="form-label small mb-1" for="userSearch">Search</label>
-                            <input type="text" class="form-control form-control-sm" id="userSearch"
-                                   placeholder="Name or email">
+                            <input type="text" class="form-control form-control-sm" id="userSearch" name="search"
+                                   placeholder="Name or email" value="<?= htmlspecialchars($userSearch, ENT_QUOTES) ?>">
                         </div>
                         <div class="col-sm-6 col-md-3">
                             <label class="form-label small mb-1" for="userRoleFilter">Role</label>
-                            <select id="userRoleFilter" class="form-select form-select-sm">
+                            <select id="userRoleFilter" name="role" class="form-select form-select-sm">
                                 <option value="">All roles</option>
-                                <option>Admin</option>
-                                <option>Editor</option>
-                                <option>Viewer</option>
+                                <option value="admin"    <?= $userRole === 'admin'    ? 'selected' : '' ?>>Admin</option>
+                                <option value="employee" <?= $userRole === 'employee' ? 'selected' : '' ?>>Employee</option>
+                                <option value="customer" <?= $userRole === 'customer' ? 'selected' : '' ?>>Customer</option>
                             </select>
                         </div>
                         <div class="col-sm-6 col-md-3">
-                            <label class="form-label small mb-1" for="userStatusFilter">Status</label>
-                            <select id="userStatusFilter" class="form-select form-select-sm">
-                                <option value="">Any status</option>
-                                <option>Active</option>
-                                <option>Suspended</option>
+                            <label class="form-label small mb-1" for="userSortSelect">Sort by</label>
+                            <select id="userSortSelect" name="sort" class="form-select form-select-sm">
+                                <option value="id"         <?= $userSort === 'id'         ? 'selected' : '' ?>>ID</option>
+                                <option value="name"       <?= $userSort === 'name'       ? 'selected' : '' ?>>Name</option>
+                                <option value="email"      <?= $userSort === 'email'      ? 'selected' : '' ?>>Email</option>
+                                <option value="role"       <?= $userSort === 'role'       ? 'selected' : '' ?>>Role</option>
+                                <option value="created_at" <?= $userSort === 'created_at' ? 'selected' : '' ?>>Registered</option>
                             </select>
                         </div>
                         <div class="col-sm-6 col-md-2 d-grid">
-                            <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary">
                                 <i class="bi bi-funnel me-1"></i> Filter
                             </button>
                         </div>
@@ -443,87 +466,148 @@
                         <table class="table align-middle table-hover">
                             <thead>
                             <tr>
-                                <th scope="col">User</th>
+                                <th scope="col">
+                                    <a href="/admin?search=<?= urlencode($userSearch) ?>&role=<?= urlencode($userRole) ?>&sort=name&dir=<?= ($userSort === 'name' && $userDir === 'ASC') ? 'DESC' : 'ASC' ?>#users"
+                                       class="text-decoration-none text-muted small text-uppercase">
+                                        User <i class="bi bi-arrow-down-up"></i>
+                                    </a>
+                                </th>
                                 <th scope="col">Email</th>
                                 <th scope="col">Role</th>
-                                <th scope="col">Status</th>
+                                <th scope="col">
+                                    <a href="/admin?search=<?= urlencode($userSearch) ?>&role=<?= urlencode($userRole) ?>&sort=created_at&dir=<?= ($userSort === 'created_at' && $userDir === 'ASC') ? 'DESC' : 'ASC' ?>#users"
+                                       class="text-decoration-none text-muted small text-uppercase">
+                                        Registered <i class="bi bi-arrow-down-up"></i>
+                                    </a>
+                                </th>
                                 <th scope="col" class="text-end">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="small">
+                            <?php foreach ($users as $u): ?>
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">John Doe</div>
-                                    <div class="text-muted">Joined Jan 2026</div>
+                                    <div class="fw-semibold"><?= htmlspecialchars($u->name, ENT_QUOTES) ?></div>
+                                    <div class="text-muted">#<?= $u->id ?></div>
                                 </td>
-                                <td>john.doe@example.com</td>
-                                <td><span class="badge bg-primary-subtle text-primary-emphasis">Admin</span></td>
-                                <td><span class="badge bg-success-subtle text-success-emphasis">Active</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
+                                <td><?= htmlspecialchars($u->email, ENT_QUOTES) ?></td>
                                 <td>
-                                    <div class="fw-semibold">Jane Smith</div>
-                                    <div class="text-muted">Joined Dec 2025</div>
+                                    <?php if ($u->role === 'admin'): ?>
+                                        <span class="badge bg-primary-subtle text-primary-emphasis">Admin</span>
+                                    <?php elseif ($u->role === 'employee'): ?>
+                                        <span class="badge bg-info-subtle text-info-emphasis">Employee</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary-subtle text-secondary-emphasis">Customer</span>
+                                    <?php endif; ?>
                                 </td>
-                                <td>jane.smith@example.com</td>
-                                <td><span class="badge bg-info-subtle text-info-emphasis">Editor</span></td>
-                                <td><span class="badge bg-success-subtle text-success-emphasis">Active</span></td>
+                                <td><?= $u->createdAt ? htmlspecialchars(date('M j, Y', strtotime($u->createdAt)), ENT_QUOTES) : '—' ?></td>
                                 <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary me-1">
+                                    <button class="btn btn-sm btn-outline-secondary me-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editUserModal"
+                                            data-id="<?= $u->id ?>"
+                                            data-name="<?= htmlspecialchars($u->name, ENT_QUOTES) ?>"
+                                            data-email="<?= htmlspecialchars($u->email, ENT_QUOTES) ?>"
+                                            data-role="<?= htmlspecialchars($u->role, ENT_QUOTES) ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php if ($u->id !== (int) ($_SESSION['user_id'] ?? 0)): ?>
+                                    <form method="post" action="/admin/users/<?= $u->id ?>/delete" class="d-inline"
+                                          onsubmit="return confirm('Delete user <?= htmlspecialchars(addslashes($u->name), ENT_QUOTES) ?>?')">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($users)): ?>
                             <tr>
-                                <td>
-                                    <div class="fw-semibold">Alex Johnson</div>
-                                    <div class="text-muted">Joined Nov 2025</div>
-                                </td>
-                                <td>alex.johnson@example.com</td>
-                                <td><span class="badge bg-secondary-subtle text-secondary-emphasis">Viewer</span></td>
-                                <td><span class="badge bg-warning-subtle text-warning-emphasis">Suspended</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </td>
+                                <td colspan="5" class="text-center text-muted py-4">No users found.</td>
                             </tr>
+                            <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
-
-                    <nav aria-label="Users pagination" class="mt-3">
-                        <ul class="pagination pagination-sm justify-content-end mb-0">
-                            <li class="page-item disabled">
-                                <a class="page-link">Previous</a>
-                            </li>
-                            <li class="page-item active">
-                                <a class="page-link" href="#">1</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">2</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="#">Next</a>
-                            </li>
-                        </ul>
-                    </nav>
                 </div>
             </article>
+
+            <!-- Create User Modal -->
+            <div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="/admin/users/create">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="createUserModalLabel">New User</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="create-name">Name</label>
+                                    <input type="text" class="form-control form-control-sm" id="create-name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="create-email">Email</label>
+                                    <input type="email" class="form-control form-control-sm" id="create-email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="create-password">Password</label>
+                                    <input type="password" class="form-control form-control-sm" id="create-password" name="password" required minlength="6">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="create-role">Role</label>
+                                    <select class="form-select form-select-sm" id="create-role" name="role">
+                                        <option value="customer">Customer</option>
+                                        <option value="employee">Employee</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Create User</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit User Modal -->
+            <div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" id="editUserForm" action="/admin/users/0/update">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="edit-name">Name</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit-name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="edit-email">Email</label>
+                                    <input type="email" class="form-control form-control-sm" id="edit-email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="edit-role">Role</label>
+                                    <select class="form-select form-select-sm" id="edit-role" name="role">
+                                        <option value="customer">Customer</option>
+                                        <option value="employee">Employee</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Events Management Page -->
@@ -1063,7 +1147,21 @@
         });
 
         const initialHash = window.location.hash.replace('#', '');
-        showPage(initialHash || 'dashboard');
+        const hasUserParams = new URLSearchParams(window.location.search).get('search') !== null
+            || new URLSearchParams(window.location.search).get('role') !== null
+            || new URLSearchParams(window.location.search).get('sort') !== null
+            || new URLSearchParams(window.location.search).get('user_saved') !== null
+            || new URLSearchParams(window.location.search).get('user_error') !== null;
+        showPage(initialHash || (hasUserParams ? 'users' : 'dashboard'));
+
+        // Populate edit user modal
+        document.getElementById('editUserModal').addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            document.getElementById('edit-name').value  = btn.getAttribute('data-name');
+            document.getElementById('edit-email').value = btn.getAttribute('data-email');
+            document.getElementById('edit-role').value  = btn.getAttribute('data-role');
+            document.getElementById('editUserForm').action = '/admin/users/' + btn.getAttribute('data-id') + '/update';
+        });
 
         // Initialize TinyMCE for all WYSIWYG fields
         tinymce.init({

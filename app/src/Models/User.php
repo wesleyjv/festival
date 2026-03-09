@@ -13,8 +13,9 @@ class User
     public string $passwordHash;
     public string $role;
     public ?string $profileImage;
+    public ?string $createdAt;
 
-    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer', ?string $profileImage = null)
+    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer', ?string $profileImage = null, ?string $createdAt = null)
     {
         $this->id = $id;
         $this->name = $name;
@@ -22,6 +23,7 @@ class User
         $this->passwordHash = $passwordHash;
         $this->role = $role;
         $this->profileImage = $profileImage;
+        $this->createdAt = $createdAt;
     }
 
     public function login(): void
