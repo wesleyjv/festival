@@ -517,6 +517,17 @@
   overflow-x: hidden;
 }
 
+/* Layout integration when using shared header/footer */
+body.storytelling-layout {
+  background: var(--gradient-primary);
+}
+
+body.storytelling-layout main.storytelling-main-wrapper {
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
 .storytelling-hero {
   position: relative;
   height: 400px;

@@ -92,6 +92,8 @@ final class ContentService
                     'hero_title' => 'The Art of <span class="highlight">Storytelling</span>',
                     'hero_description' => 'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.',
                     'info_paragraph' => 'All storytelling events are suitable for ages 12 and above unless specifically marked as children\'s events. Tickets can be purchased online or at the venue 30 minutes before each performance. In case of rain, outdoor events will be moved to covered locations nearby.',
+                    'hero_image' => '/img/storytelling-hero.jpg',
+                    'featured_image' => '/img/featured-storyteller.jpg',
                 ];
 
             case 'yummy':

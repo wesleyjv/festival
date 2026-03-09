@@ -865,6 +865,64 @@
                         <div class="card-body">
                             <input type="hidden" name="page" value="stories">
                             <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero background image URL</label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <input
+                                        type="text"
+                                        name="hero_image"
+                                        class="form-control cms-image-url"
+                                        value="<?= htmlspecialchars($storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg', ENT_QUOTES) ?>"
+                                        placeholder="/uploads/your-hero-image.jpg"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary cms-upload-btn"
+                                        data-target-input="hero_image"
+                                    >
+                                        <i class="bi bi-upload me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mb-1">
+                                    Paste an image URL or use <strong>Upload</strong> to upload a new hero image.
+                                </small>
+                                <img
+                                    src="<?= htmlspecialchars($storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg', ENT_QUOTES) ?>"
+                                    alt="Hero preview"
+                                    class="border rounded cms-image-preview"
+                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
+                                    data-preview-for="hero_image"
+                                >
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Featured storyteller image URL</label>
+                                <div class="input-group input-group-sm mb-2">
+                                    <input
+                                        type="text"
+                                        name="featured_image"
+                                        class="form-control cms-image-url"
+                                        value="<?= htmlspecialchars($storiesContent['featured_image'] ?? '/img/featured-storyteller.jpg', ENT_QUOTES) ?>"
+                                        placeholder="/uploads/your-featured-image.jpg"
+                                    >
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary cms-upload-btn"
+                                        data-target-input="featured_image"
+                                    >
+                                        <i class="bi bi-upload me-1"></i>Upload
+                                    </button>
+                                </div>
+                                <small class="text-muted d-block mb-1">
+                                    Paste an image URL or use <strong>Upload</strong> to upload a new featured storyteller image.
+                                </small>
+                                <img
+                                    src="<?= htmlspecialchars($storiesContent['featured_image'] ?? '/img/featured-storyteller.jpg', ENT_QUOTES) ?>"
+                                    alt="Featured storyteller preview"
+                                    class="border rounded cms-image-preview"
+                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
+                                    data-preview-for="featured_image"
+                                >
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label small fw-semibold">Hero title</label>
                                 <textarea name="hero_title" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($storiesContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
                             </div>
@@ -1055,6 +1113,75 @@
                 formData.append('file', blobInfo.blob(), blobInfo.filename());
                 xhr.send(formData);
             }
+        });
+
+        // Simple image uploader for non-WYSIWYG "image frame" fields
+        document.querySelectorAll('.cms-upload-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetName = button.getAttribute('data-target-input');
+                if (!targetName) return;
+
+                const form = button.closest('form');
+                if (!form) return;
+
+                let fileInput = form.querySelector(`input[type="file"][data-file-for="${targetName}"]`);
+                if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.classList.add('d-none');
+                    fileInput.setAttribute('data-file-for', targetName);
+                    form.appendChild(fileInput);
+                }
+
+                fileInput.onchange = () => {
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        return;
+                    }
+
+                    const file = fileInput.files[0];
+                    const data = new FormData();
+                    data.append('file', file, file.name);
+
+                    button.disabled = true;
+                    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Uploading...';
+
+                    fetch('/admin/upload-image', {
+                        method: 'POST',
+                        body: data,
+                        credentials: 'include'
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Upload failed with status ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(json => {
+                            if (!json || typeof json.location !== 'string') {
+                                throw new Error('Invalid response from server');
+                            }
+                            const input = form.querySelector(`input[name="${targetName}"]`);
+                            if (input) {
+                                input.value = json.location;
+                            }
+                            const preview = form.querySelector(`img.cms-image-preview[data-preview-for="${targetName}"]`);
+                            if (preview) {
+                                preview.src = json.location;
+                            }
+                        })
+                        .catch(err => {
+                            alert('Image upload failed: ' + err.message);
+                        })
+                        .finally(() => {
+                            button.disabled = false;
+                            button.innerHTML = '<i class="bi bi-upload me-1"></i>Upload';
+                            fileInput.value = '';
+                        });
+                };
+
+                fileInput.click();
+            });
         });
     })();
 </script>
