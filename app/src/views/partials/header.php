@@ -7,6 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1p0TQXB6w2+HlFz5sFpNDwfEBKQlYO" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/globals.css" />
+    <link rel="stylesheet" href="/css/styleguide.css" />
+    <link rel="stylesheet" href="/css/style.css" />
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -261,7 +264,7 @@
         }
     </style>
 </head>
-<body>
+<body<?= isset($bodyClass) ? ' class="' . htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 
 <nav class="navbar-festival">
     <!-- Fixed 56px bar -->
@@ -333,4 +336,4 @@ document.getElementById('navToggler').addEventListener('click', function() {
 });
 </script>
 
-<main class="container mt-4">
+<main class="<?= isset($mainClass) ? htmlspecialchars($mainClass, ENT_QUOTES, 'UTF-8') : 'container mt-4' ?>">

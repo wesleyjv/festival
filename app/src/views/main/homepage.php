@@ -61,9 +61,17 @@
 <!-- Hero -->
 <div class="hero-home">
     <p class="hero-date">July 23 - 26, 2026</p>
-    <h1>Welcome to<br>The Haarlem Festival</h1>
+    <h1>
+        <?php
+        $heroTitle = $homepageContent['hero_title'] ?? "Welcome to<br>The Haarlem Festival";
+        echo $heroTitle;
+        ?>
+    </h1>
     <p class="hero-sub">
-        Discover the best of food, music, stories, and history in the heart of Haarlem.
+        <?php
+        $heroSubtitle = $homepageContent['hero_subtitle'] ?? 'Discover the best of food, music, stories, and history in the heart of Haarlem.';
+        echo $heroSubtitle;
+        ?>
     </p>
     <a href="#events" class="btn btn-warning px-4 fw-semibold me-2">
         <i class="bi bi-calendar-event me-1"></i>Explore Events
@@ -123,8 +131,18 @@
 
 <!-- CTA -->
 <div class="cta-home">
-    <h3 class="fw-bold mb-3">Ready to experience Haarlem?</h3>
-    <p class="mb-4">Secure your spot before events sell out.</p>
+    <h3 class="fw-bold mb-3">
+        <?php
+        $ctaHeading = $homepageContent['cta_heading'] ?? 'Ready to experience Haarlem?';
+        echo $ctaHeading;
+        ?>
+    </h3>
+    <p class="mb-4">
+        <?php
+        $ctaText = $homepageContent['cta_text'] ?? 'Secure your spot before events sell out.';
+        echo $ctaText;
+        ?>
+    </p>
     <a href="/register" class="btn btn-warning px-5 fw-semibold">Get Your Tickets</a>
 </div>
 

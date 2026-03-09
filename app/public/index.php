@@ -92,6 +92,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/login', ['App\\Controllers\\UserController', 'handleLogin']);
     $r->addRoute('GET', '/logout', ['App\\Controllers\\UserController', 'logout']);
     $r->addRoute('GET', '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
+    $r->addRoute('POST', '/admin/content/save', ['App\\Controllers\\AdminController', 'saveContent']);
+    $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
