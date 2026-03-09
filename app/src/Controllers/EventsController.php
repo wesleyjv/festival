@@ -5,6 +5,7 @@ namespace App\Controllers;
 use PDO;
 
 use App\Repositories\EventRepository;
+use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
 
 /**
@@ -107,11 +108,16 @@ class EventsController
     /**
      * Displays the yummy events overview page.
      *
-     * @param array $vars Optional route parameters passed to the view.
      * @return void
      */
-    public function yummy($vars = [])
+    public function yummy()
     {
+        $cuisine = $_GET['cuisine'] ?? null;
+
+        $repository = new YummyEventRepository();
+        $restaurants = $repository->getAll($cuisine);
+
         require __DIR__ . '/../views/events/yummy/overview.php';
     }
+
 }

@@ -75,8 +75,16 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
-    
+
+    $r->addRoute('GET', '/orders', ['App\\Controllers\\OrderController', 'orders']);
+    $r->addRoute('GET', '/orders/{id:\d+}/download', ['App\\Controllers\\OrderController', 'download']);
+    $r->addRoute('POST', '/orders/{id:\d+}/email', ['App\\Controllers\\OrderController', 'emailTickets']);
+    $r->addRoute('GET', '/checkout', ['App\\Controllers\\OrderController', 'checkout']);
+    $r->addRoute('POST', '/checkout', ['App\\Controllers\\OrderController', 'placeOrder']);
+    $r->addRoute('GET', '/checkout/confirmation', ['App\\Controllers\\OrderController', 'confirmation']);
+
     $r->addRoute('POST', '/cart/add', ['App\\Controllers\\CartController', 'add']);
+    $r->addRoute('POST', '/cart/remove', ['App\\Controllers\\CartController', 'remove']);
     $r->addRoute('GET', '/cart', ['App\\Controllers\\CartController', 'index']);
     $r->addRoute('GET', '/register', ['App\\Controllers\\UserController', 'register']);
     $r->addRoute('POST', '/register', ['App\\Controllers\\UserController', 'handleRegister']);
@@ -104,8 +112,17 @@ switch ($routeInfo[0]) {
     case FastRoute\Dispatcher::FOUND:
         [$controllerClass, $method] = $routeInfo[1];
         $vars = $routeInfo[2];
-        
-        $controller = new $controllerClass();
+
+        // Wire up dependency injection for controllers that require it
+        if ($controllerClass === App\Controllers\OrderController::class) {
+            $orderRepository = new App\Repositories\OrderRepository();
+            $orderService = new App\Services\OrderService($orderRepository);
+            $ticketPdfService = new App\Services\TicketPdfService();
+            $mailService = new App\Services\MailService();
+            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService);
+        } else {
+            $controller = new $controllerClass();
+        }
         $controller->$method($vars);
         break;
 }
