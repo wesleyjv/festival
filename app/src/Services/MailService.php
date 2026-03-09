@@ -65,4 +65,11 @@ class MailService
             return false;
         }
     }
+
+    public function sendProfileUpdateEmail(string $to, string $name): bool
+    {
+        $subject = 'Your account details have been updated';
+        $body = "Hi {$name},\n\nYour profile has been successfully updated.\n\nIf you did not make this change, please contact us immediately.\n\nThe Haarlem Festival Team";
+        return $this->sendWithAttachment($to, $subject, $body);
+    }
 }

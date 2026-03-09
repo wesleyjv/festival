@@ -288,7 +288,7 @@
             <li><span class="lang-divider">|</span></li>
             <li><a class="nav-link-f nav-lang" href="#">NL</a></li>
             <?php if (!empty($_SESSION['user_id'])): ?>
-                <li><a class="nav-link-f nav-link-auth" href="#"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li><a class="nav-link-f nav-link-auth" href="/profile"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
                 <li><a class="nav-link-f nav-link-auth" href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
             <?php else: ?>
                 <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
@@ -319,7 +319,7 @@
         <div class="mobile-divider"></div>
         <ul class="mobile-nav">
             <?php if (!empty($_SESSION['user_id'])): ?>
-                <li><a href="#"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
+                <li><a href="/profile"><i class="bi bi-person-circle"></i> <?= htmlspecialchars($_SESSION['user_name'] ?? '') ?></a></li>
                 <li><a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
             <?php else: ?>
                 <li><a href="/login"><i class="bi bi-person"></i> Login</a></li>

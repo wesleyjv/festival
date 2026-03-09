@@ -15,4 +15,4 @@ WORKDIR /app
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # On container start, install dependencies if vendor is missing, then start php-fpm
-CMD ["sh", "-lc", "[ -f vendor/autoload.php ] || composer install --no-interaction --no-progress; exec php-fpm"]
+CMD ["sh", "-lc", "composer install --no-interaction --no-progress; exec php-fpm"]

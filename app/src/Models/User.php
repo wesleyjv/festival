@@ -12,14 +12,16 @@ class User
     public string $email;
     public string $passwordHash;
     public string $role;
+    public ?string $profileImage;
 
-    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer')
+    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer', ?string $profileImage = null)
     {
         $this->id = $id;
         $this->name = $name;
         $this->email = $email;
         $this->passwordHash = $passwordHash;
         $this->role = $role;
+        $this->profileImage = $profileImage;
     }
 
     public function login(): void
