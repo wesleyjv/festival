@@ -25,7 +25,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null, $row['created_at'] ?? null);
     }
 
     public function findByName(string $name): ?User
@@ -38,7 +38,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null, $row['created_at'] ?? null);
     }
 
     public function emailExists(string $email): bool
@@ -80,7 +80,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null, $row['created_at'] ?? null);
     }
 
     public function saveRememberToken(int $userId, string $tokenHash): void
@@ -105,7 +105,7 @@ class UserRepository
             return null;
         }
 
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null);
+        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null, $row['created_at'] ?? null);
     }
 
     public function getRememberToken(int $userId): ?string
@@ -154,5 +154,80 @@ class UserRepository
         $stmt = $this->db->prepare('SELECT COUNT(*) FROM users WHERE name = :name AND id != :id');
         $stmt->execute(['name' => $name, 'id' => $excludeId]);
         return (int) $stmt->fetchColumn() > 0;
+    }
+
+    public function countAll(): int
+    {
+        return (int) $this->db->query('SELECT COUNT(*) FROM users')->fetchColumn();
+    }
+
+    public function getAllUsers(string $search = '', string $role = '', string $sort = 'id', string $dir = 'ASC'): array
+    {
+        $allowedSorts = ['id', 'name', 'email', 'role', 'created_at'];
+        $sort = in_array($sort, $allowedSorts, true) ? $sort : 'id';
+        $dir  = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
+
+        $where  = [];
+        $params = [];
+
+        if ($search !== '') {
+            $where[]             = '(name LIKE :search_name OR email LIKE :search_email)';
+            $params['search_name']  = '%' . $search . '%';
+            $params['search_email'] = '%' . $search . '%';
+        }
+
+        if ($role !== '') {
+            $where[]       = 'role = :role';
+            $params['role'] = $role;
+        }
+
+        $sql = 'SELECT * FROM users';
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= " ORDER BY {$sort} {$dir}";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll();
+
+        return array_map(fn($row) => new User(
+            $row['id'],
+            $row['name'],
+            $row['email'],
+            $row['password_hash'],
+            $row['role'],
+            $row['profile_image'] ?? null,
+            $row['created_at'] ?? null
+        ), $rows);
+    }
+
+    public function deleteById(int $id): void
+    {
+        $stmt = $this->db->prepare('DELETE FROM users WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+    }
+
+    public function adminCreateUser(string $name, string $email, string $passwordHash, string $role): int
+    {
+        $stmt = $this->db->prepare(
+            'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)'
+        );
+        $stmt->execute([
+            'name'          => $name,
+            'email'         => $email,
+            'password_hash' => $passwordHash,
+            'role'          => $role,
+        ]);
+
+        return (int) $this->db->lastInsertId();
+    }
+
+    public function adminUpdateUser(int $id, string $name, string $email, string $role): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE users SET name = :name, email = :email, role = :role WHERE id = :id'
+        );
+        $stmt->execute(['name' => $name, 'email' => $email, 'role' => $role, 'id' => $id]);
     }
 }

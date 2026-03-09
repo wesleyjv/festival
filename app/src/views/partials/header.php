@@ -324,6 +324,9 @@
                 <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
                 <li><a class="nav-link-f nav-link-auth" href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
             <?php endif; ?>
+            <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
+                <li><a class="btn-program" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a></li>
+            <?php endif; ?>
             <li><a class="btn-program" href="#"><i class="bi bi-calendar-event"></i> My Program</a></li>
         </ul>
 
@@ -365,6 +368,9 @@
                 <li><a href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
             <?php endif; ?>
         </ul>
+        <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
+            <a class="btn-program-mobile" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a>
+        <?php endif; ?>
         <a class="btn-program-mobile" href="#"><i class="bi bi-calendar-event"></i> My Program</a>
     </div>
 </nav>

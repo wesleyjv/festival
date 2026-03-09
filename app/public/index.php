@@ -94,9 +94,12 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/logout', ['App\\Controllers\\UserController', 'logout']);
     $r->addRoute('GET', '/profile', ['App\\Controllers\\UserController', 'profile']);
     $r->addRoute('POST', '/profile/update', ['App\\Controllers\\UserController', 'handleUpdateProfile']);
-    $r->addRoute('GET', '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
+    $r->addRoute('GET',  '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
     $r->addRoute('POST', '/admin/content/save', ['App\\Controllers\\AdminController', 'saveContent']);
     $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);
+    $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
+    $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
+    $r->addRoute('POST', '/admin/users/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteUser']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
