@@ -88,7 +88,8 @@ class EventsController
 
         if ($artist === null) {
             http_response_code(404);
-            echo '404 – Artist not found';
+            $message = 'Artist not found.';
+            require __DIR__ . '/../views/errors/404.php';
             return;
         }
 
