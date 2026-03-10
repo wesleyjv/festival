@@ -3,16 +3,26 @@
 namespace App\Controllers;
 
 use App\Services\ContentService;
+use App\Services\ImageUploadService;
+use App\Services\Validator;
 use App\Repositories\UserRepository;
 
 class AdminController
 {
+    private UserRepository $userRepo;
+
+    public function __construct()
+    {
+        $this->userRepo = new UserRepository();
+    }
+
+    // -------------------------------------------------------------------------
+    // Pages
+    // -------------------------------------------------------------------------
+
     public function dashboard($vars = [])
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAdmin();
 
         $contentService = new ContentService();
         $homepageContent = $contentService->getPageContent('homepage');
@@ -21,28 +31,25 @@ class AdminController
         $historyContent  = $contentService->getPageContent('history');
         $jazzContent     = $contentService->getPageContent('jazz');
 
-        $userRepo   = new UserRepository();
         $userSearch = $_GET['search'] ?? '';
         $userRole   = $_GET['role']   ?? '';
         $userSort   = $_GET['sort']   ?? 'id';
         $userDir    = $_GET['dir']    ?? 'ASC';
-        $users      = $userRepo->getAllUsers($userSearch, $userRole, $userSort, $userDir);
-        $totalUsers = $userRepo->countAll();
-        $userError  = $_GET['user_error']  ?? '';
-        $userSaved  = $_GET['user_saved']  ?? '';
+        $users      = $this->userRepo->getAllUsers($userSearch, $userRole, $userSort, $userDir);
+        $totalUsers = $this->userRepo->countAll();
+        $userError  = $_GET['user_error'] ?? '';
+        $userSaved  = $_GET['user_saved'] ?? '';
 
         require __DIR__ . '/../views/admin/dashboard.php';
     }
 
-    /**
-     * Handle POSTed content updates from the admin CMS.
-     */
+    // -------------------------------------------------------------------------
+    // Content
+    // -------------------------------------------------------------------------
+
     public function saveContent($vars = []): void
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin');
@@ -58,8 +65,7 @@ class AdminController
         $data = $_POST;
         unset($data['page']);
 
-        $service = new ContentService();
-        $service->savePageContent($page, $data);
+        (new ContentService())->savePageContent($page, $data);
 
         header('Location: /admin?saved=1#content');
         exit;
@@ -77,56 +83,35 @@ class AdminController
             return;
         }
 
-        $uploadDir = __DIR__ . '/../../public/uploads';
-        $uploadUrlBase = '/uploads/';
-
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0775, true);
-        }
-
         if (!isset($_FILES['file']) || ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             http_response_code(400);
             echo json_encode(['error' => 'No file uploaded']);
             return;
         }
 
-        $tmpName = $_FILES['file']['tmp_name'];
-        $finfo = new \finfo(FILEINFO_MIME_TYPE);
-        $mime = $finfo->file($tmpName);
-
-        $allowed = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/gif' => 'gif',
-            'image/webp' => 'webp',
-        ];
-
-        if (!isset($allowed[$mime])) {
+        try {
+            $imageService = new ImageUploadService(
+                __DIR__ . '/../../public/uploads/',
+                '/uploads/'
+            );
+            $path = $imageService->upload($_FILES['file'], 'img');
+        } catch (\Exception $e) {
             http_response_code(400);
-            echo json_encode(['error' => 'Invalid file type']);
-            return;
-        }
-
-        $extension = $allowed[$mime];
-        $filename = uniqid('img_', true) . '.' . $extension;
-        $destination = $uploadDir . '/' . $filename;
-
-        if (!move_uploaded_file($tmpName, $destination)) {
-            http_response_code(500);
-            echo json_encode(['error' => 'Failed to move uploaded file']);
+            echo json_encode(['error' => $e->getMessage()]);
             return;
         }
 
         header('Content-Type: application/json');
-        echo json_encode(['location' => $uploadUrlBase . $filename]);
+        echo json_encode(['location' => $path]);
     }
+
+    // -------------------------------------------------------------------------
+    // User management
+    // -------------------------------------------------------------------------
 
     public function createUser($vars = []): void
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
@@ -138,30 +123,32 @@ class AdminController
         $password = trim($_POST['password'] ?? '');
         $role     = $_POST['role']          ?? 'customer';
 
-        $allowedRoles = ['customer', 'employee', 'admin'];
-        if ($name === '' || $email === '' || $password === '' || !in_array($role, $allowedRoles, true)) {
+        $validator = new Validator();
+        $validator
+            ->validateRequired($name, 'Name')
+            ->validateRequired($email, 'Email')
+            ->validateEmail($email)
+            ->validateRequired($password, 'Password')
+            ->validateRole($role, ['customer', 'employee', 'admin']);
+
+        if ($validator->hasErrors()) {
             header('Location: /admin?user_error=invalid_data#users');
             exit;
         }
 
-        $repo = new UserRepository();
-
-        if ($repo->emailExists($email)) {
+        if ($this->userRepo->emailExists($email)) {
             header('Location: /admin?user_error=email_exists#users');
             exit;
         }
 
-        $repo->adminCreateUser($name, $email, password_hash($password, PASSWORD_BCRYPT), $role);
+        $this->userRepo->adminCreateUser($name, $email, $password, $role);
         header('Location: /admin?user_saved=1#users');
         exit;
     }
 
     public function updateUser($vars = []): void
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
@@ -173,30 +160,31 @@ class AdminController
         $email = trim($_POST['email'] ?? '');
         $role  = $_POST['role']       ?? '';
 
-        $allowedRoles = ['customer', 'employee', 'admin'];
-        if ($id <= 0 || $name === '' || $email === '' || !in_array($role, $allowedRoles, true)) {
+        $validator = new Validator();
+        $validator
+            ->validateRequired($name, 'Name')
+            ->validateRequired($email, 'Email')
+            ->validateEmail($email)
+            ->validateRole($role, ['customer', 'employee', 'admin']);
+
+        if ($id <= 0 || $validator->hasErrors()) {
             header('Location: /admin?user_error=invalid_data#users');
             exit;
         }
 
-        $repo = new UserRepository();
-
-        if ($repo->emailExistsForOtherUser($email, $id)) {
+        if ($this->userRepo->emailExistsForOtherUser($email, $id)) {
             header('Location: /admin?user_error=email_exists#users');
             exit;
         }
 
-        $repo->adminUpdateUser($id, $name, $email, $role);
+        $this->userRepo->adminUpdateUser($id, $name, $email, $role);
         header('Location: /admin?user_saved=1#users');
         exit;
     }
 
     public function deleteUser($vars = []): void
     {
-        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
-            header('Location: /login');
-            exit;
-        }
+        $this->requireAdmin();
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
@@ -210,9 +198,20 @@ class AdminController
             exit;
         }
 
-        $repo = new UserRepository();
-        $repo->deleteById($id);
+        $this->userRepo->deleteById($id);
         header('Location: /admin?user_saved=1#users');
         exit;
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private function requireAdmin(): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
     }
 }
