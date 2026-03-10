@@ -55,6 +55,10 @@ class EventsController
      */
     public function jazz($vars = [])
     {
+        $dayFilter = $_GET['day'] ?? 'all';
+
+        $jazzArtists = $this->eventRepository->getJazzEvents($dayFilter !== 'all' ? $dayFilter : null);
+
         $contentService = new ContentService();
         $jazzContent = $contentService->getPageContent('jazz');
 
