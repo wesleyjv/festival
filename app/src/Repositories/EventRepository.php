@@ -100,6 +100,51 @@ class EventRepository
     }
 
     /**
+     * Retrieves a single jazz event by its event ID.
+     *
+     * @param  int $id
+     * @return JazzEvent|null  Null when not found.
+     */
+    public function getJazzEventById(int $id): ?JazzEvent
+    {
+        $db = DB::getConnection();
+
+        $sql = "SELECT je.event_id, je.artist, je.style, je.description,
+                       je.profile_image, je.banner_image, je.location,
+                       je.start_time, je.end_time, je.price, je.seats,
+                       je.images, je.tracks
+                FROM jazz_events je
+                JOIN events e ON je.event_id = e.id
+                WHERE je.event_id = :id AND e.type = 'jazz'
+                LIMIT 1";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        $event = new JazzEvent([]);
+        $event->eventId      = (int) $row['event_id'];
+        $event->artist       = $row['artist'] ?? '';
+        $event->style        = $row['style'] ?? '';
+        $event->description  = $row['description'] ?? '';
+        $event->profileImage = $row['profile_image'] ?? null;
+        $event->bannerImage  = $row['banner_image'] ?? null;
+        $event->location     = $row['location'] ?? null;
+        $event->startTime    = $row['start_time'] ?? null;
+        $event->endTime      = $row['end_time'] ?? null;
+        $event->price        = $row['price'] !== null ? (float) $row['price'] : null;
+        $event->seats        = $row['seats'] !== null ? (int) $row['seats'] : null;
+        $event->images       = $row['images'] !== null ? json_decode($row['images'], true) : null;
+        $event->tracks       = $row['tracks'] !== null ? json_decode($row['tracks'], true) : null;
+
+        return $event;
+    }
+
+    /**
      * Creates a new StorytellingEvent model instance using the shared DB connection.
      *
      * @return StorytellingEvent

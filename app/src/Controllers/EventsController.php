@@ -55,6 +55,11 @@ class EventsController
      */
     public function jazz($vars = [])
     {
+        if (isset($_GET['day']) && $_GET['day'] === 'all') {
+            header('Location: /events/jazz');
+            exit;
+        }
+
         $dayFilter = $_GET['day'] ?? 'all';
 
         $jazzArtists = $this->eventRepository->getJazzEvents($dayFilter !== 'all' ? $dayFilter : null);
@@ -63,6 +68,26 @@ class EventsController
         $jazzContent = $contentService->getPageContent('jazz');
 
         require __DIR__ . '/../views/events/jazz/overview.php';
+    }
+
+    /**
+     * Displays the detail page for a single jazz artist.
+     *
+     * @param array $vars Route parameters; expects 'id' (int).
+     * @return void
+     */
+    public function jazzDetail($vars = [])
+    {
+        $id = (int) ($vars['id'] ?? 0);
+        $artist = $this->eventRepository->getJazzEventById($id);
+
+        if ($artist === null) {
+            http_response_code(404);
+            echo '404 – Artist not found';
+            return;
+        }
+
+        require __DIR__ . '/../views/events/jazz/detail.php';
     }
 
     /**
