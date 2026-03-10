@@ -105,7 +105,7 @@ require __DIR__ . '/../../partials/header.php';
                             <div class="filter-buttons">
                                 <button class="filter-btn <?php echo (!isset($_GET['location']) || $_GET['location'] === 'all') ? 'active' : ''; ?>" onclick="window.location.href='/events/stories'">All</button>
                                 <?php foreach ($locations as $location): ?>
-                                    <button class="filter-btn <?php echo ($_GET['location'] ?? '') === (string)$location['id'] ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?location=<?php echo $location['id']; ?>'">
+                                    <button class="filter-btn <?php echo ($_GET['location'] ?? '') === (string)$location['id'] ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?location=<?php echo urlencode($location['id']); ?>'">
                                         <?php echo htmlspecialchars($location['name']); ?>
                                     </button>
                                 <?php endforeach; ?>
