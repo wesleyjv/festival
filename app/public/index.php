@@ -72,6 +72,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     
     $r->addRoute('GET', '/events/history', ['App\\Controllers\\EventsController', 'history']);
     $r->addRoute('GET', '/events/jazz', ['App\\Controllers\\EventsController', 'jazz']);
+    $r->addRoute('GET', '/events/jazz/{id:\d+}', ['App\\Controllers\\EventsController', 'jazzDetail']);
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
 

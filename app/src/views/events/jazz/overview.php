@@ -84,8 +84,9 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-bottom: 2rem;
+    justify-content: center;
 }
-.day-filters a {
+.day-filter-btn {
     display: inline-block;
     padding: 0.45rem 1.15rem;
     border-radius: 999px;
@@ -93,13 +94,14 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    text-decoration: none;
+    border: none;
+    cursor: pointer;
     background: #f0f0f0;
     color: #333;
     transition: background 0.2s, color 0.2s;
 }
-.day-filters a.active,
-.day-filters a:hover {
+.day-filter-btn.active,
+.day-filter-btn:hover {
     background: #1a1a2e;
     color: #fff;
 }
@@ -273,26 +275,27 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
 <!-- ?? Artist grid ?????????????????????????????????????????????? -->
 <section class="jazz-artists">
     <div class="container">
-        <h2 class="jazz-artists__heading">Participating Jazz Artists</h2>
+        <h2 class="jazz-artists__heading text-center">Participating Jazz Artists</h2>
 
         <!-- Day filter -->
         <nav class="day-filters" aria-label="Filter by day">
             <?php foreach ($days as $key => $label): ?>
-                <a href="?day=<?= $key ?>"
-                   class="<?= ($dayFilter === $key) ? 'active' : '' ?>">
+                <button class="day-filter-btn <?= ($dayFilter === $key) ? 'active' : '' ?>"
+                        data-filter="<?= $key ?>">
                     <?= htmlspecialchars($label) ?>
-                </a>
+                </button>
             <?php endforeach; ?>
         </nav>
 
-        <p class="jazz-artists__sub">Tickets are available per artist per performance</p>
+        <p class="jazz-artists__sub text-center">Tickets are available per artist per performance</p>
 
         <?php if (empty($jazzArtists)): ?>
             <p class="text-muted">No artists scheduled for this day yet.</p>
         <?php else: ?>
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3">
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-5 g-3" id="artist-grid">
                 <?php foreach ($jazzArtists as $artist): ?>
-                    <div class="col">
+                    <?php $artistDay = $artist->startTime ? strtolower(date('l', strtotime($artist->startTime))) : ''; ?>
+                    <div class="col artist-col" data-day="<?= htmlspecialchars($artistDay) ?>">
                         <?php require __DIR__ . '/../../partials/artist-card.php'; ?>
                     </div>
                 <?php endforeach; ?>
@@ -331,5 +334,66 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
 </section>
 
 </main>
+
+<script>
+(function () {
+    const FADE_MS = 220;
+
+    const btns  = document.querySelectorAll('.day-filter-btn');
+    const grid  = document.getElementById('artist-grid');
+    const cols  = grid ? [...grid.querySelectorAll('.artist-col')] : [];
+
+    function filterTo(day) {
+        // Step 1 – fade everything out
+        cols.forEach(col => {
+            col.style.transition = `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms ease`;
+            col.style.opacity    = '0';
+            col.style.transform  = 'translateY(10px)';
+        });
+
+        setTimeout(() => {
+            // Step 2 – hide/show, then fade visible ones back in
+            cols.forEach(col => {
+                const match = day === 'all' || col.dataset.day === day;
+                col.style.display = match ? '' : 'none';
+            });
+
+            // Allow one paint cycle before fading in
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                cols.forEach(col => {
+                    if (col.style.display !== 'none') {
+                        col.style.opacity   = '1';
+                        col.style.transform = 'translateY(0)';
+                    }
+                });
+            }));
+        }, FADE_MS);
+    }
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            btns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const filter = this.dataset.filter;
+            const url = filter === 'all' ? '/events/jazz' : '/events/jazz?day=' + filter;
+            history.replaceState(null, '', url);
+
+            filterTo(filter);
+        });
+    });
+
+    // Apply the initial filter from the server-rendered active state on load
+    const activeBtn = document.querySelector('.day-filter-btn.active');
+    if (activeBtn && activeBtn.dataset.filter !== 'all') {
+        // Instant hide on first load (no animation needed)
+        cols.forEach(col => {
+            const match = col.dataset.day === activeBtn.dataset.filter;
+            if (!match) col.style.display = 'none';
+        });
+    }
+}());
+</script>
+
 
 <?php require __DIR__ . '/../../partials/footer.php'; ?>
