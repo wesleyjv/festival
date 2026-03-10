@@ -22,6 +22,7 @@ class EventsController
      */
     private EventRepository $eventRepository;
     private StoryEventRepository $storyEventRepository;
+    private YummyEventRepository $yummyEventRepository;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -30,6 +31,7 @@ class EventsController
     {
         $this->eventRepository = new EventRepository();
         $this->storyEventRepository = new StoryEventRepository();
+        $this->yummyEventRepository = new YummyEventRepository();
     }
 
     /**
@@ -144,8 +146,7 @@ class EventsController
     {
         $cuisine = $_GET['cuisine'] ?? null;
 
-        $repository = new YummyEventRepository();
-        $restaurants = $repository->getAll($cuisine);
+        $restaurants = $this->yummyEventRepository->getAll($cuisine);
 
         require __DIR__ . '/../views/events/yummy/overview.php';
     }
