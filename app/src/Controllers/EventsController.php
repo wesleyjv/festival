@@ -5,6 +5,7 @@ namespace App\Controllers;
 use PDO;
 
 use App\Repositories\EventRepository;
+use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
 
@@ -20,6 +21,7 @@ class EventsController
      * @var EventRepository Repository used to retrieve event data.
      */
     private EventRepository $eventRepository;
+    private StoryEventRepository $storyEventRepository;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -27,6 +29,7 @@ class EventsController
     public function __construct()
     {
         $this->eventRepository = new EventRepository();
+        $this->storyEventRepository = new StoryEventRepository();
     }
 
     /**
@@ -106,18 +109,18 @@ class EventsController
 
             // Get events based on filters via repository
             if ($dateFilter) {
-                $events = $this->eventRepository->getStorytellingEventsByDate($dateFilter);
+                $events = $this->storyEventRepository->getEventsByDate($dateFilter);
             } elseif ($timeFilter) {
-                $events = $this->eventRepository->getStorytellingEventsByTime($timeFilter);
+                $events = $this->storyEventRepository->getEventsByTime($timeFilter);
             } elseif ($locationFilter) {
-                $events = $this->eventRepository->getStorytellingEventsByLocation((int)$locationFilter);
+                $events = $this->storyEventRepository->getEventsByLocation($locationFilter);
             } else {
-                $events = $this->eventRepository->getStorytellingEvents();
+                $events = $this->storyEventRepository->getEvents();
             }
 
             // Get additional data via repository
-            $featuredStoryteller = $this->eventRepository->getFeaturedStoryteller();
-            $locations = $this->eventRepository->getStorytellingLocations();
+            $featuredStoryteller = $this->storyEventRepository->getFeatured();
+            $locations = $this->storyEventRepository->getLocations();
 
             $contentService = new ContentService();
             $storiesContent = $contentService->getPageContent('stories');
