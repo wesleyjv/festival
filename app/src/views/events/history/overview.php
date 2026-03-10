@@ -1,40 +1,5 @@
 ﻿<?php require __DIR__ . '/../../partials/header.php'; ?>
 
-<?php
-/** @var array<string,string> $historyContent */
-$heroTitle    = $historyContent['hero_title']       ?? 'Historic Haarlem';
-$heroDesc     = $historyContent['hero_description'] ?? "Walk through centuries of rich history with expert guides. Explore Haarlem's most iconic landmarks and hidden gems.";
-$heroSub      = $historyContent['hero_subtitle']    ?? 'Walking Tour & Highlights';
-$heroDuration = $historyContent['hero_duration']    ?? '2.5 hours';
-$heroDist     = $historyContent['hero_distance']    ?? '3.2 km';
-$heroMax      = $historyContent['hero_max_people']  ?? '12 people';
-$heroDays     = $historyContent['hero_days']        ?? 'Thu – Sunday';
-
-$s1Title = $historyContent['section1_title'] ?? "Haarlem's History";
-$s1Body1 = $historyContent['section1_body1'] ?? "Haarlem is one of the oldest cities in the Netherlands, with a recorded history dating back over 800 years. It received city rights in 1245 and quickly developed into an important medieval trading and cultural center. During the Dutch Golden Age, Haarlem flourished as a hub for art, printing, and industry, attracting renowned painters such as Frans Hals.";
-$s1Body2 = $historyContent['section1_body2'] ?? "The city's historic center still reflects this rich past. Medieval churches like the Grote Kerk dominate the skyline, while narrow streets and hidden hofjes recall daily life in earlier centuries. Haarlem was also home to the country's first museum, Teylers Museum, founded in 1778.";
-
-$s2Title = $historyContent['section2_title'] ?? 'Trade, Canals, and Daily Life';
-$s2Body1 = $historyContent['section2_body1'] ?? "Haarlem's growth was shaped not only by major historical events, but also by everyday life along its canals and streets. Industries such as brewing, textiles, and shipping played a central role in the local economy, attracting workers, merchants, and artisans from across the region.";
-$s2Body2 = $historyContent['section2_body2'] ?? "The canals functioned as vital transport routes, allowing goods to move efficiently through the city. Many of these historic structures still line Haarlem's waterways today, offering a visible reminder of how trade, community, and design together defined the city's character.";
-
-$msTitle = $historyContent['milestones_title'] ?? 'Historic Milestones';
-$msSub   = $historyContent['milestones_sub']   ?? 'Every historical location you will visit during this tour';
-
-$startAddr = $historyContent['start_address'] ?? 'Grote Markt 23, 2011 RC Haarlem';
-$startNote = $historyContent['start_note']    ?? 'Look for a guide holding the Haarlem Festival sign';
-
-$stops = $historyContent['stops'] ?? [
-    ['name' => 'Church of St. Bavo',   'type' => 'Starting Point'],
-    ['name' => 'Grote Markt',          'type' => 'Central Square'],
-    ['name' => 'De Hallen',            'type' => 'Art & Culture'],
-    ['name' => 'Proveniershof',        'type' => 'Historic Courtyard'],
-    ['name' => 'Jaopenkerk',           'type' => 'Great Location'],
-    ['name' => 'Waalse Kerk Haarlem',  'type' => 'Religious Heritage'],
-    ['name' => 'Molen de Adriaan',     'type' => 'Historic Windmill'],
-    ['name' => 'Amsterdamse Poort',    'type' => 'City Gate'],
-    ['name' => 'Hof van Bakenes',      'type' => 'Historic Housing'],
-];
 ?>
 
 <div class="container py-5">
@@ -43,14 +8,14 @@ $stops = $historyContent['stops'] ?? [
     <div class="text-center mb-5">
         <div class="bg-light rounded-4 p-4 p-md-5 shadow-sm">
             <h1 class="fw-bold mb-2">
-                <i class="bi bi-bank me-2"></i><?= htmlspecialchars($heroTitle) ?>
+                <i class="bi bi-bank me-2"></i>Historic Haarlem
             </h1>
-            <p class="text-muted mb-3"><?= htmlspecialchars($heroDesc) ?></p>
+            <p class="text-muted mb-3">Walk through centuries of rich history with expert guides. Explore Haarlem's most iconic landmarks and hidden gems.</p>
             <div class="d-flex justify-content-center flex-wrap gap-3 text-muted small">
-                <span><i class="bi bi-clock me-1"></i><?= htmlspecialchars($heroDuration) ?></span>
-                <span><i class="bi bi-signpost-2 me-1"></i><?= htmlspecialchars($heroDist) ?></span>
-                <span><i class="bi bi-people me-1"></i><?= htmlspecialchars($heroMax) ?></span>
-                <span><i class="bi bi-calendar3 me-1"></i><?= htmlspecialchars($heroDays) ?></span>
+                <span><i class="bi bi-clock me-1"></i>2.5 hours</span>
+                <span><i class="bi bi-signpost-2 me-1"></i>3.2 km</span>
+                <span><i class="bi bi-people me-1"></i>12 people</span>
+                <span><i class="bi bi-calendar3 me-1"></i>Thu – Sunday</span>
             </div>
         </div>
     </div>
@@ -62,9 +27,9 @@ $stops = $historyContent['stops'] ?? [
                  alt="Molen de Adriaan" class="img-fluid rounded-3 shadow-sm">
         </div>
         <div class="col-md-7">
-            <h2 class="fw-bold mb-3"><?= htmlspecialchars($s1Title) ?></h2>
-            <p class="text-muted"><?= htmlspecialchars($s1Body1) ?></p>
-            <p class="text-muted mb-0"><?= htmlspecialchars($s1Body2) ?></p>
+            <h2 class="fw-bold mb-3">Haarlem's History</h2>
+            <p class="text-muted">Haarlem is one of the oldest cities in the Netherlands, with a recorded history dating back over 800 years. It received city rights in 1245 and quickly developed into an important medieval trading and cultural center. During the Dutch Golden Age, Haarlem flourished as a hub for art, printing, and industry, attracting renowned painters such as Frans Hals.</p>
+            <p class="text-muted mb-0">The city's historic center still reflects this rich past. Medieval churches like the Grote Kerk dominate the skyline, while narrow streets and hidden hofjes recall daily life in earlier centuries. Haarlem was also home to the country's first museum, Teylers Museum, founded in 1778.</p>
         </div>
     </div>
 
@@ -75,17 +40,17 @@ $stops = $historyContent['stops'] ?? [
                  alt="Grote Markt Haarlem" class="img-fluid rounded-3 shadow-sm">
         </div>
         <div class="col-md-7">
-            <h2 class="fw-bold mb-3"><?= htmlspecialchars($s2Title) ?></h2>
-            <p class="text-muted"><?= htmlspecialchars($s2Body1) ?></p>
-            <p class="text-muted mb-0"><?= htmlspecialchars($s2Body2) ?></p>
+            <h2 class="fw-bold mb-3">Trade, Canals, and Daily Life</h2>
+            <p class="text-muted">Haarlem's growth was shaped not only by major historical events, but also by everyday life along its canals and streets. Industries such as brewing, textiles, and shipping played a central role in the local economy, attracting workers, merchants, and artisans from across the region.</p>
+            <p class="text-muted mb-0">The canals functioned as vital transport routes, allowing goods to move efficiently through the city. Many of these historic structures still line Haarlem's waterways today, offering a visible reminder of how trade, community, and design together defined the city's character.</p>
         </div>
     </div>
 
     <!-- Milestones -->
     <div class="mb-5">
         <div class="text-center mb-4">
-            <h2 class="fw-bold mb-1"><?= htmlspecialchars($msTitle) ?></h2>
-            <p class="text-muted"><?= htmlspecialchars($msSub) ?></p>
+            <h2 class="fw-bold mb-1">Historic Milestones</h2>
+            <p class="text-muted">Every historical location you will visit during this tour</p>
             <div class="d-flex justify-content-center gap-2 mt-3">
                 <a href="#tours" class="btn btn-dark btn-sm">
                     <i class="bi bi-ticket-perforated me-1"></i>Book Tickets
@@ -99,16 +64,78 @@ $stops = $historyContent['stops'] ?? [
         <div class="row g-4">
             <div class="col-md-5">
                 <div class="list-group shadow-sm">
-                    <?php foreach ($stops as $i => $stop): ?>
                         <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
-                            <span class="badge bg-dark rounded-pill"><?= $i + 1 ?></span>
+                            <span class="badge bg-dark rounded-pill">1</span>
                             <div>
-                                <div class="fw-semibold small"><?= htmlspecialchars($stop['name']) ?></div>
-                                <div class="text-muted" style="font-size:.75rem"><?= htmlspecialchars($stop['type']) ?></div>
+                                <div class="fw-semibold small">Church of St. Bavo</div>
+                                <div class="text-muted" style="font-size:.75rem">Starting Point</div>
                             </div>
                             <i class="bi bi-arrow-right ms-auto text-muted"></i>
                         </a>
-                    <?php endforeach; ?>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">2</span>
+                            <div>
+                                <div class="fw-semibold small">Grote Markt</div>
+                                <div class="text-muted" style="font-size:.75rem">Central Square</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">3</span>
+                            <div>
+                                <div class="fw-semibold small">De Hallen</div>
+                                <div class="text-muted" style="font-size:.75rem">Art &amp; Culture</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">4</span>
+                            <div>
+                                <div class="fw-semibold small">Proveniershof</div>
+                                <div class="text-muted" style="font-size:.75rem">Historic Courtyard</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">5</span>
+                            <div>
+                                <div class="fw-semibold small">Jaopenkerk</div>
+                                <div class="text-muted" style="font-size:.75rem">Great Location</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">6</span>
+                            <div>
+                                <div class="fw-semibold small">Waalse Kerk Haarlem</div>
+                                <div class="text-muted" style="font-size:.75rem">Religious Heritage</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">7</span>
+                            <div>
+                                <div class="fw-semibold small">Molen de Adriaan</div>
+                                <div class="text-muted" style="font-size:.75rem">Historic Windmill</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">8</span>
+                            <div>
+                                <div class="fw-semibold small">Amsterdamse Poort</div>
+                                <div class="text-muted" style="font-size:.75rem">City Gate</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action d-flex align-items-center gap-3">
+                            <span class="badge bg-dark rounded-pill">9</span>
+                            <div>
+                                <div class="fw-semibold small">Hof van Bakenes</div>
+                                <div class="text-muted" style="font-size:.75rem">Historic Housing</div>
+                            </div>
+                            <i class="bi bi-arrow-right ms-auto text-muted"></i>
+                        </a>
                 </div>
             </div>
             <div class="col-md-7">

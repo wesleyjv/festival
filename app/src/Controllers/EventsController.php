@@ -44,9 +44,7 @@ class EventsController
     {
         $events = $this->eventRepository->getHistoryEvents();
 
-        $contentService = new ContentService();
-        $historyContent = $contentService->getPageContent('history');
-
+        // Render the history overview page. Content is embedded directly in the view.
         require __DIR__ . '/../views/events/history/overview.php';
     }
 
