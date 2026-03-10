@@ -70,7 +70,9 @@
     <?php endif; ?>
 
 </div>
+
 <script>
+
 document.getElementById("orderFilter").addEventListener("keyup", function () {
     const filter = this.value.toLowerCase();
     const rows = document.querySelectorAll("#ordersTable tbody tr");
@@ -80,6 +82,7 @@ document.getElementById("orderFilter").addEventListener("keyup", function () {
         row.style.display = text.includes(filter) ? "" : "none";
     });
 });
+
 </script>
 
 <?php require __DIR__ . '/../partials/footer.php'; ?>
