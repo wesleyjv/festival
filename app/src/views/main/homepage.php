@@ -1,149 +1,728 @@
-<?php require __DIR__ . '/../partials/header.php'; ?>
+<?php
+$mainClass = '';
+require __DIR__ . '/../partials/header.php';
+?>
 
 <style>
-    .hero-home {
-        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-        color: #fff;
-        border-radius: 16px;
-        padding: 60px 24px;
-        text-align: center;
-        margin-bottom: 40px;
-    }
-    .hero-home .hero-date {
-        color: #ffc107;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
-    }
-    .hero-home h1 {
-        font-weight: 800;
-        font-size: 2.4rem;
-        margin-bottom: 16px;
-    }
-    .hero-home .hero-sub {
-        max-width: 500px;
-        margin: 0 auto 28px;
-        opacity: 0.75;
-        font-size: 1rem;
-        line-height: 1.7;
-    }
-    .event-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-        padding: 28px 20px;
-        text-align: center;
-        height: 100%;
-    }
-    .event-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 14px;
-    }
-    .cta-home {
-        background: #2c3e50;
-        color: #fff;
-        border-radius: 16px;
-        padding: 48px 24px;
-        text-align: center;
-        margin-top: 40px;
-    }
-    .cta-home p { opacity: 0.65; }
+/* ==============================
+   HOMEPAGE
+   ============================== */
+
+/* Hero */
+.hp-hero {
+    position: relative;
+    min-height: 100vh;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    overflow: hidden;
+    margin-top: -56px;
+}
+.hp-hero-bg {
+    position: absolute;
+    inset: 0;
+    background: url('https://placehold.co/1920x1080/1a1a1a/333333?text=+') center/cover no-repeat;
+    opacity: 0.55;
+}
+.hp-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 120px 20px 60px;
+}
+.hp-hero-content .festival-the {
+    font-size: clamp(1.6rem, 3.5vw, 3rem);
+    font-weight: 900;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.35em;
+    line-height: 1;
+    margin: 0;
+}
+.hp-hero-content .festival-title {
+    font-size: clamp(4.5rem, 13vw, 10rem);
+    font-weight: 900;
+    color: #f5c218;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-shadow: 0 6px 40px rgba(0,0,0,0.5);
+    font-style: italic;
+    margin: 0;
+}
+.hp-hero-content .festival-date {
+    color: rgba(255,255,255,0.7);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    margin-top: 20px;
+    text-transform: uppercase;
+}
+
+/* Welcome */
+.hp-welcome {
+    padding: 72px 20px;
+    background: #fff;
+    text-align: center;
+}
+.hp-welcome h2 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+.hp-welcome p {
+    max-width: 580px;
+    margin: 0 auto;
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.85;
+}
+
+/* About */
+.hp-about {
+    background: #efefef;
+    padding: 72px 0;
+}
+.hp-about .about-img-wrap {
+    position: relative;
+}
+.hp-about .about-img-wrap img {
+    width: 100%;
+    height: 360px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+}
+.hp-about .year-badge {
+    position: absolute;
+    bottom: -18px;
+    left: 28px;
+    background: #e07b2a;
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 900;
+    padding: 12px 22px;
+    border-radius: 4px;
+    line-height: 1;
+}
+.hp-about .about-content {
+    padding-left: 48px;
+}
+.section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #e07b2a;
+    margin-bottom: 8px;
+}
+.hp-about .about-content h2 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+}
+.hp-about .about-content p {
+    color: #555;
+    font-size: 0.92rem;
+    line-height: 1.85;
+    margin-bottom: 24px;
+}
+.btn-fp {
+    background: #e07b2a;
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s;
+}
+.btn-fp:hover { background: #c86a1a; color: #fff; }
+.btn-fo {
+    border: 2px solid #333;
+    color: #333;
+    background: transparent;
+    padding: 9px 22px;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    margin-left: 10px;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-fo:hover { background: #333; color: #fff; }
+
+/* Experiences */
+.hp-experiences {
+    background: #1e1e1e;
+    padding: 72px 0;
+    color: #fff;
+}
+.hp-experiences .section-label { color: #e07b2a; }
+.hp-experiences h2 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+}
+.hp-experiences p {
+    color: rgba(255,255,255,0.55);
+    font-size: 0.92rem;
+    line-height: 1.85;
+}
+.exp-main-img {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 16px;
+}
+.artist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.artist-item:last-child { border-bottom: none; }
+.artist-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #444;
+}
+.artist-role {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    line-height: 1.2;
+}
+.artist-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.3;
+}
+
+/* Festival Events */
+.hp-events {
+    background: #f5f5f5;
+    padding: 72px 0;
+}
+.hp-events .section-heading {
+    font-size: 2.4rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 48px;
+}
+.event-row {
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+    display: flex;
+    min-height: 220px;
+}
+.event-row.reverse { flex-direction: row-reverse; }
+.event-row .er-img {
+    width: 44%;
+    flex-shrink: 0;
+    object-fit: cover;
+    display: block;
+}
+.event-row .er-info {
+    padding: 32px 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.event-row .er-info .section-label { color: #e07b2a; }
+.event-row .er-info h3 {
+    font-size: 1.65rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+}
+.event-row .er-info p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.75;
+    margin-bottom: 20px;
+}
+.btn-event {
+    background: #e07b2a;
+    color: #fff;
+    border: none;
+    padding: 9px 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    align-self: flex-start;
+    transition: background 0.2s;
+}
+.btn-event:hover { background: #c86a1a; color: #fff; }
+
+/* Schedule */
+.hp-schedule {
+    background: #2b2b2b;
+    padding: 72px 0;
+    color: #fff;
+}
+.hp-schedule h2 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.hp-schedule .schedule-sub {
+    text-align: center;
+    color: rgba(255,255,255,0.5);
+    font-size: 0.88rem;
+    max-width: 600px;
+    margin: 0 auto 36px;
+    line-height: 1.75;
+}
+.schedule-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 28px 28px 12px;
+    color: #333;
+}
+.sched-day-block { margin-bottom: 24px; }
+.schedule-day {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+.schedule-count {
+    font-size: 0.76rem;
+    color: #aaa;
+    margin-bottom: 12px;
+}
+.schedule-cols {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+.sched-slot {
+    border-radius: 6px;
+    padding: 10px 12px;
+}
+.sched-cat {
+    font-weight: 800;
+    font-size: 0.73rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+.sched-name {
+    font-size: 0.72rem;
+    opacity: 0.85;
+    margin-bottom: 3px;
+}
+.sched-time {
+    font-size: 0.68rem;
+    opacity: 0.65;
+}
+.sched-jazz    { background: #dce8ff; color: #1a4b9e; }
+.sched-history { background: #f4e5d3; color: #7a3e0a; }
+.sched-yummy   { background: #ffe8d0; color: #a04500; }
+.sched-stories { background: #fff4cc; color: #7a5c00; }
+
+/* Locations */
+.hp-locations {
+    padding: 72px 0;
+    background: #fff;
+}
+.hp-locations h2 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    text-align: center;
+    margin-bottom: 40px;
+}
+.map-legend { padding-right: 28px; }
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.legend-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.locations-map img {
+    width: 100%;
+    height: 360px;
+    object-fit: cover;
+    border-radius: 8px;
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .hp-about .about-content { padding-left: 0; margin-top: 44px; }
+}
+@media (max-width: 767px) {
+    .event-row, .event-row.reverse { flex-direction: column; }
+    .event-row .er-img { width: 100%; height: 200px; }
+    .schedule-cols { grid-template-columns: repeat(2, 1fr); }
+    .hp-hero-content .festival-title { font-size: 4.5rem; }
+}
 </style>
 
-<!-- Hero -->
-<div class="hero-home">
-    <p class="hero-date">July 23 - 26, 2026</p>
-    <h1>
-        <?php
-        $heroTitle = $homepageContent['hero_title'] ?? "Welcome to<br>The Haarlem Festival";
-        echo $heroTitle;
-        ?>
-    </h1>
-    <p class="hero-sub">
-        <?php
-        $heroSubtitle = $homepageContent['hero_subtitle'] ?? 'Discover the best of food, music, stories, and history in the heart of Haarlem.';
-        echo $heroSubtitle;
-        ?>
-    </p>
-    <a href="#events" class="btn btn-warning px-4 fw-semibold me-2">
-        <i class="bi bi-calendar-event me-1"></i>Explore Events
-    </a>
-    <a href="/register" class="btn btn-outline-light px-4">
-        <i class="bi bi-person-plus me-1"></i>Get Tickets
-    </a>
-</div>
+<!-- ==============================
+     HERO
+     ============================== -->
+<section class="hp-hero">
+    <div class="hp-hero-bg"></div>
+    <div class="hp-hero-content">
+        <p class="festival-the">The</p>
+        <h1 class="festival-title">Festival</h1>
+        <p class="festival-date">July 23 – 26, 2026 &nbsp;·&nbsp; Haarlem, Netherlands</p>
+    </div>
+</section>
 
-<!-- Events -->
-<div id="events">
-    <h2 class="fw-bold text-center mb-2">Our Events</h2>
-    <p class="text-muted text-center mb-4">Four unique experiences — something for everyone.</p>
-    <div class="row g-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="event-card">
-                <div class="event-icon" style="background: rgba(255,193,7,0.1); color: #ffc107;">
-                    <i class="bi bi-egg-fried"></i>
+<!-- ==============================
+     WELCOME
+     ============================== -->
+<section class="hp-welcome">
+    <div class="container">
+        <h2>Welcome to The Haarlem Festival</h2>
+        <p>
+            Discover the best of everything Haarlem has to offer at the Haarlem Festival.
+            Enjoy a vibrant celebration of music, gastronomy, artistry, and cultural
+            performances, folklore, and guided history walks — all combining into a
+            festival. 23 to 26 July. Find something for everyone.
+        </p>
+    </div>
+</section>
+
+<!-- ==============================
+     THE HAARLEM FESTIVAL (ABOUT)
+     ============================== -->
+<section class="hp-about">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-5 mb-lg-0">
+                <div class="about-img-wrap">
+                    <img src="https://placehold.co/600x360/cccccc/888888?text=Haarlem+City" alt="Haarlem Festival">
+                    <div class="year-badge">2026</div>
                 </div>
-                <h5 class="fw-bold">Yummy</h5>
-                <p class="text-muted small">Taste Haarlem's finest restaurants and street food.</p>
-                <a href="/events/yummy" class="btn btn-outline-warning btn-sm">Discover</a>
             </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="event-card">
-                <div class="event-icon" style="background: rgba(13,202,240,0.1); color: #0dcaf0;">
-                    <i class="bi bi-book"></i>
+            <div class="col-lg-7">
+                <div class="about-content">
+                    <p class="section-label">The Festival</p>
+                    <h2>The Haarlem Festival</h2>
+                    <p>
+                        Experience fun, unforgettable days where talent is on show.
+                        Join a vibrant celebration of music, gastronomy, artistry, and cultural
+                        performances. Immerse yourself in the energy of the city, from the
+                        world's best stages to intimate culinary tastings and art tours.
+                        Celebrate the many facets of Haarlem's history, community, and culture.
+                        Each day will delight you and leave you wanting more.
+                    </p>
+                    <a href="/events" class="btn-fp">Read More</a>
+                    <a href="#schedule" class="btn-fo">See Schedule</a>
                 </div>
-                <h5 class="fw-bold">Stories</h5>
-                <p class="text-muted small">Captivating tales told throughout the historic city.</p>
-                <a href="/events/stories" class="btn btn-outline-info btn-sm">Discover</a>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="event-card">
-                <div class="event-icon" style="background: rgba(13,110,253,0.1); color: #0d6efd;">
-                    <i class="bi bi-vinyl"></i>
-                </div>
-                <h5 class="fw-bold">Jazz</h5>
-                <p class="text-muted small">World-class jazz at stunning venues across Haarlem.</p>
-                <a href="/events/jazz" class="btn btn-outline-primary btn-sm">Discover</a>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="event-card">
-                <div class="event-icon" style="background: rgba(220,53,69,0.1); color: #dc3545;">
-                    <i class="bi bi-bank"></i>
-                </div>
-                <h5 class="fw-bold">History</h5>
-                <p class="text-muted small">Walk through centuries of history with expert guides.</p>
-                <a href="/events/history" class="btn btn-outline-danger btn-sm">Discover</a>
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<!-- CTA -->
-<div class="cta-home">
-    <h3 class="fw-bold mb-3">
-        <?php
-        $ctaHeading = $homepageContent['cta_heading'] ?? 'Ready to experience Haarlem?';
-        echo $ctaHeading;
-        ?>
-    </h3>
-    <p class="mb-4">
-        <?php
-        $ctaText = $homepageContent['cta_text'] ?? 'Secure your spot before events sell out.';
-        echo $ctaText;
-        ?>
-    </p>
-    <a href="/register" class="btn btn-warning px-5 fw-semibold">Get Your Tickets</a>
-</div>
+<!-- ==============================
+     WHERE EVERY MOMENT BECOMES A MEMORY
+     ============================== -->
+<section class="hp-experiences">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-5 mb-lg-0">
+                <img src="https://placehold.co/600x240/2a2a2a/666666?text=Concert+Stage" alt="Concert" class="exp-main-img">
+                <div class="artist-item">
+                    <img src="https://placehold.co/42x42/555/aaa?text=A1" alt="Artist" class="artist-avatar">
+                    <div>
+                        <div class="artist-role">Nicolas Music:</div>
+                        <div class="artist-name">Jazz &amp; Soul Night at De Grote Kerk</div>
+                    </div>
+                </div>
+                <div class="artist-item">
+                    <img src="https://placehold.co/42x42/555/aaa?text=A2" alt="Artist" class="artist-avatar">
+                    <div>
+                        <div class="artist-role">Loretta Harrington:</div>
+                        <div class="artist-name">Storytelling at the Windmills</div>
+                    </div>
+                </div>
+                <div class="artist-item">
+                    <img src="https://placehold.co/42x42/555/aaa?text=A3" alt="Artist" class="artist-avatar">
+                    <div>
+                        <div class="artist-role">City Willis / Artist:</div>
+                        <div class="artist-name">Yummy Food Tour Through Haarlem</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-7 ps-lg-5">
+                <p class="section-label">The Experiences</p>
+                <h2>Where Every Moment<br>Becomes a Memory</h2>
+                <p>
+                    The Haarlem Festival is more than an event — it's a journey
+                    through the unique Jazz performances, captivating storytelling,
+                    delicious culinary experiences, and the rich history of this
+                    beautiful city.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     THE FESTIVAL EVENTS
+     ============================== -->
+<section class="hp-events">
+    <div class="container">
+        <h2 class="section-heading">The Festival Events</h2>
+
+        <!-- Jazz -->
+        <div class="event-row">
+            <img src="https://placehold.co/700x260/1a1a40/556699?text=Haarlem+Jazz" alt="Haarlem Jazz" class="er-img">
+            <div class="er-info">
+                <p class="section-label">The Event</p>
+                <h3>Haarlem Jazz</h3>
+                <p>
+                    Immerse yourself in the soulful sounds of world-class jazz performers.
+                    Through the streets and iconic stages of Haarlem, jazz fills the air
+                    with rhythm, passion, and unforgettable melodies.
+                </p>
+                <a href="/events/jazz" class="btn-event">Your Results &rsaquo;</a>
+            </div>
+        </div>
+
+        <!-- Storytelling -->
+        <div class="event-row reverse">
+            <img src="https://placehold.co/700x260/1a0a2a/664466?text=Storytelling" alt="Storytelling" class="er-img">
+            <div class="er-info">
+                <p class="section-label">The Event</p>
+                <h3>Storytelling</h3>
+                <p>
+                    Step inside one of the most beautiful storytelling settings you'll ever encounter.
+                    Expert storytellers will take you on magical cultural journeys across the
+                    stories that still live in Haarlem today.
+                </p>
+                <a href="/events/stories" class="btn-event">Your Results &rsaquo;</a>
+            </div>
+        </div>
+
+        <!-- Yummy -->
+        <div class="event-row">
+            <img src="https://placehold.co/700x260/2a1500/886633?text=Yummy+Food" alt="Yummy" class="er-img">
+            <div class="er-info">
+                <p class="section-label">The Event</p>
+                <h3>Yummy!</h3>
+                <p>
+                    Let all the flavours of Haarlem light up your day at the Yummy Event!
+                    Indulge in the finest street food and culinary delights on offer.
+                    Various cuisines. It's Haarlem Festival coming your way!
+                </p>
+                <a href="/events/yummy" class="btn-event">Your Results &rsaquo;</a>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div class="event-row reverse">
+            <img src="https://placehold.co/700x260/cccccc/888888?text=History+Walk" alt="History" class="er-img" style="filter: grayscale(60%);">
+            <div class="er-info">
+                <p class="section-label">The Event</p>
+                <h3>Stroll Through History</h3>
+                <p>
+                    Tour the unique streets of Haarlem and explore its past. Hear stories
+                    from the old days. Haarlem has a lot to share — you'll be surprised
+                    what history discovers along the way.
+                </p>
+                <a href="/events/history" class="btn-event">Your Results &rsaquo;</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     ALL EVENTS SCHEDULE
+     ============================== -->
+<section class="hp-schedule" id="schedule">
+    <div class="container">
+        <h2>All Events Schedule</h2>
+        <p class="schedule-sub">
+            Are you going to a spot where various styles shine, pleasures are shared, and creativity takes
+            center stage. Whether you're coming to listen, reflect, or simply enjoy the atmosphere, you'd be
+            witnessing this as an opportunity to spark inspiration and bring amazing people together.
+        </p>
+        <div class="schedule-box">
+
+            <!-- Thursday -->
+            <div class="sched-day-block">
+                <div class="schedule-day">Thursday, 25th of July</div>
+                <div class="schedule-count">4 events</div>
+                <div class="schedule-cols">
+                    <div class="sched-slot sched-jazz">
+                        <div class="sched-cat">Jazz</div>
+                        <div class="sched-name">Haarlemse Jazzband</div>
+                        <div class="sched-time">18:00 – 20:00</div>
+                    </div>
+                    <div class="sched-slot sched-history">
+                        <div class="sched-cat">History</div>
+                        <div class="sched-name">Amsterdam History (Tour)</div>
+                        <div class="sched-time">10:00 – 12:00</div>
+                    </div>
+                    <div class="sched-slot sched-yummy">
+                        <div class="sched-cat">Yummy</div>
+                        <div class="sched-name">Street Dine Area</div>
+                        <div class="sched-time">12:00 – 22:00</div>
+                    </div>
+                    <div class="sched-slot sched-stories">
+                        <div class="sched-cat">Storytelling</div>
+                        <div class="sched-name">City Legends</div>
+                        <div class="sched-time">19:00 – 21:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Friday -->
+            <div class="sched-day-block">
+                <div class="schedule-day">Friday, 26th of July</div>
+                <div class="schedule-count">4 events</div>
+                <div class="schedule-cols">
+                    <div class="sched-slot sched-jazz">
+                        <div class="sched-cat">Jazz</div>
+                        <div class="sched-name">Haarlemse Jazzband</div>
+                        <div class="sched-time">18:00 – 21:00</div>
+                    </div>
+                    <div class="sched-slot sched-history">
+                        <div class="sched-cat">History</div>
+                        <div class="sched-name">Amsterdam History (Tour)</div>
+                        <div class="sched-time">10:30 – 12:30</div>
+                    </div>
+                    <div class="sched-slot sched-yummy">
+                        <div class="sched-cat">Yummy</div>
+                        <div class="sched-name">Street Dine Area</div>
+                        <div class="sched-time">12:00 – 22:00</div>
+                    </div>
+                    <div class="sched-slot sched-stories">
+                        <div class="sched-cat">Storytelling</div>
+                        <div class="sched-name">City Legends</div>
+                        <div class="sched-time">19:30 – 21:30</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saturday -->
+            <div class="sched-day-block">
+                <div class="schedule-day">Saturday, 27th of July</div>
+                <div class="schedule-count">4 events</div>
+                <div class="schedule-cols">
+                    <div class="sched-slot sched-jazz">
+                        <div class="sched-cat">Jazz</div>
+                        <div class="sched-name">Haarlemse Jazzband</div>
+                        <div class="sched-time">17:00 – 20:00</div>
+                    </div>
+                    <div class="sched-slot sched-history">
+                        <div class="sched-cat">History</div>
+                        <div class="sched-name">Amsterdam History (Tour)</div>
+                        <div class="sched-time">10:00 – 13:00</div>
+                    </div>
+                    <div class="sched-slot sched-yummy">
+                        <div class="sched-cat">Yummy</div>
+                        <div class="sched-name">Fusion Dine Area</div>
+                        <div class="sched-time">12:00 – 22:00</div>
+                    </div>
+                    <div class="sched-slot sched-stories">
+                        <div class="sched-cat">Storytelling</div>
+                        <div class="sched-name">Lore &amp; Legends</div>
+                        <div class="sched-time">20:00 – 22:00</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sunday -->
+            <div class="sched-day-block">
+                <div class="schedule-day">Sunday, 28th of July</div>
+                <div class="schedule-count">4 events</div>
+                <div class="schedule-cols">
+                    <div class="sched-slot sched-jazz">
+                        <div class="sched-cat">Jazz</div>
+                        <div class="sched-name">Haarlemse Jazzband</div>
+                        <div class="sched-time">15:00 – 18:00</div>
+                    </div>
+                    <div class="sched-slot sched-history">
+                        <div class="sched-cat">History</div>
+                        <div class="sched-name">Amsterdam History (Tour)</div>
+                        <div class="sched-time">10:00 – 12:00</div>
+                    </div>
+                    <div class="sched-slot sched-yummy">
+                        <div class="sched-cat">Yummy</div>
+                        <div class="sched-name">Closing Dine</div>
+                        <div class="sched-time">12:00 – 20:00</div>
+                    </div>
+                    <div class="sched-slot sched-stories">
+                        <div class="sched-cat">Storytelling</div>
+                        <div class="sched-name">Final Chapter</div>
+                        <div class="sched-time">18:00 – 20:00</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ==============================
+     ALL EVENT LOCATIONS
+     ============================== -->
+<section class="hp-locations">
+    <div class="container">
+        <h2>All Event Locations</h2>
+        <div class="row align-items-start">
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background:#4a7fd6;"></div>
+                        <span>Jazz</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background:#c87a3a;"></div>
+                        <span>History</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background:#e07b2a;"></div>
+                        <span>Yummy</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background:#d4b800;"></div>
+                        <span>Storytelling</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <img src="https://placehold.co/900x360/e0e0e0/999999?text=Map+of+Haarlem" alt="Map of Haarlem event locations" class="locations-map">
+            </div>
+        </div>
+    </div>
+</section>
 
 <?php require __DIR__ . '/../partials/footer.php'; ?>
