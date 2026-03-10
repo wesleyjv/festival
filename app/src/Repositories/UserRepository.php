@@ -55,16 +55,16 @@ class UserRepository
         return (int) $stmt->fetchColumn() > 0;
     }
 
-    public function create(string $name, string $email, string $passwordHash): int
+    public function create(string $name, string $email, string $password): int
     {
         $stmt = $this->db->prepare(
             'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)'
         );
         $stmt->execute([
-            'name' => $name,
-            'email' => $email,
-            'password_hash' => $passwordHash,
-            'role' => 'customer',
+            'name'          => $name,
+            'email'         => $email,
+            'password_hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]),
+            'role'          => 'customer',
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -117,29 +117,23 @@ class UserRepository
         return $token ?: null;
     }
 
-    public function updateProfile(int $id, string $name, string $email, ?string $passwordHash, ?string $profileImage): void
+    public function updateProfile(int $id, string $name, string $email, ?string $password, ?string $profileImage): void
     {
-        if ($passwordHash !== null && $profileImage !== null) {
-            $stmt = $this->db->prepare(
-                'UPDATE users SET name = :name, email = :email, password_hash = :password_hash, profile_image = :profile_image WHERE id = :id'
-            );
-            $stmt->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'profile_image' => $profileImage, 'id' => $id]);
-        } elseif ($passwordHash !== null) {
-            $stmt = $this->db->prepare(
-                'UPDATE users SET name = :name, email = :email, password_hash = :password_hash WHERE id = :id'
-            );
-            $stmt->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'id' => $id]);
-        } elseif ($profileImage !== null) {
-            $stmt = $this->db->prepare(
-                'UPDATE users SET name = :name, email = :email, profile_image = :profile_image WHERE id = :id'
-            );
-            $stmt->execute(['name' => $name, 'email' => $email, 'profile_image' => $profileImage, 'id' => $id]);
-        } else {
-            $stmt = $this->db->prepare(
-                'UPDATE users SET name = :name, email = :email WHERE id = :id'
-            );
-            $stmt->execute(['name' => $name, 'email' => $email, 'id' => $id]);
+        $fields = ['name = :name', 'email = :email'];
+        $params = ['name' => $name, 'email' => $email, 'id' => $id];
+
+        if ($password !== null) {
+            $fields[]                = 'password_hash = :password_hash';
+            $params['password_hash'] = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         }
+
+        if ($profileImage !== null) {
+            $fields[]               = 'profile_image = :profile_image';
+            $params['profile_image'] = $profileImage;
+        }
+
+        $sql = 'UPDATE users SET ' . implode(', ', $fields) . ' WHERE id = :id';
+        $this->db->prepare($sql)->execute($params);
     }
 
     public function emailExistsForOtherUser(string $email, int $excludeId): bool
@@ -208,7 +202,7 @@ class UserRepository
         $stmt->execute(['id' => $id]);
     }
 
-    public function adminCreateUser(string $name, string $email, string $passwordHash, string $role): int
+    public function adminCreateUser(string $name, string $email, string $password, string $role): int
     {
         $stmt = $this->db->prepare(
             'INSERT INTO users (name, email, password_hash, role) VALUES (:name, :email, :password_hash, :role)'
@@ -216,7 +210,7 @@ class UserRepository
         $stmt->execute([
             'name'          => $name,
             'email'         => $email,
-            'password_hash' => $passwordHash,
+            'password_hash' => password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]),
             'role'          => $role,
         ]);
 

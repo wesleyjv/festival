@@ -3,7 +3,6 @@
 <?php
 /** @var \App\Models\JazzEvent[] $jazzArtists */
 /** @var string $dayFilter */
-$dayFilter = $dayFilter ?? 'all';
 $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'];
 ?>
 
