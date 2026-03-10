@@ -101,21 +101,82 @@
 
   .restaurant-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px;
-    margin-top: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 28px;
+    margin-top: 30px;
   }
 
-  .restaurant-card {
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 14px;
-    background: #fff;
+  .restaurant-card-new {
+    position: relative;
+    background: #f5efe7;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.05);
   }
 
-  .restaurant-card h2 {
+  .price-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #b46b29;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  .restaurant-title {
     margin: 0 0 6px 0;
-    font-size: 18px;
+    font-size: 24px;
+    color: #1a2a3a;
+  }
+
+  .rating {
+    color: #d94c2a;
+    margin-bottom: 10px;
+  }
+
+  .restaurant-image {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cuisine-tags {
+    margin-bottom: 12px;
+  }
+
+  .tag {
+    display: inline-block;
+    background: #e0c4a4;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+
+  .restaurant-description {
+    margin-bottom: 10px;
+  }
+
+  .restaurant-address {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 14px;
+  }
+
+  .view-btn {
+    display: inline-block;
+    background: #1a2a3a;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 600;
   }
 
   .muted { color: #666; font-size: 0.95rem; }
@@ -416,13 +477,53 @@
   <?php else: ?>
     <div class="restaurant-grid">
       <?php foreach ($restaurants as $restaurant): ?>
-        <div class="restaurant-card">
-          <h2><?= htmlspecialchars($restaurant['restaurant_name']) ?></h2>
-          <p class="muted"><strong>Cuisine:</strong> <?= htmlspecialchars($restaurant['cuisine'] ?? 'Unknown') ?></p>
+        <div class="restaurant-card-new">
+          <div class="price-badge">
+            €<?= htmlspecialchars($restaurant['price'] ?? '45') ?>
+          </div>
+
+          <h3 class="restaurant-title">
+            <?= htmlspecialchars($restaurant['restaurant_name']) ?>
+          </h3>
+
+          <div class="rating">
+            ★ ★ ★ ★ ☆
+          </div>
+
+          <?php if (!empty($restaurant['image_path'])): ?>
+            <img
+              class="restaurant-image"
+              src="/<?= htmlspecialchars($restaurant['image_path']) ?>"
+              alt="<?= htmlspecialchars($restaurant['restaurant_name']) ?>">
+          <?php endif; ?>
+
+          <div class="cuisine-tags">
+            <?php
+              $tags = !empty($restaurant['cuisine_tags'])
+                ? array_map('trim', explode(',', $restaurant['cuisine_tags']))
+                : [];
+            ?>
+
+            <?php foreach ($tags as $tag): ?>
+              <span class="tag"><?= htmlspecialchars($tag) ?></span>
+            <?php endforeach; ?>
+          </div>
 
           <?php if (!empty($restaurant['description'])): ?>
-            <p><?= nl2br(htmlspecialchars($restaurant['description'])) ?></p>
+            <p class="restaurant-description">
+              <?= nl2br(htmlspecialchars($restaurant['description'])) ?>
+            </p>
           <?php endif; ?>
+
+          <?php if (!empty($restaurant['address'])): ?>
+            <p class="restaurant-address">
+              <?= htmlspecialchars($restaurant['address']) ?>
+            </p>
+          <?php endif; ?>
+
+          <a href="/events/yummy/restaurant/<?= htmlspecialchars($restaurant['slug']) ?>" class="view-btn">
+            View restaurant
+          </a>
         </div>
       <?php endforeach; ?>
     </div>
