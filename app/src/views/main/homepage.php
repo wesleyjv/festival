@@ -95,8 +95,8 @@ require __DIR__ . '/../partials/header.php';
 }
 .hp-about .year-badge {
     position: absolute;
-    bottom: -18px;
-    left: 28px;
+    bottom: 16px;
+    left: 24px;
     background: #e07b2a;
     color: #fff;
     font-size: 1.8rem;
@@ -370,13 +370,150 @@ require __DIR__ . '/../partials/header.php';
     border-radius: 50%;
     flex-shrink: 0;
 }
-.locations-map img {
+img.locations-map {
     width: 100%;
     height: 360px;
     object-fit: cover;
     border-radius: 8px;
     display: block;
 }
+@media (max-width: 767px) {
+    .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 24px;
+        padding-right: 0;
+        margin-bottom: 20px;
+    }
+    .legend-item { margin-bottom: 0; }
+}
+
+/* Hero CTAs */
+.hero-ctas {
+    margin-top: 32px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.btn-hero-primary {
+    background: #f5c218;
+    color: #111;
+    font-weight: 800;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 13px 30px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.btn-hero-primary:hover { background: #e0b000; color: #111; }
+.btn-hero-outline {
+    border: 2px solid rgba(255,255,255,0.65);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 11px 30px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+.btn-hero-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.hero-scroll {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.45);
+    font-size: 1.6rem;
+    text-decoration: none;
+    animation: hp-bounce 2.2s ease-in-out infinite;
+    z-index: 2;
+    line-height: 1;
+}
+@keyframes hp-bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%       { transform: translateX(-50%) translateY(9px); }
+}
+
+/* Stats bar */
+.hp-stats {
+    background: #111;
+    padding: 28px 0;
+}
+.hp-stats-grid {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}
+.hp-stat {
+    flex: 1;
+    text-align: center;
+    padding: 14px 20px;
+    min-width: 120px;
+}
+.hp-stat-divider {
+    width: 1px;
+    height: 44px;
+    background: rgba(255,255,255,0.12);
+    flex-shrink: 0;
+}
+.hp-stats .stat-number {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #f5c218;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+.hp-stats .stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    color: rgba(255,255,255,0.45);
+}
+@media (max-width: 480px) {
+    .hp-stat-divider { display: none; }
+    .hp-stat { flex: 0 0 50%; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 16px 8px; }
+}
+
+/* Ticket CTA */
+.hp-ticket-cta {
+    background: #e07b2a;
+    padding: 64px 20px;
+    text-align: center;
+}
+.hp-ticket-cta h2 {
+    font-size: 2.1rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.hp-ticket-cta p {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+    margin-bottom: 28px;
+    max-width: 480px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.btn-ticket {
+    background: #fff;
+    color: #e07b2a;
+    font-weight: 800;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 14px 36px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.2s, color 0.2s;
+}
+.btn-ticket:hover { background: #111; color: #fff; }
 
 /* Responsive */
 @media (max-width: 991px) {
@@ -393,39 +530,60 @@ require __DIR__ . '/../partials/header.php';
 <!-- ==============================
      HERO
      ============================== -->
-<section class="hp-hero">
+<section class="hp-hero" aria-label="Festival hero">
     <div class="hp-hero-bg"></div>
     <div class="hp-hero-content">
         <p class="festival-the">The</p>
         <h1 class="festival-title">Festival</h1>
         <p class="festival-date">July 23 – 26, 2026 &nbsp;·&nbsp; Haarlem, Netherlands</p>
+        <div class="hero-ctas">
+            <a href="/tickets" class="btn-hero-primary">Get Tickets</a>
+            <a href="#events" class="btn-hero-outline">Explore Events</a>
+        </div>
     </div>
+    <a href="#about" class="hero-scroll" aria-label="Scroll to about section">
+        <i class="bi bi-chevron-down"></i>
+    </a>
 </section>
 
 <!-- ==============================
-     WELCOME
+     FESTIVAL STATS
      ============================== -->
-<section class="hp-welcome">
+<div class="hp-stats" aria-label="Festival highlights">
     <div class="container">
-        <h2>Welcome to The Haarlem Festival</h2>
-        <p>
-            Discover the best of everything Haarlem has to offer at the Haarlem Festival.
-            Enjoy a vibrant celebration of music, gastronomy, artistry, and cultural
-            performances, folklore, and guided history walks — all combining into a
-            festival. 23 to 26 July. Find something for everyone.
-        </p>
+        <div class="hp-stats-grid">
+            <div class="hp-stat">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Unique Events</div>
+            </div>
+            <div class="hp-stat-divider"></div>
+            <div class="hp-stat">
+                <div class="stat-number">50+</div>
+                <div class="stat-label">Artists &amp; Guides</div>
+            </div>
+            <div class="hp-stat-divider"></div>
+            <div class="hp-stat">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Days of Festivities</div>
+            </div>
+            <div class="hp-stat-divider"></div>
+            <div class="hp-stat">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Iconic City</div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
 
 <!-- ==============================
      THE HAARLEM FESTIVAL (ABOUT)
      ============================== -->
-<section class="hp-about">
+<section class="hp-about" id="about" aria-label="About the festival">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-5 mb-5 mb-lg-0">
                 <div class="about-img-wrap">
-                    <img src="https://placehold.co/600x360/cccccc/888888?text=Haarlem+City" alt="Haarlem Festival">
+                    <img src="https://placehold.co/600x360/cccccc/888888?text=Haarlem+City" alt="Haarlem Festival" loading="lazy">
                     <div class="year-badge">2026</div>
                 </div>
             </div>
@@ -452,11 +610,11 @@ require __DIR__ . '/../partials/header.php';
 <!-- ==============================
      WHERE EVERY MOMENT BECOMES A MEMORY
      ============================== -->
-<section class="hp-experiences">
+<section class="hp-experiences" aria-label="Festival experiences">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-5 mb-5 mb-lg-0">
-                <img src="https://placehold.co/600x240/2a2a2a/666666?text=Concert+Stage" alt="Concert" class="exp-main-img">
+                <img src="https://placehold.co/600x240/2a2a2a/666666?text=Concert+Stage" alt="Concert" class="exp-main-img" loading="lazy">
                 <div class="artist-item">
                     <img src="https://placehold.co/42x42/555/aaa?text=A1" alt="Artist" class="artist-avatar">
                     <div>
@@ -496,13 +654,13 @@ require __DIR__ . '/../partials/header.php';
 <!-- ==============================
      THE FESTIVAL EVENTS
      ============================== -->
-<section class="hp-events">
+<section class="hp-events" id="events" aria-label="Festival event categories">
     <div class="container">
         <h2 class="section-heading">The Festival Events</h2>
 
         <!-- Jazz -->
         <div class="event-row">
-            <img src="https://placehold.co/700x260/1a1a40/556699?text=Haarlem+Jazz" alt="Haarlem Jazz" class="er-img">
+            <img src="https://placehold.co/700x260/1a1a40/556699?text=Haarlem+Jazz" alt="Haarlem Jazz" class="er-img" loading="lazy">
             <div class="er-info">
                 <p class="section-label">The Event</p>
                 <h3>Haarlem Jazz</h3>
@@ -511,13 +669,13 @@ require __DIR__ . '/../partials/header.php';
                     Through the streets and iconic stages of Haarlem, jazz fills the air
                     with rhythm, passion, and unforgettable melodies.
                 </p>
-                <a href="/events/jazz" class="btn-event">Your Results &rsaquo;</a>
+                <a href="/events/jazz" class="btn-event">Explore Jazz &rarr;</a>
             </div>
         </div>
 
         <!-- Storytelling -->
         <div class="event-row reverse">
-            <img src="https://placehold.co/700x260/1a0a2a/664466?text=Storytelling" alt="Storytelling" class="er-img">
+            <img src="https://placehold.co/700x260/1a0a2a/664466?text=Storytelling" alt="Storytelling" class="er-img" loading="lazy">
             <div class="er-info">
                 <p class="section-label">The Event</p>
                 <h3>Storytelling</h3>
@@ -526,13 +684,13 @@ require __DIR__ . '/../partials/header.php';
                     Expert storytellers will take you on magical cultural journeys across the
                     stories that still live in Haarlem today.
                 </p>
-                <a href="/events/stories" class="btn-event">Your Results &rsaquo;</a>
+                <a href="/events/stories" class="btn-event">Explore Stories &rarr;</a>
             </div>
         </div>
 
         <!-- Yummy -->
         <div class="event-row">
-            <img src="https://placehold.co/700x260/2a1500/886633?text=Yummy+Food" alt="Yummy" class="er-img">
+            <img src="https://placehold.co/700x260/2a1500/886633?text=Yummy+Food" alt="Yummy" class="er-img" loading="lazy">
             <div class="er-info">
                 <p class="section-label">The Event</p>
                 <h3>Yummy!</h3>
@@ -541,13 +699,13 @@ require __DIR__ . '/../partials/header.php';
                     Indulge in the finest street food and culinary delights on offer.
                     Various cuisines. It's Haarlem Festival coming your way!
                 </p>
-                <a href="/events/yummy" class="btn-event">Your Results &rsaquo;</a>
+                <a href="/events/yummy" class="btn-event">Explore Yummy &rarr;</a>
             </div>
         </div>
 
         <!-- History -->
         <div class="event-row reverse">
-            <img src="https://placehold.co/700x260/cccccc/888888?text=History+Walk" alt="History" class="er-img" style="filter: grayscale(60%);">
+            <img src="https://placehold.co/700x260/cccccc/888888?text=History+Walk" alt="History" class="er-img" style="filter: grayscale(60%);" loading="lazy">
             <div class="er-info">
                 <p class="section-label">The Event</p>
                 <h3>Stroll Through History</h3>
@@ -556,7 +714,7 @@ require __DIR__ . '/../partials/header.php';
                     from the old days. Haarlem has a lot to share — you'll be surprised
                     what history discovers along the way.
                 </p>
-                <a href="/events/history" class="btn-event">Your Results &rsaquo;</a>
+                <a href="/events/history" class="btn-event">Explore History &rarr;</a>
             </div>
         </div>
     </div>
@@ -565,19 +723,17 @@ require __DIR__ . '/../partials/header.php';
 <!-- ==============================
      ALL EVENTS SCHEDULE
      ============================== -->
-<section class="hp-schedule" id="schedule">
+<section class="hp-schedule" id="schedule" aria-label="Full festival schedule">
     <div class="container">
         <h2>All Events Schedule</h2>
         <p class="schedule-sub">
-            Are you going to a spot where various styles shine, pleasures are shared, and creativity takes
-            center stage. Whether you're coming to listen, reflect, or simply enjoy the atmosphere, you'd be
-            witnessing this as an opportunity to spark inspiration and bring amazing people together.
+            Four days, four experiences. Here's what's happening across the festival — plan your visit and make the most of every moment.
         </p>
         <div class="schedule-box">
 
             <!-- Thursday -->
             <div class="sched-day-block">
-                <div class="schedule-day">Thursday, 25th of July</div>
+                <div class="schedule-day">Thursday, July 23rd</div>
                 <div class="schedule-count">4 events</div>
                 <div class="schedule-cols">
                     <div class="sched-slot sched-jazz">
@@ -605,7 +761,7 @@ require __DIR__ . '/../partials/header.php';
 
             <!-- Friday -->
             <div class="sched-day-block">
-                <div class="schedule-day">Friday, 26th of July</div>
+                <div class="schedule-day">Friday, July 24th</div>
                 <div class="schedule-count">4 events</div>
                 <div class="schedule-cols">
                     <div class="sched-slot sched-jazz">
@@ -633,7 +789,7 @@ require __DIR__ . '/../partials/header.php';
 
             <!-- Saturday -->
             <div class="sched-day-block">
-                <div class="schedule-day">Saturday, 27th of July</div>
+                <div class="schedule-day">Saturday, July 25th</div>
                 <div class="schedule-count">4 events</div>
                 <div class="schedule-cols">
                     <div class="sched-slot sched-jazz">
@@ -661,7 +817,7 @@ require __DIR__ . '/../partials/header.php';
 
             <!-- Sunday -->
             <div class="sched-day-block">
-                <div class="schedule-day">Sunday, 28th of July</div>
+                <div class="schedule-day">Sunday, July 26th</div>
                 <div class="schedule-count">4 events</div>
                 <div class="schedule-cols">
                     <div class="sched-slot sched-jazz">
@@ -694,7 +850,7 @@ require __DIR__ . '/../partials/header.php';
 <!-- ==============================
      ALL EVENT LOCATIONS
      ============================== -->
-<section class="hp-locations">
+<section class="hp-locations" aria-label="Event locations">
     <div class="container">
         <h2>All Event Locations</h2>
         <div class="row align-items-start">
@@ -723,6 +879,15 @@ require __DIR__ . '/../partials/header.php';
             </div>
         </div>
     </div>
+</section>
+
+<!-- ==============================
+     TICKET CTA
+     ============================== -->
+<section class="hp-ticket-cta" aria-label="Get tickets">
+    <h2>Don't Miss Out</h2>
+    <p>Secure your spot at the Haarlem Festival. Four days of music, food, stories, and history — all in one unforgettable city.</p>
+    <a href="/tickets" class="btn-ticket">Get Your Tickets</a>
 </section>
 
 <?php require __DIR__ . '/../partials/footer.php'; ?>
