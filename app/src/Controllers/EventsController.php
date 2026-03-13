@@ -143,7 +143,7 @@ class EventsController
      *
      * @return void
      */
-    public function yummy()
+    public function yummy() // teacher expect exmption handling here, i should use a service layer here 
     {
         $cuisine = $_GET['cuisine'] ?? null;
 
