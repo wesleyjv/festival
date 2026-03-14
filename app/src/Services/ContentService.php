@@ -98,6 +98,12 @@ final class ContentService
 
             case 'yummy':
                 return [
+                    'hero_date' => 'JULY 23-26, 2026',
+                    'hero_title' => 'YUMMY! GOURMET WITH A TWIST',
+                    'hero_subtitle' => 'A curated culinary experience featuring seven restaurants, exclusive festival-only menus.',
+                    'explore_heading' => 'Explore Restaurants',
+                    'explore_text' => 'Taste the finest culinary experiences in Haarlem.',
+                    // Keep legacy keys so older templates remain functional during migration.
                     'intro_heading' => 'Yummy Events',
                     'intro_text' => 'Taste the finest culinary experiences in Haarlem.',
                 ];
