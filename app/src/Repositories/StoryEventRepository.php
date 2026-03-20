@@ -48,6 +48,16 @@ class StoryEventRepository
     }
 
     /**
+     * Return raw story_event rows for admin CRUD screens.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public function getAllForAdmin(): array
+    {
+        return $this->fetchRows();
+    }
+
+    /**
      * Get all storytelling events.
      */
     public function getEvents(): array
@@ -68,6 +78,28 @@ class StoryEventRepository
         $events = [];
         foreach ($this->fetchRows() as $row) {
             if ($this->getDateKeyFromRow($row) === $date) {
+                $events[] = $this->formatEvent($row);
+            }
+        }
+
+        return $events;
+    }
+
+    /**
+     * Get storytelling events filtered by day of week / day label.
+     *
+     * This compares the case-insensitive value of the "day" column
+     * from the story_event table with the requested day, so there is
+     * no hardcoded mapping to calendar dates.
+     */
+    public function getEventsByDay(string $day): array
+    {
+        $events = [];
+        $needle = strtolower($day);
+
+        foreach ($this->fetchRows() as $row) {
+            $rowDay = strtolower($row['day'] ?? '');
+            if ($rowDay === $needle) {
                 $events[] = $this->formatEvent($row);
             }
         }
@@ -160,11 +192,11 @@ class StoryEventRepository
 
         return [
             'id'          => (int)($first['id'] ?? 0),
-            'title'       => $first['title'] ?? 'Stories in Haarlem',
+            'title'       => $first['title'] ?? '',
             'description' => $first['category'] ?? '',
-            'image'       => '/img/featured-storyteller.jpg',
-            'guide_name'  => $first['location'] ?? 'Stories in Haarlem',
-            'language'    => $first['language'] ?? 'NL',
+            'image'       => $first['image'] ?? '',
+            'guide_name'  => $first['location'] ?? '',
+            'language'    => $first['language'] ?? '',
         ];
     }
 
@@ -187,31 +219,12 @@ class StoryEventRepository
                 $dateDisplay = $row['day'] ?? '';
                 $dateKey = (string)($row['event_date'] ?? ($row['day'] ?? ''));
             }
-        } elseif (!empty($row['event_date']) && $row['event_date'] === '<last weekend of July>') {
-            $map = [
-                'Thursday' => '2026-07-23',
-                'Friday'   => '2026-07-24',
-                'Saturday' => '2026-07-25',
-                'Sunday'   => '2026-07-26',
-            ];
-            $dow = $row['day'] ?? '';
-            $key = $map[$dow] ?? null;
-            if ($key !== null) {
-                $dateKey = $key;
-                try {
-                    $dt = new DateTime($key);
-                    $dateDisplay = $dt->format('l, F j, Y');
-                    $dayOfWeek = $dt->format('l');
-                } catch (\Exception $e) {
-                    $dateDisplay = $dow;
-                }
-            } else {
-                $dateDisplay = $row['day'] ?? '';
-                $dateKey = (string)$row['event_date'];
-            }
         } else {
-            $dateDisplay = $row['day'] ?? '';
-            $dateKey = (string)($row['event_date'] ?? ($row['day'] ?? ''));
+            // When event_date is not a concrete calendar date (e.g. "<last weekend of July>"),
+            // just use the raw values from the row as-is so there is no hardcoded mapping
+            // to specific festival years here.
+            $dateDisplay = $row['day'] ?? (string)($row['event_date'] ?? '');
+            $dateKey     = (string)($row['event_date'] ?? ($row['day'] ?? ''));
         }
 
         $timeSlot = $row['time_slot'] ?? '';
@@ -227,16 +240,16 @@ class StoryEventRepository
             'id'               => (int)($row['id'] ?? 0),
             'title'            => $row['title'] ?? '',
             'description'      => $row['category'] ?? '',
-            'image'            => '/img/storytelling-default.jpg',
-            'guide_name'       => '',
-            'language'         => $row['language'] ?? 'NL',
+            'image'            => $row['image'] ?? '',
+            'guide_name'       => $row['guide_name'] ?? '',
+            'language'         => $row['language'] ?? '',
             'session_id'       => (int)($row['id'] ?? 0),
             'date'             => $dateDisplay,
             'time'             => $timeSlot,
             'end_time'         => '',
             'price'            => $formattedPrice,
             'location_name'    => $row['location'] ?? '',
-            'location_address' => '',
+            'location_address' => $row['location_address'] ?? '',
             'day_of_week'      => $dayOfWeek,
             'date_key'         => $dateKey,
         ];
@@ -256,17 +269,8 @@ class StoryEventRepository
             }
         }
 
-        if (!empty($row['event_date']) && $row['event_date'] === '<last weekend of July>') {
-            $map = [
-                'Thursday' => '2026-07-23',
-                'Friday'   => '2026-07-24',
-                'Saturday' => '2026-07-25',
-                'Sunday'   => '2026-07-26',
-            ];
-            $dow = $row['day'] ?? '';
-            return $map[$dow] ?? (string)$row['event_date'];
-        }
-
+        // For non-concrete values like "<last weekend of July>", just return
+        // whatever is stored without mapping to hardcoded calendar dates.
         return (string)($row['event_date'] ?? '');
     }
 
@@ -280,6 +284,85 @@ class StoryEventRepository
             return (int)$m[1];
         }
         return null;
+    }
+
+    /**
+     * Create a new story_event row.
+     *
+     * @param array<string,mixed> $data
+     */
+    public function create(array $data): int
+    {
+        $db = DB::getConnection();
+
+        $sql = "
+            INSERT INTO story_event (event_date, day, time_slot, location, age_group, title, language, price, category)
+            VALUES (:event_date, :day, :time_slot, :location, :age_group, :title, :language, :price, :category)
+        ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':event_date' => $data['event_date'] ?? null,
+            ':day'        => $data['day'] ?? null,
+            ':time_slot'  => $data['time_slot'] ?? null,
+            ':location'   => $data['location'] ?? null,
+            ':age_group'  => $data['age_group'] ?? null,
+            ':title'      => $data['title'] ?? null,
+            ':language'   => $data['language'] ?? null,
+            ':price'      => $data['price'] ?? null,
+            ':category'   => $data['category'] ?? null,
+        ]);
+
+        return (int)$db->lastInsertId();
+    }
+
+    /**
+     * Update an existing story_event row.
+     *
+     * @param int $id story_event_id
+     * @param array<string,mixed> $data
+     */
+    public function update(int $id, array $data): void
+    {
+        $db = DB::getConnection();
+
+        $sql = "
+            UPDATE story_event
+            SET event_date = :event_date,
+                day        = :day,
+                time_slot  = :time_slot,
+                location   = :location,
+                age_group  = :age_group,
+                title      = :title,
+                language   = :language,
+                price      = :price,
+                category   = :category
+            WHERE story_event_id = :id
+        ";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':event_date' => $data['event_date'] ?? null,
+            ':day'        => $data['day'] ?? null,
+            ':time_slot'  => $data['time_slot'] ?? null,
+            ':location'   => $data['location'] ?? null,
+            ':age_group'  => $data['age_group'] ?? null,
+            ':title'      => $data['title'] ?? null,
+            ':language'   => $data['language'] ?? null,
+            ':price'      => $data['price'] ?? null,
+            ':category'   => $data['category'] ?? null,
+            ':id'         => $id,
+        ]);
+    }
+
+    /**
+     * Delete a story_event row.
+     */
+    public function delete(int $id): void
+    {
+        $db = DB::getConnection();
+        $stmt = $db->prepare('DELETE FROM story_event WHERE story_event_id = :id');
+        $stmt->execute([':id' => $id]);
     }
 }
 

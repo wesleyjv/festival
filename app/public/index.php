@@ -101,6 +101,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteUser']);
+    $r->addRoute('POST', '/admin/story-events/create', ['App\\Controllers\\AdminController', 'createStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

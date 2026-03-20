@@ -5,9 +5,9 @@ namespace App\Controllers;
 use PDO;
 
 use App\Repositories\EventRepository;
-use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\StoryEventService;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -21,7 +21,7 @@ class EventsController
      * @var EventRepository Repository used to retrieve event data.
      */
     private EventRepository $eventRepository;
-    private StoryEventRepository $storyEventRepository;
+    private StoryEventService $storyEventService;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -29,7 +29,7 @@ class EventsController
     public function __construct()
     {
         $this->eventRepository = new EventRepository();
-        $this->storyEventRepository = new StoryEventRepository();
+        $this->storyEventService = new StoryEventService();
     }
 
     /**
@@ -86,7 +86,7 @@ class EventsController
 
         if ($artist === null) {
             http_response_code(404);
-            echo '404 – Artist not found';
+            echo '404  Artist not found';
             return;
         }
 
@@ -102,25 +102,18 @@ class EventsController
     public function stories($vars = [])
     {
         try {
-            // Get filter parameters from GET request
-            $dateFilter = $_GET['date'] ?? null;
-            $timeFilter = $_GET['time'] ?? null;
-            $locationFilter = $_GET['location'] ?? null;
+            // Delegate all storytelling data retrieval to the service layer
+            $data = $this->storyEventService->getStoriesOverviewData([
+                'day'      => $_GET['day']      ?? null,
+                'date'     => $_GET['date']     ?? null,
+                'time'     => $_GET['time']     ?? null,
+                'location' => $_GET['location'] ?? null,
+            ]);
 
-            // Get events based on filters via repository
-            if ($dateFilter) {
-                $events = $this->storyEventRepository->getEventsByDate($dateFilter);
-            } elseif ($timeFilter) {
-                $events = $this->storyEventRepository->getEventsByTime($timeFilter);
-            } elseif ($locationFilter) {
-                $events = $this->storyEventRepository->getEventsByLocation($locationFilter);
-            } else {
-                $events = $this->storyEventRepository->getEvents();
-            }
-
-            // Get additional data via repository
-            $featuredStoryteller = $this->storyEventRepository->getFeatured();
-            $locations = $this->storyEventRepository->getLocations();
+            $events             = $data['events'];
+            $allEvents          = $data['allEvents'];
+            $featuredStoryteller= $data['featuredStoryteller'];
+            $locations          = $data['locations'];
 
             $contentService = new ContentService();
             $storiesContent = $contentService->getPageContent('stories');
@@ -148,6 +141,9 @@ class EventsController
 
         $repository = new YummyEventRepository();
         $restaurants = $repository->getAll($cuisine);
+
+        $contentService = new ContentService();
+        $yummyContent = $contentService->getPageContent('yummy');
 
         require __DIR__ . '/../views/events/yummy/overview.php';
     }

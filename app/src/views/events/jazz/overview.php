@@ -1,14 +1,17 @@
-<?php require __DIR__ . '/../../partials/header.php'; ?>
-
 <?php
 /** @var \App\Models\JazzEvent[] $jazzArtists */
 /** @var string $dayFilter */
+/** @var array $jazzContent */
+require __DIR__ . '/../../partials/header.php';
+
 $dayFilter = $dayFilter ?? 'all';
 $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'];
+
+$jazzHeroImage = $jazzContent['hero_image'] ?? '/assets/jazz/img/jazz-hero.jpg';
 ?>
 
 <style>
-/* ?? Hero ?????????????????????????????????????????????????????? */
+/* Hero */
 .jazz-hero {
     position: relative;
     height: 420px;
@@ -17,6 +20,7 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
     display: flex;
     align-items: flex-end;
 }
+/* Background image placeholder; real image comes from inline style */
 .jazz-hero__placeholder {
     position: absolute;
     inset: 0;
@@ -237,7 +241,7 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
 <main>
 
 <!-- ?? Hero ????????????????????????????????????????????????????? -->
-<section class="jazz-hero">
+<section class="jazz-hero" style="background-image:url('<?= htmlspecialchars($jazzHeroImage, ENT_QUOTES) ?>'); background-size:cover; background-position:center;">
     <div class="jazz-hero__placeholder"><i class="bi bi-music-note-beamed"></i></div>
     <div class="jazz-hero__overlay"></div>
     <div class="jazz-hero__content">
@@ -250,18 +254,12 @@ $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturd
     <div class="container">
         <div class="row align-items-center g-5">
             <div class="col-md-6">
-                <h2 class="fw-bold mb-1" style="font-size:1.65rem;">Jazz in Haarlem</h2>
-                <h3 class="fw-normal mb-3" style="font-size:1.25rem; color:#444;">Where the city listens</h3>
-                <p style="color:#555; line-height:1.75; font-size:0.93rem;">
-                    During the festival, jazz takes over Haarlem's historic streets, from de Grote Markt to small
-                    courtyards tucked between canals. Open-air concerts spill into the city during the day, while
-                    intimate late-night sessions unfold in clubs, churches, and unexpected corners. For a few days,
-                    Haarlem itself becomes the stage; a place where improvisation, movement, and sound are woven
-                    directly into the urban fabric.
-                </p>
-                <p style="color:#555; font-size:0.93rem;">
-                    From grand squares to quiet corners, jazz becomes part of the city's pulse.
-                </p>
+                <h2 class="fw-bold mb-1" style="font-size:1.65rem;">
+                    <?= $jazzContent['intro_heading'] ?? 'Jazz in Haarlem' ?>
+                </h2>
+                <div style="color:#555; line-height:1.75; font-size:0.93rem;">
+                    <?= $jazzContent['intro_text'] ?? "During the festival, jazz takes over Haarlem's historic streets, from de Grote Markt to small courtyards tucked between canals." ?>
+                </div>
             </div>
             <div class="col-md-6">
                 <div class="jazz-intro__img-placeholder">

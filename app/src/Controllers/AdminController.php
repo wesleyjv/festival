@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ContentService;
 use App\Repositories\UserRepository;
+use App\Repositories\StoryEventRepository;
 
 class AdminController
 {
@@ -30,6 +31,12 @@ class AdminController
         $totalUsers = $userRepo->countAll();
         $userError  = $_GET['user_error']  ?? '';
         $userSaved  = $_GET['user_saved']  ?? '';
+
+        // Story events for Events management page
+        $storyRepo    = new StoryEventRepository();
+        $storyEvents  = $storyRepo->getAllForAdmin();
+        $storyError   = $_GET['story_error'] ?? '';
+        $storySaved   = $_GET['story_saved'] ?? '';
 
         require __DIR__ . '/../views/admin/dashboard.php';
     }
@@ -213,6 +220,129 @@ class AdminController
         $repo = new UserRepository();
         $repo->deleteById($id);
         header('Location: /admin?user_saved=1#users');
+        exit;
+    }
+
+    /**
+     * Create a new storytelling event (admin CMS).
+     */
+    public function createStoryEvent($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#events');
+            exit;
+        }
+
+        $title      = trim($_POST['title']      ?? '');
+        $day        = trim($_POST['day']        ?? '');
+        $timeSlot   = trim($_POST['time_slot']  ?? '');
+        $location   = trim($_POST['location']   ?? '');
+        $eventDate  = trim($_POST['event_date'] ?? '');
+        $ageGroup   = trim($_POST['age_group']  ?? '');
+        $language   = trim($_POST['language']   ?? '');
+        $price      = trim($_POST['price']      ?? '');
+        $category   = trim($_POST['category']   ?? '');
+
+        if ($title === '' || $day === '' || $timeSlot === '' || $location === '') {
+            header('Location: /admin?story_error=invalid_data#events');
+            exit;
+        }
+
+        $repo = new StoryEventRepository();
+        $repo->create([
+            'title'      => $title,
+            'day'        => $day,
+            'time_slot'  => $timeSlot,
+            'location'   => $location,
+            'event_date' => $eventDate !== '' ? $eventDate : null,
+            'age_group'  => $ageGroup !== '' ? $ageGroup : null,
+            'language'   => $language !== '' ? $language : null,
+            'price'      => $price !== '' ? $price : null,
+            'category'   => $category !== '' ? $category : null,
+        ]);
+
+        header('Location: /admin?story_saved=1#events');
+        exit;
+    }
+
+    /**
+     * Update an existing storytelling event.
+     */
+    public function updateStoryEvent($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+        $title      = trim($_POST['title']      ?? '');
+        $day        = trim($_POST['day']        ?? '');
+        $timeSlot   = trim($_POST['time_slot']  ?? '');
+        $location   = trim($_POST['location']   ?? '');
+        $eventDate  = trim($_POST['event_date'] ?? '');
+        $ageGroup   = trim($_POST['age_group']  ?? '');
+        $language   = trim($_POST['language']   ?? '');
+        $price      = trim($_POST['price']      ?? '');
+        $category   = trim($_POST['category']   ?? '');
+
+        if ($id <= 0 || $title === '' || $day === '' || $timeSlot === '' || $location === '') {
+            header('Location: /admin?story_error=invalid_data#events');
+            exit;
+        }
+
+        $repo = new StoryEventRepository();
+        $repo->update($id, [
+            'title'      => $title,
+            'day'        => $day,
+            'time_slot'  => $timeSlot,
+            'location'   => $location,
+            'event_date' => $eventDate !== '' ? $eventDate : null,
+            'age_group'  => $ageGroup !== '' ? $ageGroup : null,
+            'language'   => $language !== '' ? $language : null,
+            'price'      => $price !== '' ? $price : null,
+            'category'   => $category !== '' ? $category : null,
+        ]);
+
+        header('Location: /admin?story_saved=1#events');
+        exit;
+    }
+
+    /**
+     * Delete a storytelling event.
+     */
+    public function deleteStoryEvent($vars = []): void
+    {
+        if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            header('Location: /login');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+        if ($id <= 0) {
+            header('Location: /admin?story_error=invalid_id#events');
+            exit;
+        }
+
+        $repo = new StoryEventRepository();
+        $repo->delete($id);
+
+        header('Location: /admin?story_saved=1#events');
         exit;
     }
 }

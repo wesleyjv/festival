@@ -1,8 +1,15 @@
-<?php require __DIR__ . '/../../partials/header.php'; ?>
+<?php
+/** @var array $yummyContent */
+require __DIR__ . '/../../partials/header.php';
+?>
 
 <link rel="stylesheet" href="/assets/yummy/css/globals.css" />
 <link rel="stylesheet" href="/assets/yummy/css/styleguide.css" />
 <link rel="stylesheet" href="/assets/yummy/css/style.css" />
+
+<?php
+$heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg';
+?>
 
 <style>
   /* Banner (no SVG navbar) */
@@ -12,8 +19,8 @@
     overflow: hidden;
     position: relative;
 
-    /* Banner image */
-    background-image: url("/assets/yummy/image/yummy-hero.jpg");
+    /* Banner image (configurable via CMS) */
+    background-image: url("<?= htmlspecialchars($heroImage, ENT_QUOTES) ?>");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -381,10 +388,12 @@
   <div class="yummy-hero-content">
     <div class="yummy-pill">JULY 23–26, 2026</div>
 
-    <h1 class="yummy-title">YUMMY!<br>GOURMET WITH<br>A TWIST</h1>
+    <h1 class="yummy-title">
+      <?= $yummyContent['intro_heading'] ?? 'YUMMY!<br>GOURMET WITH<br>A TWIST' ?>
+    </h1>
 
     <p class="yummy-subtitle">
-      A curated culinary experience featuring seven restaurants, exclusive festival-only menus.
+      <?= $yummyContent['intro_text'] ?? 'A curated culinary experience featuring seven restaurants, exclusive festival-only menus.' ?>
     </p>
 
     <a class="yummy-cta" href="#restaurants">Explore Restaurants</a>

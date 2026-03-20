@@ -100,6 +100,7 @@ final class ContentService
                 return [
                     'intro_heading' => 'Yummy Events',
                     'intro_text' => 'Taste the finest culinary experiences in Haarlem.',
+                    'hero_image' => '/assets/yummy/image/yummy-hero.jpg',
                 ];
 
             case 'history':
@@ -112,6 +113,7 @@ final class ContentService
                 return [
                     'intro_heading' => 'Jazz Events',
                     'intro_text' => 'Discover the best jazz performances at the festival.',
+                    'hero_image' => '/assets/jazz/img/jazz-hero.jpg',
                 ];
 
             default:
