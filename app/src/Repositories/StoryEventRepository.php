@@ -10,13 +10,20 @@ use DateTime;
  */
 class StoryEventRepository
 {
+    /** @var array<int,array<string,mixed>>|null In-request row cache to avoid repeated identical queries. */
+    private ?array $cachedRows = null;
+
     /**
-     * Fetch all rows from story_event.
+     * Fetch all rows from story_event, caching the result for the lifetime of this instance.
      *
      * @return array<int,array<string,mixed>>
      */
     private function fetchRows(): array
     {
+        if ($this->cachedRows !== null) {
+            return $this->cachedRows;
+        }
+
         $db = DB::getConnection();
 
         $sql = "
@@ -38,13 +45,13 @@ class StoryEventRepository
         try {
             $stmt = $db->prepare($sql);
             $stmt->execute();
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            return $rows ?: [];
+            $this->cachedRows = $stmt->fetchAll(\PDO::FETCH_ASSOC) ?: [];
         } catch (\PDOException $e) {
             error_log('Error fetching story_event rows: ' . $e->getMessage());
-            return [];
+            $this->cachedRows = [];
         }
+
+        return $this->cachedRows;
     }
 
     /**
@@ -75,13 +82,54 @@ class StoryEventRepository
      */
     public function getEventsByDate(string $date): array
     {
-        $events = [];
-        foreach ($this->fetchRows() as $row) {
-            if ($this->getDateKeyFromRow($row) === $date) {
-                $events[] = $this->formatEvent($row);
-            }
+        $dayMap = [
+            '2026-07-23' => 'Thursday',
+            '2026-07-24' => 'Friday',
+            '2026-07-25' => 'Saturday',
+            '2026-07-26' => 'Sunday',
+        ];
+        $dayName = $dayMap[$date] ?? '';
+
+        $db = DB::getConnection();
+
+        $whereClauses = ["(event_date != '<last weekend of July>' AND event_date = :date)"];
+        $params = [':date' => $date];
+
+        if ($dayName !== '') {
+            $whereClauses[] = "(event_date = '<last weekend of July>' AND day = :day_name)";
+            $params[':day_name'] = $dayName;
         }
 
+        $sql = "
+            SELECT
+                story_event_id AS id,
+                event_date,
+                day,
+                time_slot,
+                location,
+                age_group,
+                title,
+                language,
+                price,
+                category
+            FROM story_event
+            WHERE " . implode(' OR ', $whereClauses) . "
+            ORDER BY event_date, time_slot, story_event_id
+        ";
+
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log('Error fetching story_event rows by date: ' . $e->getMessage());
+            return [];
+        }
+
+        $events = [];
+        foreach ($rows as $row) {
+            $events[] = $this->formatEvent($row);
+        }
         return $events;
     }
 
@@ -113,27 +161,50 @@ class StoryEventRepository
      */
     public function getEventsByTime(string $timeOfDay): array
     {
-        $events = [];
-        foreach ($this->fetchRows() as $row) {
-            $hour = $this->getStartHourFromRow($row);
-            if ($hour === null) {
-                continue;
-            }
+        $ranges = [
+            'morning'   => [6,  11],
+            'afternoon' => [12, 17],
+            'evening'   => [18, 23],
+        ];
 
-            $match = false;
-            if ($timeOfDay === 'morning') {
-                $match = ($hour >= 6 && $hour <= 11);
-            } elseif ($timeOfDay === 'afternoon') {
-                $match = ($hour >= 12 && $hour <= 17);
-            } elseif ($timeOfDay === 'evening') {
-                $match = ($hour >= 18 && $hour <= 23);
-            }
-
-            if ($match) {
-                $events[] = $this->formatEvent($row);
-            }
+        if (!isset($ranges[$timeOfDay])) {
+            return [];
         }
 
+        [$hourStart, $hourEnd] = $ranges[$timeOfDay];
+
+        $db = DB::getConnection();
+
+        $sql = "
+            SELECT
+                story_event_id AS id,
+                event_date,
+                day,
+                time_slot,
+                location,
+                age_group,
+                title,
+                language,
+                price,
+                category
+            FROM story_event
+            WHERE CAST(SUBSTRING_INDEX(time_slot, ':', 1) AS UNSIGNED) BETWEEN :hour_start AND :hour_end
+            ORDER BY event_date, time_slot, story_event_id
+        ";
+
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute([':hour_start' => $hourStart, ':hour_end' => $hourEnd]);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log('Error fetching story_event rows by time: ' . $e->getMessage());
+            return [];
+        }
+
+        $events = [];
+        foreach ($rows as $row) {
+            $events[] = $this->formatEvent($row);
+        }
         return $events;
     }
 
@@ -142,13 +213,38 @@ class StoryEventRepository
      */
     public function getEventsByLocation(string $locationName): array
     {
-        $events = [];
-        foreach ($this->fetchRows() as $row) {
-            if (strcasecmp($row['location'] ?? '', $locationName) === 0) {
-                $events[] = $this->formatEvent($row);
-            }
+        $db = DB::getConnection();
+
+        $sql = "
+            SELECT
+                story_event_id AS id,
+                event_date,
+                day,
+                time_slot,
+                location,
+                age_group,
+                title,
+                language,
+                price,
+                category
+            FROM story_event
+            WHERE location = :location
+            ORDER BY event_date, time_slot, story_event_id
+        ";
+
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute([':location' => $locationName]);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log('Error fetching story_event rows by location: ' . $e->getMessage());
+            return [];
         }
 
+        $events = [];
+        foreach ($rows as $row) {
+            $events[] = $this->formatEvent($row);
+        }
         return $events;
     }
 
@@ -157,25 +253,24 @@ class StoryEventRepository
      */
     public function getLocations(): array
     {
-        $rows = $this->fetchRows();
-        $byName = [];
+        $db = DB::getConnection();
 
-        foreach ($rows as $row) {
-            $name = $row['location'] ?? '';
-            if ($name === '') {
-                continue;
-            }
-            if (!isset($byName[$name])) {
-                $byName[$name] = [
-                    'id'   => $name,
-                    'name' => $name,
-                ];
-            }
+        try {
+            $stmt = $db->query(
+                "SELECT DISTINCT location FROM story_event WHERE location IS NOT NULL AND location != '' ORDER BY location"
+            );
+            $names = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        } catch (\PDOException $e) {
+            error_log('Error fetching story_event locations: ' . $e->getMessage());
+            $names = [];
         }
 
-        ksort($byName, SORT_NATURAL | SORT_FLAG_CASE);
+        $byName = [];
+        foreach ($names as $name) {
+            $byName[] = ['id' => $name, 'name' => $name];
+        }
 
-        return array_values($byName);
+        return $byName;
     }
 
     /**
@@ -183,12 +278,37 @@ class StoryEventRepository
      */
     public function getFeatured(): ?array
     {
-        $rows = $this->fetchRows();
-        if (empty($rows)) {
+        $db = DB::getConnection();
+
+        $sql = "
+            SELECT
+                story_event_id AS id,
+                event_date,
+                day,
+                time_slot,
+                location,
+                age_group,
+                title,
+                language,
+                price,
+                category
+            FROM story_event
+            ORDER BY event_date, time_slot, story_event_id
+            LIMIT 1
+        ";
+
+        try {
+            $stmt = $db->prepare($sql);
+            $stmt->execute();
+            $first = $stmt->fetch(\PDO::FETCH_ASSOC);
+        } catch (\PDOException $e) {
+            error_log('Error fetching featured story_event: ' . $e->getMessage());
             return null;
         }
 
-        $first = $rows[0];
+        if (!$first) {
+            return null;
+        }
 
         return [
             'id'          => (int)($first['id'] ?? 0),

@@ -3,11 +3,15 @@
 namespace App\Controllers;
 
 use PDO;
+use Throwable;
 
 use App\Repositories\EventRepository;
+use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
-use App\Services\StoryEventService;
+use App\Services\Interfaces\IYummyService;
+use App\Services\YummyService;
+use App\ViewModels\YummyOverviewViewModel;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -21,7 +25,8 @@ class EventsController
      * @var EventRepository Repository used to retrieve event data.
      */
     private EventRepository $eventRepository;
-    private StoryEventService $storyEventService;
+    private StoryEventRepository $storyEventRepository;
+    private IYummyService $yummyService;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -29,7 +34,11 @@ class EventsController
     public function __construct()
     {
         $this->eventRepository = new EventRepository();
-        $this->storyEventService = new StoryEventService();
+        $this->storyEventRepository = new StoryEventRepository();
+        $this->yummyService = new YummyService(
+            new YummyEventRepository(),
+            new ContentService()
+        );
     }
 
     /**
@@ -44,9 +53,7 @@ class EventsController
     {
         $events = $this->eventRepository->getHistoryEvents();
 
-        $contentService = new ContentService();
-        $historyContent = $contentService->getPageContent('history');
-
+        // Render the history overview page. Content is embedded directly in the view.
         require __DIR__ . '/../views/events/history/overview.php';
     }
 
@@ -86,7 +93,8 @@ class EventsController
 
         if ($artist === null) {
             http_response_code(404);
-            echo '404  Artist not found';
+            $message = 'Artist not found.';
+            require __DIR__ . '/../views/errors/404.php';
             return;
         }
 
@@ -102,18 +110,25 @@ class EventsController
     public function stories($vars = [])
     {
         try {
-            // Delegate all storytelling data retrieval to the service layer
-            $data = $this->storyEventService->getStoriesOverviewData([
-                'day'      => $_GET['day']      ?? null,
-                'date'     => $_GET['date']     ?? null,
-                'time'     => $_GET['time']     ?? null,
-                'location' => $_GET['location'] ?? null,
-            ]);
+            // Get filter parameters from GET request
+            $dateFilter = $_GET['date'] ?? null;
+            $timeFilter = $_GET['time'] ?? null;
+            $locationFilter = $_GET['location'] ?? null;
 
-            $events             = $data['events'];
-            $allEvents          = $data['allEvents'];
-            $featuredStoryteller= $data['featuredStoryteller'];
-            $locations          = $data['locations'];
+            // Get events based on filters via repository
+            if ($dateFilter) {
+                $events = $this->storyEventRepository->getEventsByDate($dateFilter);
+            } elseif ($timeFilter) {
+                $events = $this->storyEventRepository->getEventsByTime($timeFilter);
+            } elseif ($locationFilter) {
+                $events = $this->storyEventRepository->getEventsByLocation($locationFilter);
+            } else {
+                $events = $this->storyEventRepository->getEvents();
+            }
+
+            // Get additional data via repository
+            $featuredStoryteller = $this->storyEventRepository->getFeatured();
+            $locations = $this->storyEventRepository->getLocations();
 
             $contentService = new ContentService();
             $storiesContent = $contentService->getPageContent('stories');
@@ -135,17 +150,43 @@ class EventsController
      *
      * @return void
      */
-    public function yummy()
+    public function yummy(): void
     {
-        $cuisine = $_GET['cuisine'] ?? null;
+        try {
+            $cuisine = $_GET['cuisine'] ?? null;
+            $viewModel = $this->yummyService->getOverviewViewModel($cuisine);
 
-        $repository = new YummyEventRepository();
-        $restaurants = $repository->getAll($cuisine);
+            require __DIR__ . '/../views/events/yummy/overview.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummy controller: ' . $e->getMessage());
 
-        $contentService = new ContentService();
-        $yummyContent = $contentService->getPageContent('yummy');
+            http_response_code(500);
+            $message = 'Unable to load the Yummy page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
+    }
 
-        require __DIR__ . '/../views/events/yummy/overview.php';
+    public function yummyDetail(array $vars = []): void
+    {
+        try {
+            $slug = (string) ($vars['slug'] ?? '');
+            $restaurant = $this->yummyService->getRestaurantBySlug($slug);
+
+            if ($restaurant === null) {
+                http_response_code(404);
+                $message = 'Restaurant not found.';
+                require __DIR__ . '/../views/errors/404.php';
+                return;
+            }
+
+            require __DIR__ . '/../views/events/yummy/detail.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummyDetail controller: ' . $e->getMessage());
+
+            http_response_code(500);
+            $message = 'Unable to load the restaurant page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
     }
 
 }

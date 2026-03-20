@@ -1,10 +1,7 @@
 <?php
-// User.php
+
 namespace App\Models;
 
-/**
- * Base user of the system.
- */
 class User
 {
     public int $id;
@@ -15,25 +12,27 @@ class User
     public ?string $profileImage;
     public ?string $createdAt;
 
-    public function __construct(int $id, string $name, string $email, string $passwordHash, string $role = 'customer', ?string $profileImage = null, ?string $createdAt = null)
-    {
-        $this->id = $id;
-        $this->name = $name;
-        $this->email = $email;
+    public function __construct(
+        int $id,
+        string $name,
+        string $email,
+        string $passwordHash,
+        string $role = 'customer',
+        ?string $profileImage = null,
+        ?string $createdAt = null
+    ) {
+        $this->id           = $id;
+        $this->name         = $name;
+        $this->email        = $email;
         $this->passwordHash = $passwordHash;
-        $this->role = $role;
+        $this->role         = $role;
         $this->profileImage = $profileImage;
-        $this->createdAt = $createdAt;
+        $this->createdAt    = $createdAt;
     }
 
-    public function login(): void
+    public function isAdmin(): bool
     {
-        // Authentication handled elsewhere; this is a domain placeholder.
-    }
-
-    public function logout(): void
-    {
-        // Session termination handled by infrastructure.
+        return $this->role === 'admin';
     }
 }
 

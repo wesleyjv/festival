@@ -53,6 +53,14 @@ class Validator
         return $this;
     }
 
+    public function validateRole(string $role, array $allowed): self
+    {
+        if (!in_array($role, $allowed, true)) {
+            $this->errors[] = 'Invalid role selected.';
+        }
+        return $this;
+    }
+
     public function validateNameLength(string $name, int $min = 2, int $max = 255): self
     {
         $length = strlen(trim($name));

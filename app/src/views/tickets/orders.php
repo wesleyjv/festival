@@ -18,8 +18,16 @@
 
     <?php else: ?>
 
+        <div class="mb-3">
+            <input 
+                type="text" 
+                id="orderFilter" 
+                class="form-control" 
+                placeholder="Search by order number, status, or date..."
+            >
+        </div>
         <div class="table-responsive">
-            <table class="table align-middle">
+            <table class="table align-middle" id="ordersTable">
                 <thead>
                     <tr>
                         <th>Order Number</th>
@@ -62,5 +70,19 @@
     <?php endif; ?>
 
 </div>
+
+<script>
+
+document.getElementById("orderFilter").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#ordersTable tbody tr");
+
+    rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+});
+
+</script>
 
 <?php require __DIR__ . '/../partials/footer.php'; ?>
