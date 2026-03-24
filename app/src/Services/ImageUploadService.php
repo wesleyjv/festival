@@ -17,7 +17,6 @@ class ImageUploadService
         $this->uploadUrlPath = $uploadUrlPath ?? '/uploads/profiles/';
     }
 
-    /**
      * @throws \InvalidArgumentException if the file type or size is not allowed.
      * @throws \RuntimeException         if the file could not be moved to the upload directory.
      */
@@ -45,7 +44,7 @@ class ImageUploadService
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0755, true);
         }
-
+        //There is still vulnerability here, called the 'Polygot File Attack', which I don't know how to fix yet.
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename  = $filenamePrefix . '_' . uniqid('', true) . '.' . $extension;
 

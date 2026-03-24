@@ -338,6 +338,9 @@
                 <li><a class="nav-link-f nav-link-auth" href="/login"><i class="bi bi-person"></i> Login</a></li>
                 <li><a class="nav-link-f nav-link-auth" href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
             <?php endif; ?>
+            <?php if (in_array(($_SESSION['user_role'] ?? ''), ['employee', 'admin'], true)): ?>
+                <li><a class="btn-program" href="/employee/scan" style="background-color:#1a7f37;"><i class="bi bi-qr-code-scan"></i> Scan</a></li>
+            <?php endif; ?>
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                 <li><a class="btn-program" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a></li>
             <?php endif; ?>
@@ -382,6 +385,9 @@
                 <li><a href="/register"><i class="bi bi-person-plus"></i> Register</a></li>
             <?php endif; ?>
         </ul>
+        <?php if (in_array(($_SESSION['user_role'] ?? ''), ['employee', 'admin'], true)): ?>
+            <a class="btn-program-mobile" href="/employee/scan" style="background-color:#1a7f37;"><i class="bi bi-qr-code-scan"></i> Scan tickets</a>
+        <?php endif; ?>
         <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
             <a class="btn-program-mobile" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a>
         <?php endif; ?>
