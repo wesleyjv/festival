@@ -285,6 +285,13 @@
             }
         }
     </style>
+    <?php
+    if (!empty($extraStylesheets) && is_array($extraStylesheets)) {
+        foreach ($extraStylesheets as $href) {
+            echo '<link rel="stylesheet" href="' . htmlspecialchars((string) $href, ENT_QUOTES, 'UTF-8') . '" />' . "\n    ";
+        }
+    }
+    ?>
 </head>
 <body<?= isset($bodyClass) ? ' class="' . htmlspecialchars($bodyClass, ENT_QUOTES, 'UTF-8') . '"' : '' ?>>
 

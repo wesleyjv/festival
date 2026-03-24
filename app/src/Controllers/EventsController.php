@@ -80,12 +80,7 @@ class EventsController
         require __DIR__ . '/../views/events/jazz/overview.php';
     }
 
-    /**
-     * Displays the detail page for a single jazz artist.
-     *
-     * @param array $vars Route parameters; expects 'id' (int).
-     * @return void
-     */
+
     public function jazzDetail($vars = [])
     {
         $id = (int) ($vars['id'] ?? 0);
@@ -136,8 +131,8 @@ class EventsController
             // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';
 
-        } catch (Exception $e) {
-            error_log("Error in stories controller: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error in stories controller: ' . $e->getMessage());
 
             // Fallback to static view with error handling
             http_response_code(500);

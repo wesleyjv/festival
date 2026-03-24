@@ -464,8 +464,7 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
     <select name="cuisine" id="cuisine" onchange="this.form.submit()">
       <option value="">All</option>
 
-      <?php foreach ($cuisines as $cuisine):
-      ?>
+      <?php foreach ($cuisines as $cuisine): ?>
         <option value="<?= htmlspecialchars($cuisine) ?>" <?= $selectedCuisine === $cuisine ? 'selected' : '' ?>>
           <?= htmlspecialchars($cuisine) ?>
         </option>

@@ -1,0 +1,104 @@
+/**
+ * Admin Jazz visual CMS (Content tab → Jazz).
+ */
+
+.jazz-cms-visual {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    background: #fff;
+    overflow: hidden;
+}
+.jazz-cms-visual__toolbar {
+    background: linear-gradient(90deg, #1a1a2e, #2d2d5e);
+    color: #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.jazz-cms-block {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #eee;
+}
+.jazz-cms-block--hero-dark {
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 100%);
+}
+.jazz-cms-label--on-dark {
+    color: rgba(255, 255, 255, 0.65);
+}
+.jazz-cms-block:last-child {
+    border-bottom: none;
+}
+.jazz-cms-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+    margin-bottom: 0.35rem;
+}
+.jazz-cms-editable {
+    outline: none;
+    border-radius: 0.35rem;
+    padding: 0.35rem 0.45rem;
+    min-height: 1.5;
+    transition: box-shadow 0.15s;
+}
+.jazz-cms-editable:focus {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+    background: #fafafa;
+}
+.jazz-cms-editable.jazz-cms-rich {
+    min-height: 100px;
+    font-size: 0.9rem;
+}
+.jazz-cms-hero-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+}
+.jazz-cms-hero-title:focus,
+.jazz-cms-hero-title:focus-within {
+    color: #111 !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.45) !important;
+}
+.cms-dropzone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: #f8fafc;
+    position: relative;
+    overflow: hidden;
+}
+.cms-dropzone.is-dragover {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+.cms-dropzone img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+}
+.cms-dropzone .cms-dropzone-hint {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    text-align: center;
+}
+.jazz-cms-artist-preview {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background: #fdf6ee;
+}

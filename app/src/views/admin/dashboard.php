@@ -23,6 +23,7 @@
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
     />
+    <link rel="stylesheet" href="/css/jazz/jazz-cms.css" />
 
     <style>
         :root {
@@ -529,7 +530,7 @@
                                         <span class="badge bg-secondary-subtle text-secondary-emphasis">Customer</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= $u->createdAt ? htmlspecialchars(date('M j, Y', strtotime($u->createdAt)), ENT_QUOTES) : '—' ?></td>
+                                <td><?= $u->createdAt ? htmlspecialchars(date('M j, Y', strtotime($u->createdAt)), ENT_QUOTES) : 'ΓÇö' ?></td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-outline-secondary me-1"
                                             data-bs-toggle="modal"
@@ -1278,65 +1279,7 @@
                     </form>
                 </div>
 
-                <!-- Jazz -->
-                <div class="tab-pane fade" id="content-jazz" role="tabpanel" aria-labelledby="tab-jazz">
-                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
-                        <div class="card-body">
-                            <input type="hidden" name="page" value="jazz">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero background image URL</label>
-                                <div class="input-group input-group-sm mb-2">
-                                    <input
-                                        type="text"
-                                        name="hero_image"
-                                        class="form-control cms-image-url"
-                                        value="<?= htmlspecialchars($jazzContent['hero_image'] ?? '/assets/jazz/img/jazz-hero.jpg', ENT_QUOTES) ?>"
-                                        placeholder="/uploads/your-jazz-hero-image.jpg"
-                                    >
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary cms-upload-btn"
-                                        data-target-input="hero_image"
-                                    >
-                                        <i class="bi bi-upload me-1"></i>Upload
-                                    </button>
-                                </div>
-                                <div
-                                    class="cms-dropzone mb-2"
-                                    data-target-input="hero_image"
-                                >
-                                    <i class="bi bi-cloud-arrow-up"></i>
-                                    <span>
-                                        Drag &amp; drop an image here, or click to select a file.
-                                    </span>
-                                </div>
-                                <small class="text-muted d-block mb-1">
-                                    Paste an image URL, use <strong>Upload</strong>, or drag-and-drop into the box above to upload a new Jazz hero image.
-                                </small>
-                                <img
-                                    src="<?= htmlspecialchars($jazzContent['hero_image'] ?? '/assets/jazz/img/jazz-hero.jpg', ENT_QUOTES) ?>"
-                                    alt="Jazz hero preview"
-                                    class="border rounded cms-image-preview"
-                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
-                                    data-preview-for="hero_image"
-                                >
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Intro heading</label>
-                                <textarea name="intro_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($jazzContent['intro_heading'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Intro text</label>
-                                <textarea name="intro_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($jazzContent['intro_text'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-1"></i>Save Jazz Content
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                <?php require __DIR__ . '/partials/jazz-cms.php'; ?>
             </div>
         </section>
     </main>
@@ -1437,7 +1380,7 @@
             });
         }
 
-        // Initialize TinyMCE for all WYSIWYG fields
+        // TinyMCE: all WYSIWYG textareas (Jazz home/artist uses contenteditable in jazz-cms partial, not .wysiwyg there)
         tinymce.init({
             selector: 'textarea.wysiwyg',
             plugins: 'link lists code image media table',
@@ -1577,13 +1520,137 @@
             });
         });
 
-        // Drag & drop support for CMS image fields
-        document.querySelectorAll('.cms-dropzone').forEach(zone => {
+        // --- Jazz visual CMS: drag-drop onto zones with hidden inputs (no data-target-input) ---
+        function jazzUploadImage(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+            return fetch('/admin/upload-image', { method: 'POST', body: fd, credentials: 'include' })
+                .then(function (r) {
+                    return r.text().then(function (text) {
+                        let j = null;
+                        try {
+                            j = text ? JSON.parse(text) : null;
+                        } catch (e) {
+                            throw new Error(
+                                r.ok
+                                    ? 'Server did not return JSON (check PHP errors).'
+                                    : ('Upload failed (' + r.status + '): ' + (text ? text.slice(0, 120) : ''))
+                            );
+                        }
+                        if (!r.ok) {
+                            throw new Error((j && j.error) ? j.error : ('Upload failed (' + r.status + ')'));
+                        }
+                        if (!j || typeof j.location !== 'string') {
+                            throw new Error((j && j.error) ? j.error : 'Invalid upload response');
+                        }
+                        return j.location;
+                    });
+                });
+        }
+
+        document.querySelectorAll('.cms-dropzone').forEach(function (zone) {
+            if (zone.getAttribute('data-target-input')) return;
+            const input = zone.querySelector('input[type="hidden"]');
+            if (!input) return;
+
+            function setPreview(url) {
+                let img = zone.querySelector('.cms-preview-img');
+                const span = zone.querySelector('span.text-muted');
+                if (span) span.remove();
+                if (!img) {
+                    img = document.createElement('img');
+                    img.className = 'cms-preview-img';
+                    img.alt = '';
+                    zone.insertBefore(img, zone.firstChild);
+                }
+                img.src = url;
+                input.value = url;
+            }
+
+            function handleFile(file) {
+                if (!file || !file.type || file.type.indexOf('image/') !== 0) return;
+                jazzUploadImage(file).then(setPreview).catch(function (err) {
+                    alert(err.message || String(err));
+                });
+            }
+
+            zone.addEventListener('click', function (e) {
+                if (e.target.closest('input')) return;
+                const fi = document.createElement('input');
+                fi.type = 'file';
+                fi.accept = 'image/*';
+                fi.onchange = function () {
+                    if (fi.files && fi.files[0]) handleFile(fi.files[0]);
+                };
+                fi.click();
+            });
+
+            ['dragenter', 'dragover'].forEach(function (ev) {
+                zone.addEventListener(ev, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.add('is-dragover');
+                });
+            });
+            ['dragleave', 'drop'].forEach(function (ev) {
+                zone.addEventListener(ev, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.remove('is-dragover');
+                });
+            });
+            zone.addEventListener('drop', function (e) {
+                const f = e.dataTransfer.files && e.dataTransfer.files[0];
+                if (f) handleFile(f);
+            });
+        });
+
+        function jazzAppendCmsFields(form, hiddenSelector) {
+            const root = form.querySelector(hiddenSelector);
+            if (!root) return;
+            root.innerHTML = '';
+            form.querySelectorAll('[data-cms-field]').forEach(function (el) {
+                const name = el.getAttribute('data-cms-field');
+                const rich = el.getAttribute('data-cms-rich') === '1';
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = rich ? el.innerHTML.trim() : el.innerText.trim();
+                root.appendChild(input);
+            });
+        }
+
+        var jazzHomeForm = document.getElementById('jazz-cms-form-home');
+        if (jazzHomeForm) {
+            jazzHomeForm.addEventListener('submit', function () {
+                jazzAppendCmsFields(jazzHomeForm, '#jazz-cms-home-hidden-fields');
+            });
+        }
+
+        document.querySelectorAll('.jazz-cms-artist-form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var id = form.getAttribute('data-artist-id');
+                jazzAppendCmsFields(form, '#jazz-cms-artist-hidden-' + id);
+            });
+        });
+
+        var jazzArtistPicker = document.getElementById('jazz-artist-picker');
+        if (jazzArtistPicker) {
+            jazzArtistPicker.addEventListener('change', function () {
+                var v = jazzArtistPicker.value;
+                document.querySelectorAll('.jazz-cms-artist-wrap').forEach(function (wrap) {
+                    var match = wrap.getAttribute('data-artist-id') === v;
+                    wrap.classList.toggle('d-none', !match);
+                });
+            });
+        }
+
+        // Yummy / History / etc.: dropzones that delegate to named URL fields via data-target-input
+        document.querySelectorAll('.cms-dropzone[data-target-input]').forEach(zone => {
             const targetName = zone.getAttribute('data-target-input');
             if (!targetName) return;
 
             zone.addEventListener('click', () => {
-                // Delegate to the existing upload button for the same target, if present
                 const form = zone.closest('form');
                 if (!form) return;
                 const relatedButton = form.querySelector(`.cms-upload-btn[data-target-input="${targetName}"]`);
