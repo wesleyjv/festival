@@ -18,16 +18,7 @@ use App\Models\Ticket;
 class TicketRepository
 {
 
-    /**
-     * Retrieve every ticket that belongs to a specific event.
-     *
-     * Executes a prepared SELECT query filtered by `event_id` and ordered
-     * alphabetically by ticket name so the results can be displayed in a
-     * consistent order on the front-end.
-     *
-     * @param  int   $eventId  The event’s primary key.
-     * @return Ticket[]        An array of Ticket models (empty when none found).
-     */
+
     public function getByEventId(int $eventId): array
     {
         $db = DB::getConnection();
@@ -42,12 +33,6 @@ class TicketRepository
         return $tickets;
     }
 
-    /**
-     * Retrieve a single ticket by its primary key.
-     *
-     * @param  int         $id  The ticket’s primary key.
-     * @return Ticket|null      The matching Ticket model, or null when not found.
-     */
     public function getById(int $id): ?Ticket
     {
         $db = DB::getConnection();

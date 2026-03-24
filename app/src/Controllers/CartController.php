@@ -8,50 +8,25 @@ use App\Models\ShoppingCart;
 use App\Services\TicketService;
 use App\ViewModels\CartViewModel;
 
-/**
- * CartController – handles shopping-cart HTTP requests.
- *
- * Manages adding tickets to the cart, removing items by index, and
- * displaying the cart contents. Cart state is persisted in the PHP
- * session (`$_SESSION['cart']`) as a serialised ShoppingCart object.
- *
- * All ticket look-ups go through TicketService so that validation
- * and any future business rules are applied consistently.
- */
 class CartController
 {
-    /** @var TicketService Service used to look up ticket details. */
     private TicketService $ticketService;
 
-    /**
-     * Create a new CartController.
-     *
-     * Accepts an optional TicketService for dependency injection.
-     * When called without arguments (as the router does) a default
-     * service instance is created automatically.
-     *
-     * @param TicketService|null $ticketService  Service instance, or null for the default.
-     */
+
     public function __construct(?TicketService $ticketService = null)
     {
         $this->ticketService = $ticketService ?? new TicketService();
     }
 
-    /**
-     * POST /cart/add – Add a ticket to the shopping cart.
-     *
-     * Reads `ticket_id` from the POST body, looks the ticket up via the
-     * service layer, and – if the ticket exists – adds it to the session
-     * cart with a quantity of 1. Always redirects to the cart page.
-     *
-     * @return void Redirects to /cart.
-     */
+
     public function add()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ticketId = $_POST['ticket_id'] ?? null;
+            $quantity = isset($_POST['quantity']) ? max(1, (int)$_POST['quantity']) : 1;
+            $redirect = $_POST['redirect'] ?? null;
 
             if ($ticketId) {
                 // Look up the ticket through the service (includes ID validation)
@@ -60,9 +35,42 @@ class CartController
                 if ($ticket) {
                     // Retrieve existing cart from session or create a new one
                     $cart = $_SESSION['cart'] ?? new ShoppingCart();
-                    $cart->addItem($ticket, 1);
+                    $cart->addItem($ticket, $quantity);
                     $_SESSION['cart'] = $cart;
                 }
+            } else {
+                // Fallback: allow adding an ad-hoc ticket by name/price (used by standalone event ordering pages).
+                $ticketName = $_POST['ticket_name'] ?? null;
+                $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
+
+                // Support combined 'ticket' field (value: "Name|Price") used by the history order form
+                if (empty($ticketName) && isset($_POST['ticket'])) {
+                    $parts = explode('|', (string)$_POST['ticket'], 2);
+                    $ticketName = trim($parts[0] ?? '');
+                    if (isset($parts[1])) {
+                        $p = preg_replace('/[^0-9,\.\-]/', '', $parts[1]);
+                        $price = (float) str_replace(',', '.', $p);
+                    }
+                }
+
+                if ($ticketName && $price !== null) {
+                    $ticket = new \App\Models\Ticket();
+                    $ticket->id = 0; // synthetic ID for cart-only items
+                    $ticket->eventId = 0;
+                    $ticket->name = (string)$ticketName;
+                    $ticket->price = (float)$price;
+                    $ticket->ticketCode = '';
+
+                    $cart = $_SESSION['cart'] ?? new ShoppingCart();
+                    $cart->addItem($ticket, $quantity);
+                    $_SESSION['cart'] = $cart;
+                }
+            }
+
+            // If the form set redirect=checkout, send straight to checkout
+            if ($redirect === 'checkout') {
+                header('Location: /checkout');
+                exit;
             }
         }
 
@@ -70,15 +78,7 @@ class CartController
         exit;
     }
 
-    /**
-     * POST /cart/remove – Remove an item from the shopping cart by its index.
-     *
-     * Reads `item_index` from the POST body, removes the matching entry
-     * from the cart’s items array, and re-indexes so there are no gaps.
-     * Always redirects to the cart page.
-     *
-     * @return void Redirects to /cart.
-     */
+
     public function remove()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
@@ -102,14 +102,6 @@ class CartController
         exit;
     }
 
-    /**
-     * GET /cart – Display the shopping cart contents.
-     *
-     * Retrieves the cart from the session (or creates an empty one) and
-     * renders the cart view template.
-     *
-     * @return void Renders the cart view.
-     */
     public function index(): void
     {
         if (session_status() === PHP_SESSION_NONE) session_start();

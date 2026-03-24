@@ -50,6 +50,7 @@ class EventsController
         require __DIR__ . '/../views/events/history/overview.php';
     }
 
+
     /**
      * Displays the jazz events overview page.
      *
