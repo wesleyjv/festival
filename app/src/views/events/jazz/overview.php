@@ -5,12 +5,12 @@
 $extraStylesheets = ['/css/jazz/jazz-public.css'];
 require __DIR__ . '/../../partials/header.php';
 
+$dayFilter = $dayFilter ?? 'all';
 $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'];
 $heroBg = $jazzContent['hero_background_image'] ?? '';
 ?>
 
 <main>
-
 
 <section class="jazz-hero"<?= $heroBg !== '' ? ' style="background-image:url(\'' . htmlspecialchars($heroBg, ENT_QUOTES) . '\');background-size:cover;background-position:center;"' : '' ?>>
     <?php if ($heroBg === ''): ?>

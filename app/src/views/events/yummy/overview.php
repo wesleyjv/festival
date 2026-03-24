@@ -1,8 +1,23 @@
-<?php require __DIR__ . '/../../partials/header.php'; ?>
+<?php
+/** @var array $yummyContent */
+require __DIR__ . '/../../partials/header.php';
+?>
+
+<?php
+/** @var \App\ViewModels\YummyOverviewViewModel $viewModel */
+$content = $viewModel->content;
+$restaurants = $viewModel->restaurants;
+$cuisines = $viewModel->cuisines;
+$selectedCuisine = $viewModel->selectedCuisine;
+?>
 
 <link rel="stylesheet" href="/assets/yummy/css/globals.css" />
 <link rel="stylesheet" href="/assets/yummy/css/styleguide.css" />
 <link rel="stylesheet" href="/assets/yummy/css/style.css" />
+
+<?php
+$heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg';
+?>
 
 <style>
   /* Banner (no SVG navbar) */
@@ -12,8 +27,8 @@
     overflow: hidden;
     position: relative;
 
-    /* Banner image */
-    background-image: url("/assets/yummy/image/yummy-hero.jpg");
+    /* Banner image (configurable via CMS) */
+    background-image: url("<?= htmlspecialchars($heroImage, ENT_QUOTES) ?>");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -379,15 +394,15 @@
 <!-- ✅ HERO BANNER ONLY -->
 <section class="yummy-hero">
   <div class="yummy-hero-content">
-    <div class="yummy-pill">JULY 23–26, 2026</div>
+    <div class="yummy-pill"><?= htmlspecialchars($content['hero_date'] ?? '') ?></div>
 
-    <h1 class="yummy-title">YUMMY!<br>GOURMET WITH<br>A TWIST</h1>
+<h1 class="yummy-title"><?= nl2br(htmlspecialchars($content['hero_title'] ?? '')) ?></h1>
 
-    <p class="yummy-subtitle">
-      A curated culinary experience featuring seven restaurants, exclusive festival-only menus.
-    </p>
+<p class="yummy-subtitle">
+  <?= htmlspecialchars($content['hero_subtitle'] ?? '') ?>
+</p>
 
-    <a class="yummy-cta" href="#restaurants">Explore Restaurants</a>
+    <a class="yummy-cta" href="#restaurants"><?= htmlspecialchars($content['explore_heading'] ?? 'Explore Restaurants') ?></a>
   </div>
 </section>
 
@@ -440,8 +455,8 @@
 
 <!-- ✅ DYNAMIC RESTAURANTS LIST -->
 <section id="restaurants" class="restaurants-section">
-  <h2>Explore Restaurants</h2>
-  <p class="muted">Taste the finest culinary experiences in Haarlem.</p>
+  <h2><?= htmlspecialchars($content['explore_heading'] ?? 'Explore Restaurants') ?></h2>
+  <p class="muted"><?= htmlspecialchars($content['explore_text'] ?? 'Taste the finest culinary experiences in Haarlem.') ?></p>
 
   <form method="GET" class="filter-row">
     <label for="cuisine"><strong>Cuisine:</strong></label>
@@ -449,19 +464,9 @@
     <select name="cuisine" id="cuisine" onchange="this.form.submit()">
       <option value="">All</option>
 
-      <?php
-      
-      $availableCuisines = $cuisines ?? [
-        ['cuisine' => 'Italian'],
-        ['cuisine' => 'Asian'],
-        ['cuisine' => 'Mexican'],
-      ];
-
-      foreach ($availableCuisines as $row):
-        $c = $row['cuisine'];
-      ?>
-        <option value="<?= htmlspecialchars($c) ?>" <?= (($_GET['cuisine'] ?? '') === $c) ? 'selected' : '' ?>>
-          <?= htmlspecialchars($c) ?>
+      <?php foreach ($cuisines as $cuisine): ?>
+        <option value="<?= htmlspecialchars($cuisine) ?>" <?= $selectedCuisine === $cuisine ? 'selected' : '' ?>>
+          <?= htmlspecialchars($cuisine) ?>
         </option>
       <?php endforeach; ?>
     </select>
@@ -477,50 +482,44 @@
     <div class="restaurant-grid">
       <?php foreach ($restaurants as $restaurant): ?>
         <div class="restaurant-card-new">
-          <div class="price-badge">
-            €<?= htmlspecialchars($restaurant['price'] ?? '45') ?>
-          </div>
+          <?php if ($restaurant->price !== null): ?>
+            <div class="price-badge">€<?= number_format($restaurant->price, 2) ?></div>
+          <?php endif; ?>
 
           <h3 class="restaurant-title">
-            <?= htmlspecialchars($restaurant['restaurant_name']) ?>
+            <?= htmlspecialchars($restaurant->restaurantName) ?>
           </h3>
 
-          <div class="rating">
-            ★ ★ ★ ★ ☆
-          </div>
+          <?php if ($restaurant->rating !== null): ?>
+            <div class="rating">Rating: <?= htmlspecialchars((string) $restaurant->rating) ?></div>
+          <?php endif; ?>
 
-          <?php if (!empty($restaurant['image_path'])): ?>
+          <?php if (!empty($restaurant->imagePath)): ?>
             <img
               class="restaurant-image"
-              src="/<?= htmlspecialchars($restaurant['image_path']) ?>"
-              alt="<?= htmlspecialchars($restaurant['restaurant_name']) ?>">
+              src="/<?= htmlspecialchars($restaurant->imagePath) ?>"
+              alt="<?= htmlspecialchars($restaurant->restaurantName) ?>">
           <?php endif; ?>
 
           <div class="cuisine-tags">
-            <?php
-              $tags = !empty($restaurant['cuisine_tags'])
-                ? array_map('trim', explode(',', $restaurant['cuisine_tags']))
-                : [];
-            ?>
-
-            <?php foreach ($tags as $tag): ?>
+            <?php foreach ($restaurant->cuisineTags as $tag): ?>
               <span class="tag"><?= htmlspecialchars($tag) ?></span>
             <?php endforeach; ?>
           </div>
 
-          <?php if (!empty($restaurant['description'])): ?>
+          <?php if (!empty($restaurant->description)): ?>
             <p class="restaurant-description">
-              <?= nl2br(htmlspecialchars($restaurant['description'])) ?>
+              <?= nl2br(htmlspecialchars($restaurant->description)) ?>
             </p>
           <?php endif; ?>
 
-          <?php if (!empty($restaurant['address'])): ?>
+          <?php if (!empty($restaurant->address)): ?>
             <p class="restaurant-address">
-              <?= htmlspecialchars($restaurant['address']) ?>
+              <?= htmlspecialchars($restaurant->address) ?>
             </p>
           <?php endif; ?>
 
-          <a href="/events/yummy/restaurant/<?= htmlspecialchars($restaurant['slug']) ?>" class="view-btn">
+          <a href="/events/yummy/restaurant/<?= htmlspecialchars($restaurant->slug) ?>" class="view-btn">
             View restaurant
           </a>
         </div>

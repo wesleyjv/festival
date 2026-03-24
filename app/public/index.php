@@ -75,6 +75,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/jazz/{id:\d+}', ['App\\Controllers\\EventsController', 'jazzDetail']);
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
+    $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'yummyDetail']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
 
@@ -103,6 +104,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteUser']);
+    $r->addRoute('POST', '/admin/story-events/create', ['App\\Controllers\\AdminController', 'createStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

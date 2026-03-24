@@ -3,11 +3,15 @@
 namespace App\Controllers;
 
 use PDO;
+use Throwable;
 
 use App\Repositories\EventRepository;
 use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\Interfaces\IYummyService;
+use App\Services\YummyService;
+use App\ViewModels\YummyOverviewViewModel;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -22,7 +26,7 @@ class EventsController
      */
     private EventRepository $eventRepository;
     private StoryEventRepository $storyEventRepository;
-    private YummyEventRepository $yummyEventRepository;
+    private IYummyService $yummyService;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -31,7 +35,10 @@ class EventsController
     {
         $this->eventRepository = new EventRepository();
         $this->storyEventRepository = new StoryEventRepository();
-        $this->yummyEventRepository = new YummyEventRepository();
+        $this->yummyService = new YummyService(
+            new YummyEventRepository(),
+            new ContentService()
+        );
     }
 
     /**
@@ -124,8 +131,8 @@ class EventsController
             // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';
 
-        } catch (Exception $e) {
-            error_log("Error in stories controller: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error in stories controller: ' . $e->getMessage());
 
             // Fallback to static view with error handling
             http_response_code(500);
@@ -138,13 +145,43 @@ class EventsController
      *
      * @return void
      */
-    public function yummy()
+    public function yummy(): void
     {
-        $cuisine = $_GET['cuisine'] ?? null;
+        try {
+            $cuisine = $_GET['cuisine'] ?? null;
+            $viewModel = $this->yummyService->getOverviewViewModel($cuisine);
 
-        $restaurants = $this->yummyEventRepository->getAll($cuisine);
+            require __DIR__ . '/../views/events/yummy/overview.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummy controller: ' . $e->getMessage());
 
-        require __DIR__ . '/../views/events/yummy/overview.php'; // ex handling , service layer
+            http_response_code(500);
+            $message = 'Unable to load the Yummy page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
+    }
+
+    public function yummyDetail(array $vars = []): void
+    {
+        try {
+            $slug = (string) ($vars['slug'] ?? '');
+            $restaurant = $this->yummyService->getRestaurantBySlug($slug);
+
+            if ($restaurant === null) {
+                http_response_code(404);
+                $message = 'Restaurant not found.';
+                require __DIR__ . '/../views/errors/404.php';
+                return;
+            }
+
+            require __DIR__ . '/../views/events/yummy/detail.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummyDetail controller: ' . $e->getMessage());
+
+            http_response_code(500);
+            $message = 'Unable to load the restaurant page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
     }
 
 }
