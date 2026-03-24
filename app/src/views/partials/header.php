@@ -341,7 +341,7 @@
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                 <li><a class="btn-program" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a></li>
             <?php endif; ?>
-            <li><a class="btn-program" href="#"><i class="bi bi-calendar-event"></i> My Program</a></li>
+            <li><a class="btn-program" href="/cart"><i class="bi bi-calendar-event"></i> My Program</a></li>
         </ul>
 
         <!-- Mobile hamburger -->
@@ -385,7 +385,7 @@
         <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
             <a class="btn-program-mobile" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a>
         <?php endif; ?>
-        <a class="btn-program-mobile" href="#"><i class="bi bi-calendar-event"></i> My Program</a>
+        <a class="btn-program-mobile" href="/cart"><i class="bi bi-calendar-event"></i> My Program</a>
     </div>
 </nav>
 

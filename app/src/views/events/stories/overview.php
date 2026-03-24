@@ -1,6 +1,7 @@
 <?php
 $bodyClass = 'storytelling-layout';
 $mainClass = 'storytelling-main-wrapper';
+$storyTicketIds = $storyTicketIds ?? [];
 require __DIR__ . '/../../partials/header.php';
 
 $heroImage = $storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg';
@@ -158,6 +159,10 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
                     <p>No storytelling events found for the selected filters.</p>
                 <?php else: ?>
                     <?php foreach ($events as $event): ?>
+                        <?php
+                        $eventId = (int) ($event['id'] ?? 0);
+                        $ticketId = $storyTicketIds[$eventId] ?? null;
+                        ?>
                         <article class="storytelling-event-card">
                             <img class="storytelling-event-image" src="<?php echo htmlspecialchars($event['image']); ?>" alt="<?php echo htmlspecialchars($event['title']); ?>" />
                             <div class="storytelling-event-content">
@@ -180,7 +185,16 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
                                 </div>
                                 <div class="storytelling-event-actions">
                                     <div class="storytelling-event-price">€<?php echo htmlspecialchars($event['price']); ?></div>
-                                    <button class="storytelling-event-btn" onclick="addToProgram(<?php echo $event['session_id']; ?>)">Add to Program</button>
+                                    <?php if ($ticketId !== null): ?>
+                                        <form action="/cart/add" method="post" class="js-cart-add-form storytelling-event-cart-form">
+                                            <?= \App\Security\Csrf::field() ?>
+                                            <input type="hidden" name="ticket_id" value="<?= (int) $ticketId ?>">
+                                            <input type="number" name="quantity" class="form-control form-control-sm storytelling-event-qty" value="1" min="1" max="99" aria-label="Ticket quantity for <?= htmlspecialchars($event['title'], ENT_QUOTES, 'UTF-8') ?>">
+                                            <button type="submit" class="storytelling-event-btn storytelling-event-add-btn">Add</button>
+                                        </form>
+                                    <?php else: ?>
+                                        <span class="text-muted small">Tickets unavailable</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </article>

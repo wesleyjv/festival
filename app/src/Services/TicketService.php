@@ -101,4 +101,97 @@ class TicketService
             $this->ticketRepository->insertTicketForEvent($ev->eventId, $name, $price);
         }
     }
+
+    /**
+     * Ensure every story event has at least one ticket row so cart / checkout work.
+     *
+     * @param array<int,array<string,mixed>> $storyEvents
+     */
+    public function syncMissingStoryTickets(array $storyEvents): void
+    {
+        foreach ($storyEvents as $event) {
+            $eventId = (int) ($event['id'] ?? 0);
+            if ($eventId <= 0) {
+                continue;
+            }
+
+            $existing = $this->ticketRepository->getByEventId($eventId);
+            if ($existing !== []) {
+                continue;
+            }
+
+            $rawPrice = $event['price'] ?? 0;
+            if (is_numeric($rawPrice)) {
+                $price = (float) $rawPrice;
+            } else {
+                $normalized = str_replace(',', '.', (string) $rawPrice);
+                $price = is_numeric($normalized) ? (float) $normalized : 0.0;
+            }
+
+            $title = trim((string) ($event['title'] ?? 'Story Session'));
+            if ($title === '') {
+                $title = 'Story Session';
+            }
+            $name = 'Storytelling — ' . $title;
+
+            $this->ticketRepository->insertTicketForEvent($eventId, $name, $price);
+        }
+    }
+
+    /**
+     * Resolve a Storytelling ticket per story event.
+     *
+     * If an event id already has tickets from another module (id collisions across
+     * event tables), we pick/create a story-specific ticket by name prefix.
+     *
+     * @param array<int,array<string,mixed>> $storyEvents
+     * @return array<int,int> event_id => story ticket id
+     */
+    public function getStoryTicketIdMap(array $storyEvents): array
+    {
+        $map = [];
+
+        foreach ($storyEvents as $event) {
+            $eventId = (int) ($event['id'] ?? 0);
+            if ($eventId <= 0) {
+                continue;
+            }
+
+            $title = trim((string) ($event['title'] ?? 'Story Session'));
+            if ($title === '') {
+                $title = 'Story Session';
+            }
+
+            $existing = $this->ticketRepository->getByEventId($eventId);
+            $storyTicket = null;
+            foreach ($existing as $ticket) {
+                if (str_starts_with((string) $ticket->name, 'Storytelling — ')) {
+                    $storyTicket = $ticket;
+                    break;
+                }
+            }
+
+            if ($storyTicket === null) {
+                $rawPrice = $event['price'] ?? 0;
+                if (is_numeric($rawPrice)) {
+                    $price = (float) $rawPrice;
+                } else {
+                    $normalized = str_replace(',', '.', (string) $rawPrice);
+                    $price = is_numeric($normalized) ? (float) $normalized : 0.0;
+                }
+
+                $ticketId = $this->ticketRepository->insertTicketForEvent(
+                    $eventId,
+                    'Storytelling — ' . $title,
+                    $price
+                );
+                $map[$eventId] = $ticketId;
+                continue;
+            }
+
+            $map[$eventId] = (int) $storyTicket->id;
+        }
+
+        return $map;
+    }
 }

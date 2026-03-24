@@ -133,6 +133,9 @@ class EventsController
                 $events = $this->storyEventRepository->getEvents();
             }
 
+            $ticketService = new TicketService();
+            $storyTicketIds = $ticketService->getStoryTicketIdMap($events);
+
             // Get additional data via repository
             $featuredStoryteller = $this->storyEventRepository->getFeatured();
             $locations = $this->storyEventRepository->getLocations();
