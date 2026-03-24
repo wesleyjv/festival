@@ -13,7 +13,7 @@ $extraStylesheets = [
 ];
 require __DIR__ . '/../../partials/header.php';
 
-$dayFilter = $dayFilter ?? 'all';
+$dayFilter = $dayFilter ?? 'thursday';
 $days = ['all' => 'All', 'thursday' => 'Thursday', 'friday' => 'Friday', 'saturday' => 'Saturday', 'sunday' => 'Sunday'];
 $heroBg = $jazzContent['hero_background_image'] ?? '';
 ?>
@@ -57,7 +57,7 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
 <section class="jazz-schedule" aria-labelledby="jazz-schedule-heading">
     <div class="container">
         <h2 id="jazz-schedule-heading" class="jazz-schedule__heading text-center">Schedule</h2>
-        <p class="jazz-schedule__sub text-center">Browse performances by day, time of day, or artist. Expand a row for more info.</p>
+        <p class="jazz-schedule__sub text-center">Choose a day to see that day&rsquo;s programme only, or search by artist. Expand a row for more info.</p>
 
         <div class="jazz-schedule__filters-card">
             <div class="jazz-schedule__filters">
@@ -66,12 +66,11 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
                     <input type="search" id="schedule-artist-filter" class="form-control jazz-schedule__search" placeholder="Search by name" autocomplete="off" aria-label="Filter schedule by artist name">
                 </label>
                 <label class="jazz-schedule__filter">
-                    <span class="jazz-schedule__filter-label">Time of day</span>
-                    <select id="schedule-time-filter" class="form-select jazz-schedule__select" aria-label="Filter by time of day">
-                        <option value="all">Any time</option>
-                        <option value="morning">Morning (before noon)</option>
-                        <option value="afternoon">Afternoon (noon &ndash; 5pm)</option>
-                        <option value="evening">Evening (after 5pm)</option>
+                    <span class="jazz-schedule__filter-label">Day</span>
+                    <select id="schedule-day-filter" class="form-select jazz-schedule__select" aria-label="Show schedule for one day">
+                        <?php foreach ($days as $key => $label): ?>
+                            <option value="<?= htmlspecialchars($key) ?>" <?= ($dayFilter === $key) ? 'selected' : '' ?>><?= htmlspecialchars($label) ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </label>
             </div>
@@ -124,16 +123,6 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
                                         <?php
                                         $ticketId = $jazzTicketIds[$ev->eventId] ?? null;
                                         $dayKey = $ev->startTime ? strtolower(date('l', strtotime($ev->startTime))) : '';
-                                        $hour = $ev->startTime ? (int) date('G', strtotime($ev->startTime)) : -1;
-                                        if ($hour >= 0 && $hour < 12) {
-                                            $slot = 'morning';
-                                        } elseif ($hour >= 12 && $hour < 17) {
-                                            $slot = 'afternoon';
-                                        } elseif ($hour >= 17) {
-                                            $slot = 'evening';
-                                        } else {
-                                            $slot = '';
-                                        }
                                         $artistLower = strtolower($ev->artist);
                                         $timeFrom = $ev->startTime ? date('H:i', strtotime($ev->startTime)) : '';
                                         $timeTo = $ev->endTime ? date('H:i', strtotime($ev->endTime)) : '';
@@ -148,8 +137,7 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
                                         ?>
                                         <tr class="jazz-schedule__main-row jazz-schedule__row"
                                             data-day="<?= htmlspecialchars($dayKey) ?>"
-                                            data-artist="<?= htmlspecialchars($artistLower, ENT_QUOTES) ?>"
-                                            data-slot="<?= htmlspecialchars($slot) ?>">
+                                            data-artist="<?= htmlspecialchars($artistLower, ENT_QUOTES) ?>">
                                             <td class="jazz-schedule__cell jazz-schedule__cell-time">
                                                 <div class="jazz-schedule__time-inner">
                                                     <button type="button" class="jazz-schedule__toggle" aria-expanded="false" aria-label="Show details for <?= htmlspecialchars($ev->artist, ENT_QUOTES) ?>">
@@ -212,8 +200,9 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
 
         <nav class="day-filters" aria-label="Filter by day">
             <?php foreach ($days as $key => $label): ?>
-                <button class="day-filter-btn <?= ($dayFilter === $key) ? 'active' : '' ?>"
-                        data-filter="<?= $key ?>">
+                <button type="button"
+                        class="day-filter-btn <?= ($dayFilter === $key) ? 'active' : '' ?>"
+                        data-filter="<?= htmlspecialchars($key) ?>">
                     <?= htmlspecialchars($label) ?>
                 </button>
             <?php endforeach; ?>
@@ -263,26 +252,31 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
 
 <script>
 (function () {
-    const FADE_MS = 220;
-
-    const btns  = document.querySelectorAll('.day-filter-btn');
-    const grid  = document.getElementById('artist-grid');
-    const cols  = grid ? [...grid.querySelectorAll('.artist-col')] : [];
+    const btns = document.querySelectorAll('.day-filter-btn');
+    const grid = document.getElementById('artist-grid');
+    const cols = grid ? [...grid.querySelectorAll('.artist-col')] : [];
     const scheduleRows = [...document.querySelectorAll('.jazz-schedule__main-row')];
     const artistInput = document.getElementById('schedule-artist-filter');
-    const timeSelect = document.getElementById('schedule-time-filter');
+    const daySelect = document.getElementById('schedule-day-filter');
+
+    function setDayUrl(day) {
+        const url = day === 'all' ? '/events/jazz' : '/events/jazz?day=' + encodeURIComponent(day);
+        history.replaceState(null, '', url);
+    }
+
+    function syncDayControls(day) {
+        if (daySelect) daySelect.value = day;
+        btns.forEach(b => b.classList.toggle('active', b.dataset.filter === day));
+    }
 
     function refreshSchedule() {
-        const dayBtn = document.querySelector('.day-filter-btn.active');
-        const day = dayBtn ? dayBtn.dataset.filter : 'all';
+        const day = daySelect ? daySelect.value : 'thursday';
         const artistQ = (artistInput && artistInput.value ? artistInput.value : '').trim().toLowerCase();
-        const timeSlot = timeSelect ? timeSelect.value : 'all';
 
         scheduleRows.forEach(row => {
             const dayOk = day === 'all' || row.dataset.day === day;
             const artistOk = !artistQ || (row.dataset.artist || '').includes(artistQ);
-            const slotOk = timeSlot === 'all' || (row.dataset.slot || '') === timeSlot;
-            const show = dayOk && artistOk && slotOk;
+            const show = dayOk && artistOk;
             row.style.display = show ? '' : 'none';
             const detail = row.nextElementSibling;
             if (detail && detail.classList.contains('jazz-schedule__detail-row')) {
@@ -312,49 +306,34 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
         });
     }
 
-    function filterTo(day) {
+    function filterArtistGrid(day) {
         cols.forEach(col => {
-            col.style.transition = `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms ease`;
-            col.style.opacity    = '0';
-            col.style.transform  = 'translateY(10px)';
+            const match = day === 'all' || col.dataset.day === day;
+            col.style.display = match ? '' : 'none';
         });
+    }
 
-        setTimeout(() => {
-            cols.forEach(col => {
-                const match = day === 'all' || col.dataset.day === day;
-                col.style.display = match ? '' : 'none';
-            });
+    function applyDay(day) {
+        syncDayControls(day);
+        setDayUrl(day);
+        filterArtistGrid(day);
+        refreshSchedule();
+    }
 
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                cols.forEach(col => {
-                    if (col.style.display !== 'none') {
-                        col.style.opacity   = '1';
-                        col.style.transform = 'translateY(0)';
-                    }
-                });
-                refreshSchedule();
-            }));
-        }, FADE_MS);
+    if (daySelect) {
+        daySelect.addEventListener('change', function () {
+            applyDay(this.value);
+        });
     }
 
     btns.forEach(btn => {
         btn.addEventListener('click', function () {
-            btns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-
-            const filter = this.dataset.filter;
-            const url = filter === 'all' ? '/events/jazz' : '/events/jazz?day=' + filter;
-            history.replaceState(null, '', url);
-
-            filterTo(filter);
+            applyDay(this.dataset.filter);
         });
     });
 
     if (artistInput) {
         artistInput.addEventListener('input', refreshSchedule);
-    }
-    if (timeSelect) {
-        timeSelect.addEventListener('change', refreshSchedule);
     }
 
     document.querySelectorAll('.jazz-schedule__toggle').forEach(btn => {
@@ -375,14 +354,7 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
         });
     });
 
-    const activeBtn = document.querySelector('.day-filter-btn.active');
-    if (activeBtn && activeBtn.dataset.filter !== 'all') {
-        cols.forEach(col => {
-            const match = col.dataset.day === activeBtn.dataset.filter;
-            if (!match) col.style.display = 'none';
-        });
-    }
-    refreshSchedule();
+    applyDay(daySelect ? daySelect.value : 'thursday');
 }());
 </script>
 

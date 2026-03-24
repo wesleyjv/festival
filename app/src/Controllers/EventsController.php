@@ -66,16 +66,15 @@ class EventsController
      */
     public function jazz($vars = [])
     {
-        if (isset($_GET['day']) && $_GET['day'] === 'all') {
-            header('Location: /events/jazz');
-            exit;
+        $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayFilter = $_GET['day'] ?? 'thursday';
+        if (!in_array($dayFilter, $validDays, true)) {
+            $dayFilter = 'thursday';
         }
 
-        $dayFilter = $_GET['day'] ?? 'all';
-
-        $dayParam = $dayFilter !== 'all' ? $dayFilter : null;
-        $jazzArtists = $this->eventRepository->getJazzEvents($dayParam, 'artist');
-        $jazzSchedule = $this->eventRepository->getJazzEvents($dayParam, 'start_time');
+        // Full lineup in the page; day filter is applied in the browser (no reload).
+        $jazzArtists = $this->eventRepository->getJazzEvents(null, 'artist');
+        $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
 
         $ticketService = new TicketService();
         $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);

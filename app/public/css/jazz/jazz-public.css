@@ -98,6 +98,10 @@
     color: #333;
     transition: background 0.2s, color 0.2s;
 }
+.day-filter-btn:focus-visible {
+    outline: 2px solid #c9a227;
+    outline-offset: 2px;
+}
 .day-filter-btn.active,
 .day-filter-btn:hover {
     background: #1a1a2e;
