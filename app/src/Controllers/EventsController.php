@@ -9,6 +9,7 @@ use App\Repositories\EventRepository;
 use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\TicketService;
 use App\Services\Interfaces\IYummyService;
 use App\Services\YummyService;
 use App\ViewModels\YummyOverviewViewModel;
@@ -65,14 +66,20 @@ class EventsController
      */
     public function jazz($vars = [])
     {
-        if (isset($_GET['day']) && $_GET['day'] === 'all') {
-            header('Location: /events/jazz');
-            exit;
+        $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayFilter = $_GET['day'] ?? 'thursday';
+        if (!in_array($dayFilter, $validDays, true)) {
+            $dayFilter = 'thursday';
         }
 
-        $dayFilter = $_GET['day'] ?? 'all';
+        // Full lineup in the page; day filter is applied in the browser (no reload).
+        $jazzArtists = $this->eventRepository->getJazzEvents(null, 'artist');
+        $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
 
-        $jazzArtists = $this->eventRepository->getJazzEvents($dayFilter !== 'all' ? $dayFilter : null);
+        $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets($jazzArtists);
+        $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
+        $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
 
         $contentService = new ContentService();
         $jazzContent = $contentService->getPageContent('jazz');
@@ -92,6 +99,11 @@ class EventsController
             require __DIR__ . '/../views/errors/404.php';
             return;
         }
+
+        $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets([$artist]);
+        $jazzCartTickets = $ticketService->getTicketsByEventId($artist->eventId);
+        $jazzCartTicket = $jazzCartTickets[0] ?? null;
 
         require __DIR__ . '/../views/events/jazz/detail.php';
     }

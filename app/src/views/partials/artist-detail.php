@@ -102,6 +102,13 @@ $tracks   = $artist->tracks ?? [];
 
         <!-- Upcoming performances -->
         <?php if ($day && $timeFrom): ?>
+            <?php
+            $jazzCartTicket = $jazzCartTicket ?? null;
+            $perfMaxQty = 99;
+            if ($artist->seats !== null && $artist->seats > 0) {
+                $perfMaxQty = min(99, $artist->seats);
+            }
+            ?>
             <section class="detail-performances" id="performances">
                 <h2 class="detail-performances__heading"><?= htmlspecialchars($dc['performances_heading'] ?? 'Upcoming performances') ?></h2>
                 <div class="perf-card">
@@ -115,9 +122,21 @@ $tracks   = $artist->tracks ?? [];
                         <div class="perf-card__price">&euro;<?= number_format($artist->price, 0) ?></div>
                         <div class="perf-card__price-note"><?= htmlspecialchars($dc['price_note'] ?? 'Included in passes') ?></div>
                     <?php endif; ?>
-                    <a href="/cart/add?session_id=<?= $artist->eventId ?>" class="perf-card__btn">
-                        Add to Program &amp; Cart
-                    </a>
+                    <?php if ($jazzCartTicket !== null): ?>
+                        <form action="/cart/add" method="post" class="perf-card__cart-form js-cart-add-form">
+                            <?= \App\Security\Csrf::field() ?>
+                            <input type="hidden" name="ticket_id" value="<?= (int) $jazzCartTicket->id ?>">
+                            <div class="perf-card__qty-row">
+                                <label for="perf-cart-qty" class="perf-card__qty-label">Tickets</label>
+                                <input type="number" name="quantity" id="perf-cart-qty" class="form-control form-control-sm perf-card__qty-input" value="1" min="1" max="<?= (int) $perfMaxQty ?>">
+                            </div>
+                            <button type="submit" class="perf-card__btn">
+                                <i class="bi bi-bag-plus me-1" aria-hidden="true"></i>Add to cart
+                            </button>
+                        </form>
+                    <?php else: ?>
+                        <p class="perf-card__unavailable text-muted small mb-0">Online tickets are not available for this performance.</p>
+                    <?php endif; ?>
                 </div>
             </section>
         <?php endif; ?>

@@ -43,6 +43,62 @@ class TicketRepository
     }
 
     /**
+     * For each event id, returns one ticket id (lowest id) when tickets exist.
+     *
+     * @param  int[]       $eventIds
+     * @return array<int,int>  event_id => ticket id
+     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        $eventIds = array_values(array_unique(array_filter(array_map('intval', $eventIds), fn ($id) => $id > 0)));
+        if ($eventIds === []) {
+            return [];
+        }
+
+        $db = DB::getConnection();
+        $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+        $stmt = $db->prepare(
+            "SELECT event_id, MIN(id) AS tid FROM tickets WHERE event_id IN ($placeholders) GROUP BY event_id"
+        );
+        $stmt->execute($eventIds);
+
+        $out = [];
+        foreach ($stmt as $row) {
+            $out[(int) $row['event_id']] = (int) $row['tid'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Insert a single saleable ticket row for an event (catalog line used by cart / orders).
+     *
+     * @return int New ticket id
+     */
+    public function insertTicketForEvent(int $eventId, string $name, float $price): int
+    {
+        if ($eventId <= 0) {
+            throw new \InvalidArgumentException('Invalid event id for ticket.');
+        }
+
+        $db = DB::getConnection();
+        $ticketCode = 'JZ-' . $eventId . '-' . strtoupper(bin2hex(random_bytes(5)));
+
+        $stmt = $db->prepare(
+            'INSERT INTO tickets (event_id, name, price, ticket_code, is_scanned)
+             VALUES (:event_id, :name, :price, :ticket_code, 0)'
+        );
+        $stmt->execute([
+            'event_id' => $eventId,
+            'name' => $name,
+            'price' => $price,
+            'ticket_code' => $ticketCode,
+        ]);
+
+        return (int) $db->lastInsertId();
+    }
+
+    /**
      * Retrieve a single ticket by its primary key.
      *
      * @param  int         $id  The ticket’s primary key.

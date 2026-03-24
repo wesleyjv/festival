@@ -41,38 +41,98 @@ class CartController
     /**
      * POST /cart/add – Add a ticket to the shopping cart.
      *
-     * Reads `ticket_id` from the POST body, looks the ticket up via the
-     * service layer, and – if the ticket exists – adds it to the session
-     * cart with a quantity of 1. Always redirects to the cart page.
-     *
-     * @return void Redirects to /cart.
+     * Reads `ticket_id` and optional `quantity` (1–99, default 1). Merges
+     * quantity into an existing line when the same ticket is already in the cart.
+     * Returns JSON when the client sends Accept: application/json, ajax=1, or
+     * X-Requested-With: XMLHttpRequest; otherwise redirects to /cart.
      */
     public function add()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            if (!Csrf::validateRequest()) {
-                header('Location: /cart');
-                exit;
+        $wantsJson = $this->wantsJsonCartAddResponse();
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'Invalid request.');
             }
+            header('Location: /cart');
+            exit;
+        }
 
-            $ticketId = $_POST['ticket_id'] ?? null;
-
-            if ($ticketId) {
-                // Look up the ticket through the service (includes ID validation)
-                $ticket = $this->ticketService->getTicketById((int)$ticketId);
-
-                if ($ticket) {
-                    // Retrieve existing cart from session or create a new one
-                    $cart = $_SESSION['cart'] ?? new ShoppingCart();
-                    $cart->addItem($ticket, 1);
-                    $_SESSION['cart'] = $cart;
-                }
+        if (!Csrf::validateRequest()) {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'Your session expired or the form was invalid. Refresh the page and try again.');
             }
+            header('Location: /cart');
+            exit;
+        }
+
+        $ticketId = $_POST['ticket_id'] ?? null;
+        if (!$ticketId) {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'No ticket was selected.');
+            }
+            header('Location: /cart');
+            exit;
+        }
+
+        $qty = isset($_POST['quantity']) ? (int) $_POST['quantity'] : 1;
+        $qty = max(1, min(99, $qty));
+
+        $ticket = $this->ticketService->getTicketById((int) $ticketId);
+        if (!$ticket) {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'That ticket could not be found.');
+            }
+            header('Location: /cart');
+            exit;
+        }
+
+        $cart = $_SESSION['cart'] ?? new ShoppingCart();
+        $cart->addOrMergeTicket($ticket, $qty);
+        $_SESSION['cart'] = $cart;
+
+        if ($wantsJson) {
+            $label = $ticket->name;
+            $msg = $qty === 1
+                ? sprintf('“%s” was added to your cart.', $label)
+                : sprintf('%d × “%s” were added to your cart.', $qty, $label);
+            $this->jsonCartAddResponse(true, $msg, [
+                'ticketName' => $label,
+                'quantity' => $qty,
+            ]);
         }
 
         header('Location: /cart');
+        exit;
+    }
+
+    private function wantsJsonCartAddResponse(): bool
+    {
+        $accept = $_SERVER['HTTP_ACCEPT'] ?? '';
+        if (is_string($accept) && stripos($accept, 'application/json') !== false) {
+            return true;
+        }
+        if (($_POST['ajax'] ?? '') === '1') {
+            return true;
+        }
+        $xhr = $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '';
+        return is_string($xhr) && strtolower($xhr) === 'xmlhttprequest';
+    }
+
+    /**
+     * @param array<string,mixed> $extra
+     */
+    private function jsonCartAddResponse(bool $ok, string $message, array $extra = []): void
+    {
+        header('Content-Type: application/json; charset=UTF-8');
+        echo json_encode(array_merge([
+            'ok' => $ok,
+            'message' => $message,
+        ], $extra), JSON_UNESCAPED_UNICODE);
         exit;
     }
 
