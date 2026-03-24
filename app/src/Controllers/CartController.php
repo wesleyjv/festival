@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\ShoppingCart;
+use App\Security\Csrf;
 use App\Services\TicketService;
 use App\ViewModels\CartViewModel;
 
@@ -51,6 +52,11 @@ class CartController
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::validateRequest()) {
+                header('Location: /cart');
+                exit;
+            }
+
             $ticketId = $_POST['ticket_id'] ?? null;
 
             if ($ticketId) {
@@ -84,6 +90,11 @@ class CartController
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::validateRequest()) {
+                header('Location: /cart');
+                exit;
+            }
+
             $index = $_POST['item_index'] ?? null;
 
             if ($index !== null && isset($_SESSION['cart'])) {

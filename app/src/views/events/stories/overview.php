@@ -4,8 +4,8 @@ $mainClass = 'storytelling-main-wrapper';
 require __DIR__ . '/../../partials/header.php';
 
 $heroImage = $storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg';
-$heroTitle = $storiesContent['hero_title'] ?? 'The Art of <span class="highlight">Storytelling</span>';
-$heroDescription = $storiesContent['hero_description'] ?? 'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.';
+$heroTitleCustom = isset($storiesContent['hero_title']) ? trim((string) $storiesContent['hero_title']) : '';
+$heroDescriptionCustom = isset($storiesContent['hero_description']) ? trim((string) $storiesContent['hero_description']) : '';
 
 $featuredTitle = $featuredStoryteller['title'] ?? 'Experience the Art of Storytelling in Haarlem';
 $featuredDescription = $featuredStoryteller['description'] ?? 'Join us for an enchanting journey through the world of storytelling, where words come alive and imagination knows no bounds. Our featured storytellers bring decades of experience and unique perspectives to create unforgettable experiences.';
@@ -21,8 +21,26 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
         <!-- Hero Content -->
         <div class="storytelling-hero-overlay">
             <div class="storytelling-hero-content">
-                <h1 class="storytelling-hero-title"><?php echo $heroTitle; ?></h1>
-                <p class="storytelling-hero-description"><?php echo $heroDescription; ?></p>
+                <h1 class="storytelling-hero-title"><?php
+                    if ($heroTitleCustom !== '') {
+                        echo htmlspecialchars(strip_tags($heroTitleCustom), ENT_QUOTES, 'UTF-8');
+                    } else {
+                        ?>The Art of <span class="highlight">Storytelling</span><?php
+                    }
+                ?></h1>
+                <p class="storytelling-hero-description"><?php
+                    if ($heroDescriptionCustom !== '') {
+                        $descPlain = preg_replace('#</p>\s*<p[^>]*>#i', "\n\n", $heroDescriptionCustom);
+                        $descPlain = str_replace(['<br>', '<br/>', '<br />'], "\n", $descPlain);
+                        echo nl2br(htmlspecialchars(strip_tags($descPlain), ENT_QUOTES, 'UTF-8'), false);
+                    } else {
+                        echo htmlspecialchars(
+                            'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.',
+                            ENT_QUOTES,
+                            'UTF-8'
+                        );
+                    }
+                ?></p>
                 <a href="#schedule" class="storytelling-hero-cta">View Event Schedule</a>
             </div>
         </div>
@@ -179,7 +197,9 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
                 <p>
                     <?php
                     $infoParagraph = $storiesContent['info_paragraph'] ?? "All storytelling events are suitable for ages 12 and above unless specifically marked as children's events. Tickets can be purchased online or at the venue 30 minutes before each performance. In case of rain, outdoor events will be moved to covered locations nearby.";
-                    echo $infoParagraph;
+                    $infoPlain = preg_replace('#</p>\s*<p[^>]*>#i', "\n\n", $infoParagraph);
+                    $infoPlain = str_replace(['<br>', '<br/>', '<br />'], "\n", $infoPlain);
+                    echo nl2br(htmlspecialchars(strip_tags($infoPlain), ENT_QUOTES, 'UTF-8'), false);
                     ?>
                 </p>
             </div>

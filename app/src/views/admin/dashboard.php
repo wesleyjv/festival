@@ -1,5 +1,7 @@
 <?php
 
+use App\Security\Csrf;
+
 // Simple standalone admin CMS dashboard view.
 // This is intentionally self-contained so you can open it via the /admin route
 // without needing any additional layout templates.
@@ -11,6 +13,7 @@
     <meta charset="utf-8">
     <title>Admin CMS Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<?= htmlspecialchars(Csrf::getToken(), ENT_QUOTES, 'UTF-8') ?>">
 
     <!-- Bootstrap 5 CSS -->
     <link
@@ -450,6 +453,7 @@
                     <small>
                         <?php if ($userError === 'email_exists'): ?>Email is already in use.
                         <?php elseif ($userError === 'invalid_id'): ?>Cannot delete that user.
+                        <?php elseif ($userError === 'csrf'): ?>Invalid session. Please reload the page and try again.
                         <?php else: ?>Invalid data. Please check all fields.
                         <?php endif; ?>
                     </small>
@@ -544,6 +548,7 @@
                                     <?php if ($u->id !== (int) ($_SESSION['user_id'] ?? 0)): ?>
                                     <form method="post" action="/admin/users/<?= $u->id ?>/delete" class="d-inline"
                                           onsubmit="return confirm('Delete user <?= htmlspecialchars(addslashes($u->name), ENT_QUOTES) ?>?')">
+                                        <?= Csrf::field() ?>
                                         <button type="submit" class="btn btn-sm btn-outline-danger">
                                             <i class="bi bi-trash"></i>
                                         </button>
@@ -568,6 +573,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <form method="post" action="/admin/users/create">
+                            <?= Csrf::field() ?>
                             <div class="modal-header">
                                 <h5 class="modal-title" id="createUserModalLabel">New User</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -608,6 +614,7 @@
                 <div class="modal-dialog">
                     <div class="modal-content">
                         <form method="post" id="editUserForm" action="/admin/users/0/update">
+                            <?= Csrf::field() ?>
                             <div class="modal-header">
                                 <h5 class="modal-title" id="editUserModalLabel">Edit User</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -665,6 +672,7 @@
                 <div class="alert alert-danger alert-sm py-2 mb-3">
                     <small>
                         <?php if ($storyError === 'invalid_id'): ?>Invalid event ID.
+                        <?php elseif ($storyError === 'csrf'): ?>Invalid session. Please reload the page and try again.
                         <?php else: ?>Invalid data. Please check all required fields.
                         <?php endif; ?>
                     </small>
@@ -726,6 +734,7 @@
                                               action="/admin/story-events/<?= (int)($e['id'] ?? 0) ?>/delete"
                                               class="d-inline"
                                               onsubmit="return confirm('Delete story event <?= htmlspecialchars(addslashes($e['title'] ?? ''), ENT_QUOTES) ?>?');">
+                                            <?= Csrf::field() ?>
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -751,6 +760,7 @@
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <form method="post" action="/admin/story-events/create">
+                            <?= Csrf::field() ?>
                             <div class="modal-header">
                                 <h5 class="modal-title" id="createStoryEventModalLabel">New Story Event</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -809,6 +819,7 @@
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <form method="post" id="editStoryEventForm" action="/admin/story-events/0/update">
+                            <?= Csrf::field() ?>
                             <div class="modal-header">
                                 <h5 class="modal-title" id="editStoryEventModalLabel">Edit Story Event</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1069,6 +1080,7 @@
                 <div class="tab-pane fade show active" id="content-homepage" role="tabpanel" aria-labelledby="tab-homepage">
                     <form method="post" action="/admin/content/save" class="card stat-card mb-3">
                         <div class="card-body">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="page" value="homepage">
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Hero title (supports HTML)</label>
@@ -1099,6 +1111,7 @@
                 <div class="tab-pane fade" id="content-stories" role="tabpanel" aria-labelledby="tab-stories">
                     <form method="post" action="/admin/content/save" class="card stat-card mb-3">
                         <div class="card-body">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="page" value="stories">
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Hero background image URL</label>
@@ -1201,6 +1214,7 @@
                 <div class="tab-pane fade" id="content-yummy" role="tabpanel" aria-labelledby="tab-yummy">
                     <form method="post" action="/admin/content/save" class="card stat-card mb-3">
                         <div class="card-body">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="page" value="yummy">
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Hero background image URL</label>
@@ -1261,6 +1275,7 @@
                 <div class="tab-pane fade" id="content-history" role="tabpanel" aria-labelledby="tab-history">
                     <form method="post" action="/admin/content/save" class="card stat-card mb-3">
                         <div class="card-body">
+                            <?= Csrf::field() ?>
                             <input type="hidden" name="page" value="history">
                             <div class="mb-3">
                                 <label class="form-label small fw-semibold">Hero title</label>
@@ -1293,6 +1308,8 @@
 
 <script>
     (function () {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
         const pageSections = document.querySelectorAll('.page-section');
 
         function showPage(page) {
@@ -1426,6 +1443,7 @@
 
                 const formData = new FormData();
                 formData.append('file', blobInfo.blob(), blobInfo.filename());
+                formData.append('csrf_token', csrfToken);
                 xhr.send(formData);
             }
         });
@@ -1435,6 +1453,7 @@
 
             const data = new FormData();
             data.append('file', file, file.name);
+            data.append('csrf_token', csrfToken);
 
             if (typeof onStart === 'function') {
                 onStart();
@@ -1524,6 +1543,7 @@
         function jazzUploadImage(file) {
             const fd = new FormData();
             fd.append('file', file);
+            fd.append('csrf_token', csrfToken);
             return fetch('/admin/upload-image', { method: 'POST', body: fd, credentials: 'include' })
                 .then(function (r) {
                     return r.text().then(function (text) {

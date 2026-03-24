@@ -251,6 +251,7 @@
             <?php endif; ?>
 
             <form method="POST" action="/login" novalidate>
+                <?= \App\Security\Csrf::field() ?>
                 <div class="form-group-custom">
                     <label for="identity"><i class="bi bi-person"></i> Username or Email</label>
                     <input type="text"

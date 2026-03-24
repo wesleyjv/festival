@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Repositories\UserRepository;
+use App\Security\Csrf;
 use App\Services\ImageUploadService;
 use App\Services\MailService;
 use App\Services\Validator;
@@ -36,6 +37,12 @@ class UserController
 
     public function handleRegister($vars = [])
     {
+        if (!Csrf::validateRequest()) {
+            $_SESSION['register_errors'] = ['Invalid session. Please try again.'];
+            header('Location: /register');
+            exit;
+        }
+
         $name                 = trim($_POST['name']                 ?? '');
         $email                = trim($_POST['email']                ?? '');
         $password             =      $_POST['password']             ?? '';
@@ -93,6 +100,12 @@ class UserController
 
     public function handleLogin($vars = [])
     {
+        if (!Csrf::validateRequest()) {
+            $_SESSION['login_errors'] = ['Invalid session. Please try again.'];
+            header('Location: /login');
+            exit;
+        }
+
         $identity = trim($_POST['identity'] ?? '');
         $password =      $_POST['password'] ?? '';
 
@@ -183,6 +196,12 @@ class UserController
     public function handleUpdateProfile($vars = [])
     {
         $this->requireAuth();
+
+        if (!Csrf::validateRequest()) {
+            $_SESSION['profile_errors'] = ['Invalid session. Please try again.'];
+            header('Location: /profile');
+            exit;
+        }
 
         $userId               = (int) $_SESSION['user_id'];
         $name                 = trim($_POST['name']                  ?? '');
