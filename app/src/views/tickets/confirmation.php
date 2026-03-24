@@ -1,232 +1,228 @@
-<?php require __DIR__ . '/../partials/header.php'; ?>
+<?php 
+$mainClass = 'p-0';
+require __DIR__ . '/../partials/header.php'; 
+?>
 
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-
-    :root {
-        --bg-dark: #1f1813;
-        --card-bg: #f8f5eb;
-        --text-dark: #2a1f17;
-        --text-muted: #827566;
-        --primary-brown: #36291e;
-        --border-color: #d8cbbc;
-        --gold-accent: #c39a3b;
-        --btn-gold: #bfa374;
-    }
-
-    body {
-        background-color: var(--bg-dark);
-        font-family: 'Montserrat', sans-serif;
-        color: #fff;
-    }
-
-    .confirm-wrapper {
-        background-color: var(--bg-dark);
-        background-image: radial-gradient(circle at bottom left, rgba(195, 154, 59, 0.05) 0%, transparent 40%),
-                          radial-gradient(circle at bottom right, rgba(195, 154, 59, 0.05) 0%, transparent 40%);
-        min-height: 100vh;
-        padding: 60px 0 100px;
+    .confirm-page {
+        padding: 80px 0;
+        background-color: #f8f9fa;
+        min-height: calc(100vh - 56px);
         display: flex;
         align-items: center;
     }
 
-    /* --- Card --- */
     .confirm-card {
-        background-color: var(--card-bg);
-        border-radius: 16px;
-        padding: 50px 45px;
-        color: var(--text-dark);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        padding: 50px;
         text-align: center;
-        max-width: 520px;
+        max-width: 600px;
         margin: 0 auto;
+        border: none;
     }
 
-    /* --- Success icon --- */
-    .success-icon {
-        width: 72px;
-        height: 72px;
-        background: linear-gradient(135deg, rgba(195,154,59,0.15), rgba(195,154,59,0.05));
-        border: 2px solid rgba(195, 154, 59, 0.4);
+    .success-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        background-color: #e6fffa;
+        color: #28a745;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 24px;
-    }
-    .success-icon svg {
-        width: 32px;
-        height: 32px;
-        fill: none;
-        stroke: var(--gold-accent);
-        stroke-width: 2.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+        margin: 0 auto 30px;
+        font-size: 40px;
+        box-shadow: 0 4px 10px rgba(40, 167, 69, 0.1);
     }
 
-    /* --- Heading --- */
     .confirm-title {
-        font-size: 2rem;
-        font-weight: 800;
-        letter-spacing: -0.5px;
+        font-family: var(--font-josefin);
+        font-weight: 700;
+        font-size: var(--text-4xl);
+        color: var(--primary-dark);
         margin-bottom: 10px;
-        color: var(--text-dark);
-    }
-    .confirm-subtitle {
-        font-size: 0.95rem;
-        color: var(--text-muted);
-        font-style: italic;
-        margin-bottom: 35px;
     }
 
-    /* --- Detail rows --- */
-    .detail-row {
-        background-color: #fff;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 16px 22px;
-        margin-bottom: 12px;
+    .confirm-subtitle {
+        font-family: var(--font-inter);
+        color: #6c757d;
+        font-size: var(--text-lg);
+        margin-bottom: 40px;
+    }
+
+    .order-details {
+        background-color: #f8f9fa;
+        border-radius: var(--radius-md);
+        padding: 25px;
+        margin-bottom: 40px;
+    }
+
+    .detail-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 15px;
     }
+
+    .detail-item:last-child {
+        margin-bottom: 0;
+    }
+
     .detail-label {
-        font-size: 0.72rem;
-        font-weight: 700;
+        font-family: var(--font-inter);
+        font-weight: 600;
+        color: #495057;
         text-transform: uppercase;
-        letter-spacing: 1.2px;
-        color: var(--text-muted);
-    }
-    .detail-val {
-        font-size: 1rem;
-        font-weight: 800;
-        color: var(--text-dark);
-    }
-    .detail-val.gold { color: var(--gold-accent); }
-
-    /* --- Divider --- */
-    .confirm-divider {
-        border: none;
-        border-top: 1px solid var(--border-color);
-        margin: 25px 0;
+        font-size: 12px;
+        letter-spacing: 1px;
     }
 
-    /* --- Email note --- */
-    .email-note {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-bottom: 30px;
-        line-height: 1.6;
-    }
-    .email-note strong {
-        color: var(--text-dark);
+    .detail-value {
+        font-family: var(--font-inter);
         font-weight: 700;
+        color: var(--primary-dark);
+        font-size: 18px;
     }
 
-    /* --- Buttons --- */
+    .detail-value.amount {
+        color: var(--primary-orange);
+    }
+
+    .email-notification {
+        background-color: #fff8f0;
+        border: 1px solid #fee2e2;
+        border-radius: var(--radius-sm);
+        padding: 15px;
+        margin-bottom: 40px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        text-align: left;
+    }
+
+    .email-notification i {
+        font-size: 24px;
+        color: var(--primary-orange);
+    }
+
+    .email-notification p {
+        margin: 0;
+        font-size: 14px;
+        color: #7c2d12;
+    }
+
+    .email-notification strong {
+        color: var(--primary-dark);
+    }
+
     .confirm-actions {
         display: flex;
-        gap: 12px;
+        gap: 20px;
         justify-content: center;
     }
-    .btn-home {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        background: transparent;
-        border: 1px solid var(--border-color);
-        color: var(--text-muted);
-        border-radius: 6px;
-        padding: 12px 22px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.8rem;
+
+    .btn-confirm {
+        padding: 14px 30px;
+        border-radius: var(--radius-full);
         font-weight: 600;
+        font-family: var(--font-inter);
         text-transform: uppercase;
         letter-spacing: 1px;
+        transition: all 0.3s ease;
         text-decoration: none;
-        transition: border-color 0.2s, color 0.2s;
-    }
-    .btn-home:hover {
-        border-color: var(--text-dark);
-        color: var(--text-dark);
-    }
-    .btn-orders {
         display: inline-flex;
         align-items: center;
-        gap: 7px;
-        background-color: var(--btn-gold);
+        gap: 10px;
+    }
+
+    .btn-primary-confirm {
+        background-color: var(--primary-orange);
+        color: white;
         border: none;
-        color: #fff;
-        border-radius: 6px;
-        padding: 12px 24px;
-        font-family: 'Montserrat', sans-serif;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        text-decoration: none;
-        transition: background-color 0.3s;
-        box-shadow: 0 4px 15px rgba(191, 163, 116, 0.3);
+        box-shadow: 0 4px 15px rgba(224, 145, 69, 0.3);
     }
-    .btn-orders:hover {
-        background-color: #a88d60;
-        color: #fff;
+
+    .btn-primary-confirm:hover {
+        background-color: #d17a35;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(224, 145, 69, 0.4);
     }
-    .btn-home svg, .btn-orders svg {
-        width: 13px;
-        height: 13px;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
+
+    .btn-secondary-confirm {
+        background-color: white;
+        color: var(--primary-dark);
+        border: 2px solid #e9ecef;
+    }
+
+    .btn-secondary-confirm:hover {
+        border-color: var(--primary-dark);
+        background-color: #f8f9fa;
+        color: var(--primary-dark);
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 576px) {
+        .confirm-card {
+            padding: 30px 20px;
+        }
+        .confirm-actions {
+            flex-direction: column;
+        }
+        .btn-confirm {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
-<div class="confirm-wrapper">
+<div class="confirm-page">
     <div class="container">
-
         <div class="confirm-card">
-
-            <div class="success-icon">
-                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            
+            <div class="success-icon-wrapper">
+                <i class="bi bi-check-lg"></i>
             </div>
 
-            <h1 class="confirm-title">Order Confirmed</h1>
-            <p class="confirm-subtitle">Thank you for your purchase. Your tickets are being prepared.</p>
+            <h1 class="confirm-title">Order Confirmed!</h1>
+            <p class="confirm-subtitle">Thank you for your purchase. We've received your order.</p>
 
-            <div class="detail-row">
-                <span class="detail-label">Order Number</span>
-                <span class="detail-val"><?= htmlspecialchars($viewModel->orderNumber) ?></span>
-            </div>
-
-            <?php if ($viewModel->orderTotal !== null): ?>
-                <div class="detail-row">
-                    <span class="detail-label">Total Paid</span>
-                    <span class="detail-val gold">&euro;<?= number_format($viewModel->orderTotal, 2) ?></span>
+            <div class="order-details">
+                <div class="detail-item">
+                    <span class="detail-label">Order Number</span>
+                    <span class="detail-value">#<?= htmlspecialchars($viewModel->orderNumber) ?></span>
                 </div>
-            <?php endif; ?>
+                <?php if ($viewModel->orderTotal !== null): ?>
+                    <div class="detail-item">
+                        <span class="detail-label">Total Amount</span>
+                        <span class="detail-value amount">&euro;<?= number_format($viewModel->orderTotal, 2) ?></span>
+                    </div>
+                <?php endif; ?>
+            </div>
 
-            <hr class="confirm-divider">
-
-            <p class="email-note">
-                A confirmation email will be sent to<br>
-                <strong><?= htmlspecialchars($viewModel->userEmail) ?></strong>
-            </p>
+            <div class="email-notification">
+                <i class="bi bi-envelope-check"></i>
+                <p>
+                    A confirmation email with your tickets has been sent to<br>
+                    <strong><?= htmlspecialchars($viewModel->userEmail) ?></strong>
+                </p>
+            </div>
 
             <div class="confirm-actions">
-                <a href="/" class="btn-home">
-                    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-                    Home
+                <a href="/orders" class="btn-confirm btn-primary-confirm">
+                    <i class="bi bi-ticket-detailed"></i>
+                    View My Orders
                 </a>
-                <a href="/orders" class="btn-orders">
-                    ✦ &nbsp;My Orders
+                <a href="/" class="btn-confirm btn-secondary-confirm">
+                    <i class="bi bi-house"></i>
+                    Back to Home
                 </a>
             </div>
 
         </div>
-
     </div>
 </div>
 
-<?php require __DIR__ . '/../partials/footer.php'; ?>
+<?php require __DIR__ . '/../partials/header.php'; ?>

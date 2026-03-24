@@ -396,33 +396,37 @@
 </div>
 
 <script>
+// Simple script to keep the booking summary in sync with the form selections
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Root form container and quantity input
     const form = document.querySelector('.booking-container');
     const quantityInput = document.getElementById('quantity');
     
-    // Summary elements
-    const sumName = document.getElementById('sum-name');
-    const sumPrice = document.getElementById('sum-price');
-    const sumDate = document.getElementById('sum-date');
-    const sumTime = document.getElementById('sum-time');
-    const sumLang = document.getElementById('sum-lang');
-    const sumTotal = document.getElementById('sum-total');
+    // Summary elements in the sidebar that will be updated
+    const sumName = document.getElementById('sum-name');   // ticket name
+    const sumPrice = document.getElementById('sum-price'); // single-ticket price text
+    const sumDate = document.getElementById('sum-date');   // selected day
+    const sumTime = document.getElementById('sum-time');   // selected time
+    const sumLang = document.getElementById('sum-lang');   // selected language
+    const sumTotal = document.getElementById('sum-total'); // total amount
 
+    // Update the summary box based on current form state
     function updateSummary() {
-        // Get selected ticket info
+        // Get selected ticket info (value format: "Name|Price")
         const selectedTicket = form.querySelector('input[name="ticket"]:checked');
         if (selectedTicket) {
-            const [name, price] = selectedTicket.value.split('|');
+            const [name, price] = selectedTicket.value.split('|'); // split into name and numeric price
             sumName.textContent = name;
             sumPrice.textContent = '€ ' + parseFloat(price).toFixed(2);
             
-            // Calculate Total
+            // Calculate and display total = price * quantity
             const quantity = parseInt(quantityInput.value) || 1;
             const total = parseFloat(price) * quantity;
             sumTotal.textContent = '€' + total.toFixed(2);
         }
 
-        // Update other details
+        // Update day, time and language fields from the checked radio inputs
         const selectedDate = form.querySelector('input[name="date"]:checked');
         if (selectedDate) sumDate.textContent = selectedDate.value;
 
@@ -433,16 +437,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedLang) sumLang.textContent = selectedLang.value;
     }
 
-    // Add event listeners to all radio inputs and quantity input
+    // Attach listeners to radios and the quantity input so changes update the summary
     form.querySelectorAll('input[type="radio"], #quantity').forEach(input => {
-        input.addEventListener('change', updateSummary);
-        // Also listen for 'input' on quantity for real-time updates
+        input.addEventListener('change', updateSummary); // radio/number change
+        // For immediate feedback while typing/changing number, listen to 'input' too
         if (input.id === 'quantity') {
             input.addEventListener('input', updateSummary);
         }
     });
 
-    // Initial update
+    // Run once on load to populate the summary with default selections
     updateSummary();
 });
 </script>

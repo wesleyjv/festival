@@ -8,42 +8,29 @@ use App\Enums\PaymentMethod;
 use App\Models\ShoppingCart;
 use App\Services\MailService;
 use App\Services\OrderService;
+use App\Services\StripeService;
 use App\Services\TicketPdfService;
 use App\ViewModels\CheckoutViewModel;
 use App\ViewModels\OrderConfirmationViewModel;
 use App\ViewModels\OrderHistoryViewModel;
-use Stripe\StripeClient;
 
 class OrderController
 {
     private OrderService $orderService;
     private TicketPdfService $ticketPdfService;
     private MailService $mailService;
+    private StripeService $stripeService;
 
     public function __construct(
         OrderService $orderService,
         TicketPdfService $ticketPdfService,
         MailService $mailService,
+        StripeService $stripeService,
     ) {
         $this->orderService = $orderService;
         $this->ticketPdfService = $ticketPdfService;
         $this->mailService = $mailService;
-    }
-
-    /**
-     * Find the Stripe secret key from several common environment variable names.
-     */
-    private function getStripeSecret(): ?string
-    {
-        // Try to find the Stripe API key from environment variables
-        $keys = ['STRIPE_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_API_SECRET', 'STRIPE_KEY', 'STRIPE_PRIVATE'];
-        foreach ($keys as $k) {
-            $v = getenv($k);
-            if ($v !== false && strlen($v) > 0) {
-                return $v;
-            }
-        }
-        return null;
+        $this->stripeService = $stripeService;
     }
 
     public function orders(): void
@@ -103,100 +90,31 @@ class OrderController
             exit;
         }
 
-        $paymentMethod = $_POST['payment_method'] ?? null;
-        if (!$this->orderService->isValidPaymentMethod($paymentMethod)) {
-            $_SESSION['checkout_error'] = 'Please select a valid payment method.';
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
             header('Location: /checkout');
             exit;
         }
-        // If the user chose to pay by credit card, create a Stripe Checkout session
-        if ($paymentMethod === \App\Enums\PaymentMethod::CREDIT_CARD->value) {
-            $stripeSecret = $this->getStripeSecret();
-            if (empty($stripeSecret)) {
-                $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
-                header('Location: /checkout');
-                exit;
-            }
 
-            // Initialize the Stripe client with the secret key
-            $stripe = new StripeClient($stripeSecret);
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $baseUrl = $protocol . '://' . $host;
 
-            // Build line items from the shopping cart to send to Stripe
-            $lineItems = [];
-            foreach ($cart->items as $item) {
-                $name = $item->ticket ? $item->ticket->name : 'Festival Ticket';
-                // Convert price to cents (Stripe uses cents)
-                $unitAmount = (int) round($item->price * 100);
-                $lineItems[] = [
-                    'price_data' => [
-                        'currency' => 'eur',
-                        'product_data' => ['name' => $name],
-                        'unit_amount' => $unitAmount,
-                    ],
-                    'quantity' => $item->quantity,
-                ];
-            }
-
-            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $baseUrl = $protocol . '://' . $host;
-
-            try {
-                // Create a Stripe Checkout session with our items and redirect URLs
-                $session = $stripe->checkout->sessions->create([
-                    'payment_method_types' => ['card'],
-                    'mode' => 'payment',
-                    'line_items' => $lineItems,
-                    'success_url' => $baseUrl . '/checkout/complete?session_id={CHECKOUT_SESSION_ID}',
-                    'cancel_url' => $baseUrl . '/checkout',
-                    'metadata' => [
-                        'user_id' => (string) ($_SESSION['user_id'] ?? ''),
-                    ],
-                ]);
-
-                // Redirect the user to Stripe's payment page
-                header('Location: ' . $session->url);
-                exit;
-            } catch (\Throwable $e) {
-                // Don't expose Stripe errors to the user — show a generic message
-                $_SESSION['checkout_error'] = 'Unable to start payment session. Please try again.';
-                header('Location: /checkout');
-                exit;
-            }
-        }
-
-        // Non-credit card flows continue to create the order directly
         try {
-            $order = $this->orderService->createOrderFromCart($cart, (int) $_SESSION['user_id']);
-            unset($_SESSION['cart']);
+            // Use StripeService to create a Checkout Session
+            $session = $this->stripeService->createCheckoutSession(
+                cart: $cart,
+                baseUrl: $baseUrl,
+                userId: (int) $_SESSION['user_id']
+            );
 
-            // Generate ticket PDF and email it to the user
-            $userEmail = $_SESSION['user_email'] ?? null;
-            if ($userEmail !== null) {
-                $orderWithItems = $this->orderService->getOrderByIdWithItems($order->id);
-                if ($orderWithItems !== null) {
-                    $pdfBytes = $this->ticketPdfService->generatePdf($orderWithItems);
-                    $this->mailService->sendWithAttachment(
-                        to: $userEmail,
-                        subject: 'Your Festival Tickets - ' . $order->orderNumber,
-                        body: "Hi,\r\n\r\nThank you for your order!\r\n\r\n"
-                            . "Order number: " . $order->orderNumber . "\r\n"
-                            . "Total: EUR " . number_format($order->totalAmount, 2) . "\r\n\r\n"
-                            . "Your tickets are attached as a PDF.\r\n\r\n"
-                            . "See you at the festival!",
-                        attachmentData: $pdfBytes,
-                        attachmentName: 'tickets-' . $order->orderNumber . '.pdf',
-                    );
-                }
-            }
-
-            $_SESSION['last_order_number'] = $order->orderNumber;
-            $_SESSION['last_order_total'] = $order->totalAmount;
-
-            header('Location: /checkout/confirmation');
+            // Redirect the user to Stripe's payment page
+            header('Location: ' . $session->url);
             exit;
-        } catch (\Exception $e) {
-            $_SESSION['checkout_error'] = 'Something went wrong placing your order. Please try again.';
+        } catch (\Throwable $e) {
+            error_log('Stripe Session Creation Error: ' . $e->getMessage());
+            $_SESSION['checkout_error'] = 'Unable to start payment session. Please try again.';
             header('Location: /checkout');
             exit;
         }
@@ -221,19 +139,18 @@ class OrderController
             exit;
         }
 
-        $stripeSecret = $this->getStripeSecret();
-        if (empty($stripeSecret)) {
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
             $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
             header('Location: /checkout');
             exit;
         }
 
-        $stripe = new StripeClient($stripeSecret);
-
         try {
-            // Ask Stripe for the details of this payment session
-            $session = $stripe->checkout->sessions->retrieve($sessionId, []);
+            // Use StripeService to retrieve the payment session
+            $session = $this->stripeService->retrieveSession($sessionId);
         } catch (\Throwable $e) {
+            error_log('Stripe Session Retrieval Error: ' . $e->getMessage());
             $_SESSION['checkout_error'] = 'Unable to verify payment. Please contact support.';
             header('Location: /checkout');
             exit;

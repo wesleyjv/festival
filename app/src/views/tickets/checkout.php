@@ -402,17 +402,11 @@
             <!-- Right: Payment -->
             <div class="payment-col">
                 <div class="payment-card">
-                    <h2 class="payment-title">Payment Method</h2>
-
-                    <?php foreach ($viewModel->paymentMethods as $i => $method): ?>
-                        <label class="method-option">
-                            <input type="radio"
-                                   name="payment_method"
-                                   value="<?= htmlspecialchars($method['value']) ?>"
-                                   <?= $i === 0 ? 'checked required' : '' ?>>
-                            <span class="method-label"><?= htmlspecialchars($method['label']) ?></span>
-                        </label>
-                    <?php endforeach; ?>
+                    <h2 class="payment-title">Checkout with Stripe</h2>
+                    
+                    <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-bottom: 25px;">
+                        Select your preferred payment method (Credit Card, iDEAL, or PayPal) on the next page.
+                    </p>
 
                     <?php if (!$viewModel->isLoggedIn): ?>
                         <div class="warning-box" style="margin-top:20px;">
@@ -427,10 +421,10 @@
                     </div>
 
                     <button type="submit" class="btn-pay" <?= !$viewModel->isLoggedIn ? 'disabled' : '' ?>>
-                        ✦ &nbsp;Pay &euro;<?= number_format($viewModel->total, 2) ?> &nbsp;✦
+                        ✦ &nbsp;Pay with Stripe &nbsp;✦
                     </button>
 
-                    <p class="payment-note">🔒 &nbsp;Your payment is secure and encrypted</p>
+                    <p class="payment-note">🔒 &nbsp;Securely processed via Stripe</p>
                 </div>
             </div>
 

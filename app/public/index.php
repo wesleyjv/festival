@@ -141,7 +141,8 @@ switch ($routeInfo[0]) {
             $orderService = new App\Services\OrderService($orderRepository);
             $ticketPdfService = new App\Services\TicketPdfService();
             $mailService = new App\Services\MailService();
-            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService);
+            $stripeService = new App\Services\StripeService();
+            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
         } else {
             $controller = new $controllerClass();
         }
