@@ -9,6 +9,7 @@
     <?php endif; ?>
 
     <form action="/checkout" method="POST">
+        <?= \App\Security\Csrf::field() ?>
         <div class="row g-4">
 
             <!-- Left: order summary -->

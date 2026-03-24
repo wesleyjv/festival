@@ -42,6 +42,7 @@
                                 <td class="fw-semibold">&euro;<?= number_format($item->price * $item->quantity, 2) ?></td>
                                 <td class="text-end pe-4">
                                     <form action="/cart/remove" method="POST">
+                                        <?= \App\Security\Csrf::field() ?>
                                         <input type="hidden" name="item_index" value="<?= $index ?>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger rounded-3">
                                             <i class="bi bi-trash me-1"></i>Remove

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Enums\PaymentMethod;
+use App\Security\Csrf;
 use App\Models\ShoppingCart;
 use App\Services\MailService;
 use App\Services\OrderService;
@@ -72,6 +73,12 @@ class OrderController
     public function placeOrder(): void
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (!Csrf::validateRequest()) {
+            $_SESSION['checkout_error'] = 'Invalid session. Please try again.';
+            header('Location: /checkout');
+            exit;
+        }
 
         if (empty($_SESSION['user_id'])) {
             $_SESSION['checkout_error'] = 'You must be logged in to complete your purchase.';
@@ -156,6 +163,12 @@ class OrderController
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
+        }
+
+        if (!Csrf::validateRequest()) {
+            $_SESSION['email_error'] = 'Invalid session. Please try again.';
+            header('Location: /orders');
+            exit;
         }
 
         if (empty($_SESSION['user_id'])) {

@@ -9,6 +9,11 @@
         <?php unset($_SESSION['email_success']); ?>
     <?php endif; ?>
 
+    <?php if (!empty($_SESSION['email_error'])): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['email_error']) ?></div>
+        <?php unset($_SESSION['email_error']); ?>
+    <?php endif; ?>
+
     <?php if (empty($viewModel->orders)): ?>
 
         <div class="text-center py-5">
@@ -56,6 +61,7 @@
                             </td>
                             <td>
                                 <form action="/orders/<?= $order->id ?>/email" method="POST">
+                                    <?= \App\Security\Csrf::field() ?>
                                     <button type="submit" class="btn btn-dark">
                                         <i class="bi bi-envelope me-1"></i>Email Tickets
                                     </button>

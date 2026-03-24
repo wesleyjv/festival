@@ -1,4 +1,7 @@
 <?php
+
+use App\Security\Csrf;
+
 /** @var array<string,string> $jazzContent */
 /** @var \App\Models\JazzEvent[] $jazzCmsArtists */
 /** @var array<int, array<string,string>> $jazzArtistContents */
@@ -53,6 +56,8 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
         <div class="tab-pane fade show active" id="jazz-cms-pane-home" role="tabpanel">
 
             <form method="post" action="/admin/content/save" class="mb-0" id="jazz-cms-form-home">
+
+                <?= Csrf::field() ?>
 
                 <input type="hidden" name="page" value="jazz">
 
@@ -309,6 +314,7 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                     <h3 class="h6 mb-2">Add jazz artist</h3>
                     <p class="small text-muted mb-3">Creates database rows and a public page at <code>/events/jazz/&lt;id&gt;</code>.</p>
                     <form method="post" action="/admin/jazz/artists/create" class="row g-2">
+                        <?= Csrf::field() ?>
                         <div class="col-md-4">
                             <label class="form-label small mb-0">Artist name *</label>
                             <input type="text" name="artist" class="form-control form-control-sm" required maxlength="255">
@@ -403,6 +409,8 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                         data-artist-id="<?= $aid ?>"
 
                     >
+
+                        <?= Csrf::field() ?>
 
                         <input type="hidden" name="page" value="jazz_<?= $aid ?>">
 
@@ -541,6 +549,8 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                     </form>
 
                     <form method="post" action="/admin/jazz/artists/<?= $aid ?>/delete" class="mt-2 pt-2 border-top" onsubmit="return confirm('Delete this artist and all CMS content for them? This cannot be undone.');">
+
+                        <?= Csrf::field() ?>
 
                         <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash me-1"></i>Delete artist from database</button>
 

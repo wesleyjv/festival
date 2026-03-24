@@ -233,6 +233,7 @@
             <?php endif; ?>
 
             <form method="POST" action="/profile/update" enctype="multipart/form-data" novalidate>
+                <?= \App\Security\Csrf::field() ?>
                 <div class="form-group-custom">
                     <label for="name"><i class="bi bi-person"></i> Name</label>
                     <input

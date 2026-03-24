@@ -43,6 +43,8 @@ ini_set('session.cookie_httponly', '1');
 
 session_start();
 
+\App\Security\Csrf::getToken();
+
 /**
  * Auto-login via "Remember me" cookie.
  * If the user has no active session but carries a valid remember token cookie,

@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Security\Csrf;
 use App\Services\ContentService;
 use App\Services\ImageUploadService;
 use App\Services\Validator;
@@ -69,6 +70,11 @@ class AdminController
     {
         $this->requireAdmin();
 
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?error=csrf#content');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin');
             exit;
@@ -81,7 +87,7 @@ class AdminController
         }
 
         $data = $_POST;
-        unset($data['page']);
+        unset($data['page'], $data[Csrf::FIELD_NAME]);
 
         (new ContentService())->savePageContent($page, $data);
 
@@ -101,7 +107,10 @@ class AdminController
         $payload = ['error' => 'Unexpected error'];
 
         try {
-            if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+            if (!Csrf::validateRequest()) {
+                $status = 403;
+                $payload = ['error' => 'Invalid CSRF token'];
+            } elseif (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
                 $status = 403;
                 $payload = ['error' => 'Unauthorized'];
             } elseif (!isset($_FILES['file']) || ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
@@ -138,6 +147,11 @@ class AdminController
     {
         $this->requireAdmin();
 
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . '#content');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#content');
             exit;
@@ -162,6 +176,11 @@ class AdminController
     public function deleteJazzArtist($vars = []): void
     {
         $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . '#content');
+            exit;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#content');
@@ -189,6 +208,11 @@ class AdminController
     public function createUser($vars = []): void
     {
         $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?user_error=csrf#users');
+            exit;
+        }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
@@ -227,6 +251,11 @@ class AdminController
     {
         $this->requireAdmin();
 
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?user_error=csrf#users');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
             exit;
@@ -263,6 +292,11 @@ class AdminController
     {
         $this->requireAdmin();
 
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?user_error=csrf#users');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#users');
             exit;
@@ -287,6 +321,11 @@ class AdminController
     {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
             header('Location: /login');
+            exit;
+        }
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?story_error=csrf#events');
             exit;
         }
 
@@ -337,6 +376,11 @@ class AdminController
             exit;
         }
 
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?story_error=csrf#events');
+            exit;
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header('Location: /admin#events');
             exit;
@@ -382,6 +426,11 @@ class AdminController
     {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
             header('Location: /login');
+            exit;
+        }
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?story_error=csrf#events');
             exit;
         }
 
