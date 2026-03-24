@@ -81,6 +81,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
 
+    $r->addRoute('GET', '/employee/scan', ['App\\Controllers\\TicketScanController', 'index']);
+    $r->addRoute('POST', '/employee/scan', ['App\\Controllers\\TicketScanController', 'scan']);
+
     $r->addRoute('GET', '/orders', ['App\\Controllers\\OrderController', 'orders']);
     $r->addRoute('GET', '/orders/{id:\d+}/download', ['App\\Controllers\\OrderController', 'download']);
     $r->addRoute('POST', '/orders/{id:\d+}/email', ['App\\Controllers\\OrderController', 'emailTickets']);

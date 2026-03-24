@@ -194,4 +194,64 @@ class TicketService
 
         return $map;
     }
+
+    /**
+     * Normalise raw input from QR (e.g. "TICKET-JZ-1-ABC") or manual entry for lookup.
+     */
+    public static function normalizeTicketCode(string $raw): string
+    {
+        $s = trim($raw);
+        if ($s === '') {
+            return '';
+        }
+        if (preg_match('/^TICKET-/i', $s)) {
+            $s = substr($s, strlen('TICKET-'));
+        }
+
+        return strtoupper(trim($s));
+    }
+
+    /**
+     * Validate and record entry: first scan marks the ticket; repeat scan returns a warning.
+     *
+     * @return array{status:string,message:string,ticket:?\App\Models\Ticket}
+     */
+    public function scanTicketByCode(string $rawInput): array
+    {
+        $code = self::normalizeTicketCode($rawInput);
+        if ($code === '') {
+            return [
+                'status' => 'invalid',
+                'message' => 'Please enter or scan a ticket code.',
+                'ticket' => null,
+            ];
+        }
+
+        $ticket = $this->ticketRepository->findByTicketCode($code);
+        if ($ticket === null) {
+            return [
+                'status' => 'not_found',
+                'message' => 'No ticket found for this code.',
+                'ticket' => null,
+            ];
+        }
+
+        $updated = $this->ticketRepository->markScannedIfNotYet($ticket->id);
+        if ($updated === 1) {
+            $ticket->isScanned = true;
+            $ticket->scannedAt = new \DateTime();
+
+            return [
+                'status' => 'success',
+                'message' => 'Entry allowed. Ticket marked as scanned.',
+                'ticket' => $ticket,
+            ];
+        }
+
+        return [
+            'status' => 'warning',
+            'message' => 'Warning: This ticket has already been scanned.',
+            'ticket' => $ticket,
+        ];
+    }
 }
