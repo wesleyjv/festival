@@ -84,8 +84,6 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
                     <?php
                     $currentDay = $_GET['day'] ?? '';
                     $currentTime = $_GET['time'] ?? '';
-                    $currentGenre = $_GET['genre'] ?? '';
-                    $currentLocation = $_GET['location'] ?? '';
                     ?>
 
                     <!-- Date Filter -->
@@ -126,30 +124,6 @@ $featuredName = $featuredStoryteller['guide_name'] ?? 'Elena van der Meer';
                         </div>
                     </div>
 
-                    <!-- Genre Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Genre</div>
-                        <div class="filter-buttons">
-                            <button class="filter-btn <?php echo !$currentGenre ? 'active' : ''; ?>" onclick="window.location.href='/events/stories'">All</button>
-                            <button class="filter-btn <?php echo ($currentGenre === 'folklore') ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?genre=folklore'">Folklore</button>
-                            <button class="filter-btn <?php echo ($currentGenre === 'contemporary') ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?genre=contemporary'">Contemporary</button>
-                            <button class="filter-btn <?php echo ($currentGenre === 'children') ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?genre=children'">Children</button>
-                            <button class="filter-btn <?php echo ($currentGenre === 'historical') ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?genre=historical'">Historical</button>
-                        </div>
-                    </div>
-
-                    <!-- Location Filter -->
-                    <div class="filter-group">
-                        <div class="filter-label">Location</div>
-                        <div class="filter-buttons">
-                            <button class="filter-btn <?php echo !$currentLocation ? 'active' : ''; ?>" onclick="window.location.href='/events/stories'">All</button>
-                            <?php foreach ($locations as $location): ?>
-                                <button class="filter-btn <?php echo ($currentLocation === (string)$location['id']) ? 'active' : ''; ?>" onclick="window.location.href='/events/stories?location=<?php echo urlencode($location['id']); ?>'">
-                                    <?php echo htmlspecialchars($location['name']); ?>
-                                </button>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
                 </div>
             </div>
 

@@ -118,13 +118,13 @@ class EventsController
     {
         try {
             // Get filter parameters from GET request
-            $dateFilter = $_GET['date'] ?? null;
+            $dayFilter = $_GET['day'] ?? null;
             $timeFilter = $_GET['time'] ?? null;
             $locationFilter = $_GET['location'] ?? null;
 
             // Get events based on filters via repository
-            if ($dateFilter) {
-                $events = $this->storyEventRepository->getEventsByDate($dateFilter);
+            if ($dayFilter) {
+                $events = $this->storyEventRepository->getEventsByDay($dayFilter);
             } elseif ($timeFilter) {
                 $events = $this->storyEventRepository->getEventsByTime($timeFilter);
             } elseif ($locationFilter) {
@@ -138,8 +138,6 @@ class EventsController
 
             // Get additional data via repository
             $featuredStoryteller = $this->storyEventRepository->getFeatured();
-            $locations = $this->storyEventRepository->getLocations();
-
             $contentService = new ContentService();
             $storiesContent = $contentService->getPageContent('stories');
 
