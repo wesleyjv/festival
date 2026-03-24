@@ -43,6 +43,34 @@ class TicketRepository
     }
 
     /**
+     * For each event id, returns one ticket id (lowest id) when tickets exist.
+     *
+     * @param  int[]       $eventIds
+     * @return array<int,int>  event_id => ticket id
+     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        $eventIds = array_values(array_unique(array_filter(array_map('intval', $eventIds), fn ($id) => $id > 0)));
+        if ($eventIds === []) {
+            return [];
+        }
+
+        $db = DB::getConnection();
+        $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+        $stmt = $db->prepare(
+            "SELECT event_id, MIN(id) AS tid FROM tickets WHERE event_id IN ($placeholders) GROUP BY event_id"
+        );
+        $stmt->execute($eventIds);
+
+        $out = [];
+        foreach ($stmt as $row) {
+            $out[(int) $row['event_id']] = (int) $row['tid'];
+        }
+
+        return $out;
+    }
+
+    /**
      * Retrieve a single ticket by its primary key.
      *
      * @param  int         $id  The ticket’s primary key.

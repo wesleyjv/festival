@@ -35,6 +35,20 @@ class ShoppingCart
     }
 
     /**
+     * Add tickets, merging quantity into an existing line when the same ticket id is already in the cart.
+     */
+    public function addOrMergeTicket(Ticket $ticket, int $qty): void
+    {
+        foreach ($this->items as $item) {
+            if ($item->ticket->id === $ticket->id) {
+                $item->quantity += $qty;
+                return;
+            }
+        }
+        $this->addItem($ticket, $qty);
+    }
+
+    /**
      * Remove a specific CartItem from the cart by object identity.
      *
      * Searches the items array for the exact same object reference,

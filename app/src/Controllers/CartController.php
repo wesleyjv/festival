@@ -41,9 +41,9 @@ class CartController
     /**
      * POST /cart/add – Add a ticket to the shopping cart.
      *
-     * Reads `ticket_id` from the POST body, looks the ticket up via the
-     * service layer, and – if the ticket exists – adds it to the session
-     * cart with a quantity of 1. Always redirects to the cart page.
+     * Reads `ticket_id` and optional `quantity` (1–99, default 1). Merges
+     * quantity into an existing line when the same ticket is already in the cart.
+     * Always redirects to the cart page.
      *
      * @return void Redirects to /cart.
      */
@@ -60,13 +60,16 @@ class CartController
             $ticketId = $_POST['ticket_id'] ?? null;
 
             if ($ticketId) {
+                $qty = isset($_POST['quantity']) ? (int) $_POST['quantity'] : 1;
+                $qty = max(1, min(99, $qty));
+
                 // Look up the ticket through the service (includes ID validation)
                 $ticket = $this->ticketService->getTicketById((int)$ticketId);
 
                 if ($ticket) {
                     // Retrieve existing cart from session or create a new one
                     $cart = $_SESSION['cart'] ?? new ShoppingCart();
-                    $cart->addItem($ticket, 1);
+                    $cart->addOrMergeTicket($ticket, $qty);
                     $_SESSION['cart'] = $cart;
                 }
             }

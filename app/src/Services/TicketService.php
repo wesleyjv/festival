@@ -54,6 +54,15 @@ class TicketService
     }
 
     /**
+     * @param  int[]       $eventIds
+     * @return array<int,int>  event_id => first ticket id for that event
+     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        return $this->ticketRepository->getFirstTicketIdByEventIds($eventIds);
+    }
+
+    /**
      * Get a single ticket by its primary key.
      *
      * Returns null both when the ID is invalid (<= 0) and when no

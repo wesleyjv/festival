@@ -51,9 +51,10 @@ class EventRepository
      * Retrieves jazz events, optionally filtered by day of week.
      *
      * @param  string|null $day  Day name in English, e.g. "Friday" (case-insensitive). Null returns all.
+     * @param  string      $sort  "artist" or "start_time"
      * @return JazzEvent[]
      */
-    public function getJazzEvents(?string $day = null): array
+    public function getJazzEvents(?string $day = null, string $sort = 'artist'): array
     {
         $db = DB::getConnection();
 
@@ -71,7 +72,9 @@ class EventRepository
             $params[':day'] = ucfirst(strtolower($day));
         }
 
-        $sql .= " ORDER BY je.artist ASC";
+        $sql .= $sort === 'start_time'
+            ? ' ORDER BY je.start_time ASC, je.artist ASC'
+            : ' ORDER BY je.artist ASC';
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);

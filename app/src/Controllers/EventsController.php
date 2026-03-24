@@ -9,6 +9,7 @@ use App\Repositories\EventRepository;
 use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\TicketService;
 use App\Services\Interfaces\IYummyService;
 use App\Services\YummyService;
 use App\ViewModels\YummyOverviewViewModel;
@@ -72,7 +73,13 @@ class EventsController
 
         $dayFilter = $_GET['day'] ?? 'all';
 
-        $jazzArtists = $this->eventRepository->getJazzEvents($dayFilter !== 'all' ? $dayFilter : null);
+        $dayParam = $dayFilter !== 'all' ? $dayFilter : null;
+        $jazzArtists = $this->eventRepository->getJazzEvents($dayParam, 'artist');
+        $jazzSchedule = $this->eventRepository->getJazzEvents($dayParam, 'start_time');
+
+        $ticketService = new TicketService();
+        $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
+        $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
 
         $contentService = new ContentService();
         $jazzContent = $contentService->getPageContent('jazz');
@@ -92,6 +99,9 @@ class EventsController
             require __DIR__ . '/../views/errors/404.php';
             return;
         }
+
+        $jazzCartTickets = (new TicketService())->getTicketsByEventId($artist->eventId);
+        $jazzCartTicket = $jazzCartTickets[0] ?? null;
 
         require __DIR__ . '/../views/events/jazz/detail.php';
     }
