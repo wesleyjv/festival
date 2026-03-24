@@ -1,0 +1,458 @@
+/**
+ * Jazz public site: overview (/events/jazz), artist cards, detail pages.
+ */
+
+/* --- Overview: hero --- */
+.jazz-hero {
+    position: relative;
+    height: 420px;
+    background: #1a1a2e;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+}
+.jazz-hero__placeholder {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #2d2d5e 50%, #3a2a1a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.08);
+    font-size: 5rem;
+}
+.jazz-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 40%, transparent 100%);
+}
+.jazz-hero__content {
+    position: relative;
+    z-index: 2;
+    padding: 0 2.5rem 2.5rem;
+    color: #fff;
+}
+.jazz-hero__content h1 {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin: 0;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Overview: intro --- */
+.jazz-intro {
+    background: #fdf6ee;
+    padding: 3.5rem 0;
+}
+.jazz-intro__img-placeholder {
+    background: #e8e0d5;
+    border-radius: 12px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.2);
+    font-size: 3.5rem;
+}
+
+/* --- Overview: artists grid --- */
+.jazz-artists {
+    background: #fff;
+    padding: 3.5rem 0 4rem;
+}
+.jazz-artists__heading {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+.jazz-artists__sub {
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+.day-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    justify-content: center;
+}
+.day-filter-btn {
+    display: inline-block;
+    padding: 0.45rem 1.15rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border: none;
+    cursor: pointer;
+    background: #f0f0f0;
+    color: #333;
+    transition: background 0.2s, color 0.2s;
+}
+.day-filter-btn.active,
+.day-filter-btn:hover {
+    background: #1a1a2e;
+    color: #fff;
+}
+
+/* --- Artist cards (overview grid) --- */
+.artist-card {
+    background: #fafafa;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.artist-card__cover {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #ddd;
+}
+.artist-card__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.35s ease;
+}
+.artist-card:hover .artist-card__cover img {
+    transform: scale(1.04);
+}
+.artist-card__cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #d0cac2;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 3rem;
+}
+.artist-card__body {
+    padding: 1rem 1.1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.artist-card__name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+}
+.artist-card__day {
+    font-size: 0.88rem;
+    color: #444;
+    margin: 0 0 0.25rem;
+}
+.artist-card__time {
+    font-size: 0.95rem;
+    color: #222;
+    margin: 0 0 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.artist-card__time i {
+    color: #888;
+}
+.artist-card__blurb {
+    font-size: 0.84rem;
+    color: #666;
+    flex: 1;
+    margin: 0 0 1rem;
+    line-height: 1.5;
+}
+.artist-card__btn {
+    display: block;
+    text-align: center;
+    background: #1a1a2e;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.6rem 1rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    transition: background 0.2s;
+}
+.artist-card__btn:hover {
+    background: #2e2e5e;
+    color: #fff;
+}
+
+/* --- Overview: locations --- */
+.jazz-locations {
+    background: #fdf6ee;
+    padding: 3.5rem 0 0;
+}
+.jazz-locations__heading {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+.jazz-locations__sub {
+    color: #888;
+    font-size: 0.88rem;
+    margin-bottom: 2rem;
+}
+.location-list__item {
+    margin-bottom: 1.5rem;
+}
+.location-list__name {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.1rem;
+}
+.location-list__addr {
+    font-size: 0.83rem;
+    color: #666;
+    line-height: 1.5;
+}
+.map-placeholder {
+    background: #d8d3cb;
+    height: 360px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 4rem;
+    margin-top: 2rem;
+}
+
+/* --- Artist detail page --- */
+.detail-hero {
+    position: relative;
+    height: 380px;
+    background: #111;
+    overflow: hidden;
+}
+.detail-hero__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.detail-hero__placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #111 0%, #2d2346 60%, #1a3a2a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.07);
+    font-size: 6rem;
+}
+.detail-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 60%);
+}
+.detail-hero__tags {
+    position: absolute;
+    bottom: 3.5rem;
+    right: 1.5rem;
+    text-align: right;
+    z-index: 2;
+}
+.detail-hero__tags span {
+    display: block;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+.detail-hero__perf-btn {
+    display: inline-block;
+    margin-top: 0.7rem;
+    padding: 0.45rem 1.1rem;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+}
+.detail-hero__perf-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+}
+
+.detail-goback {
+    background: #fff;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+.detail-goback a {
+    font-size: 0.88rem;
+    color: #333;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.detail-goback a:hover {
+    color: #000;
+}
+
+.detail-page {
+    background: linear-gradient(180deg, #fdf6ee 0%, #fce8c8 100%);
+    min-height: 60vh;
+    padding-bottom: 4rem;
+}
+
+.detail-bio {
+    padding: 3rem 0 2rem;
+}
+.detail-bio__name {
+    font-size: clamp(1.6rem, 3.5vw, 2.1rem);
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+}
+.detail-bio__text {
+    font-size: 0.93rem;
+    color: #444;
+    line-height: 1.75;
+}
+.detail-bio__img {
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    display: block;
+}
+.detail-bio__img-placeholder {
+    width: 100%;
+    height: 280px;
+    background: #ddd;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(0, 0, 0, 0.2);
+    font-size: 4rem;
+}
+
+.detail-tracks {
+    padding: 2rem 0;
+}
+.detail-tracks__heading {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+}
+.track-item {
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.07);
+}
+.track-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+}
+.track-item__title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #222;
+}
+.track-item__genre {
+    font-size: 0.78rem;
+    color: #888;
+}
+.track-item audio {
+    width: 100%;
+    height: 28px;
+    outline: none;
+}
+
+.detail-performances {
+    padding: 2rem 0 1rem;
+}
+.detail-performances__heading {
+    font-size: 1.55rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+.perf-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.75rem 1.5rem;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.09);
+    max-width: 360px;
+    margin: 0 auto;
+    text-align: center;
+}
+.perf-card__time {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: #111;
+}
+.perf-card__location {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1rem;
+}
+.perf-card__price {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 0.2rem;
+}
+.perf-card__price-note {
+    font-size: 0.78rem;
+    color: #888;
+    margin-bottom: 1.25rem;
+}
+.perf-card__btn {
+    display: inline-block;
+    background: #1a1a2e;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: background 0.2s;
+    border: none;
+    cursor: pointer;
+}
+.perf-card__btn:hover {
+    background: #2e2e5e;
+    color: #fff;
+}
+
+.detail-back-artists {
+    padding: 1.5rem 0 2rem;
+}
+.detail-back-artists a {
+    font-size: 0.9rem;
+    color: #333;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.detail-back-artists a:hover {
+    color: #000;
+}

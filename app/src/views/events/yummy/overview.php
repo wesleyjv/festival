@@ -450,8 +450,7 @@
       <option value="">All</option>
 
       <?php
-      // If you already pass $cuisines from controller, this uses it.
-      // Otherwise it falls back to a simple list.
+      
       $availableCuisines = $cuisines ?? [
         ['cuisine' => 'Italian'],
         ['cuisine' => 'Asian'],

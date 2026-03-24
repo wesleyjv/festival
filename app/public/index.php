@@ -97,6 +97,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/profile/update', ['App\\Controllers\\UserController', 'handleUpdateProfile']);
     $r->addRoute('GET',  '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
     $r->addRoute('POST', '/admin/content/save', ['App\\Controllers\\AdminController', 'saveContent']);
+    $r->addRoute('POST', '/admin/jazz/artists/create', ['App\\Controllers\\AdminController', 'createJazzArtist']);
+    $r->addRoute('POST', '/admin/jazz/artists/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteJazzArtist']);
     $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);
     $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
@@ -105,6 +107,8 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 $uri = strtok($_SERVER['REQUEST_URI'], '?');
+// Match routes registered without a trailing slash (e.g. /admin vs /admin/)
+$uri = $uri !== '/' ? rtrim($uri, '/') : '/';
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
 switch ($routeInfo[0]) {

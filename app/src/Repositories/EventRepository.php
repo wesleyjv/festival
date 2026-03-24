@@ -143,4 +143,221 @@ class EventRepository
         return $event;
     }
 
+    /**
+     * Create a jazz artist: one row in `events` (type jazz) and one in `jazz_events`.
+     *
+     * @param array{artist:string,description:string,style?:string,location?:string,start_time?:string,end_time?:string,price?:string,seats?:string} $input
+     * @return int New event id (same as jazz_events.event_id)
+     */
+    public function createJazzArtist(array $input): int
+    {
+        $db = DB::getConnection();
+
+        $artist = trim($input['artist'] ?? '');
+        $description = trim($input['description'] ?? '');
+        if ($artist === '' || $description === '') {
+            throw new \InvalidArgumentException('Artist name and description are required.');
+        }
+
+        $style = trim($input['style'] ?? '');
+        $location = trim($input['location'] ?? '');
+        $location = $location !== '' ? $location : null;
+
+        $startTime = $this->parseOptionalDateTime($input['start_time'] ?? null);
+        $endTime = $this->parseOptionalDateTime($input['end_time'] ?? null);
+
+        $price = null;
+        if (isset($input['price']) && $input['price'] !== '' && is_numeric($input['price'])) {
+            $price = (float) $input['price'];
+        }
+        $seats = null;
+        if (isset($input['seats']) && $input['seats'] !== '' && is_numeric($input['seats'])) {
+            $seats = (int) $input['seats'];
+        }
+
+        $db->beginTransaction();
+        try {
+            $eventId = $this->insertEventsJazzRow($db, $artist, $description);
+
+            $insJazz = $db->prepare(
+                'INSERT INTO jazz_events (
+                    event_id, artist, style, description, profile_image, banner_image, location,
+                    start_time, end_time, price, seats, images, tracks
+                ) VALUES (
+                    :event_id, :artist, :style, :description, NULL, NULL, :location,
+                    :start_time, :end_time, :price, :seats, NULL, NULL
+                )'
+            );
+            $insJazz->execute([
+                'event_id' => $eventId,
+                'artist' => $artist,
+                'style' => $style,
+                'description' => $description,
+                'location' => $location,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'price' => $price,
+                'seats' => $seats,
+            ]);
+
+            $db->commit();
+
+            return $eventId;
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Remove a jazz artist and CMS rows. Fails if tickets still reference this event.
+     */
+    public function deleteJazzArtist(int $eventId): void
+    {
+        if ($eventId <= 0) {
+            throw new \InvalidArgumentException('Invalid artist id.');
+        }
+
+        $db = DB::getConnection();
+
+        if ($this->tableExists($db, 'tickets')) {
+            $c = $db->prepare('SELECT COUNT(*) FROM tickets WHERE event_id = :id');
+            $c->execute(['id' => $eventId]);
+            if ((int) $c->fetchColumn() > 0) {
+                throw new \RuntimeException(
+                    'Cannot delete this artist while tickets exist for this event. Remove or reassign tickets first.'
+                );
+            }
+        }
+
+        $db->beginTransaction();
+        try {
+            $pageKey = 'jazz_' . $eventId;
+            if ($this->tableExists($db, 'jazz_page_contents')) {
+                $db->prepare('DELETE FROM jazz_page_contents WHERE page = :p')->execute(['p' => $pageKey]);
+            }
+
+            $delJe = $db->prepare('DELETE FROM jazz_events WHERE event_id = :id');
+            $delJe->execute(['id' => $eventId]);
+            if ($delJe->rowCount() === 0) {
+                throw new \RuntimeException('Jazz artist not found.');
+            }
+
+            $delEv = $db->prepare('DELETE FROM events WHERE id = :id AND type = \'jazz\'');
+            $delEv->execute(['id' => $eventId]);
+            if ($delEv->rowCount() === 0) {
+                throw new \RuntimeException('Event row not found or not a jazz event.');
+            }
+
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getEventsTableColumns(\PDO $db): array
+    {
+        $stmt = $db->query('SHOW COLUMNS FROM events');
+        $out = [];
+        while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            if (isset($row['Field'])) {
+                $out[] = $row['Field'];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Insert a jazz event row using only columns that exist (supports name vs title, optional homepage fields).
+     */
+    private function insertEventsJazzRow(\PDO $db, string $artist, string $description): int
+    {
+        $cols = $this->getEventsTableColumns($db);
+
+        $titleCol = in_array('name', $cols, true)
+            ? 'name'
+            : (in_array('title', $cols, true) ? 'title' : null);
+        if ($titleCol === null) {
+            throw new \RuntimeException('The events table must have a name or title column.');
+        }
+
+        $fields = [];
+        $placeholders = [];
+        $params = [];
+
+        $add = function (string $column, $value) use (&$fields, &$placeholders, &$params, $cols): void {
+            if (!in_array($column, $cols, true)) {
+                return;
+            }
+            $fields[] = '`' . str_replace('`', '', $column) . '`';
+            $placeholders[] = ':' . $column;
+            $params[$column] = $value;
+        };
+
+        $add($titleCol, $artist);
+        $add('description', $description);
+        $add('image', '/img/jazz-festival.jpg');
+        $add('alt_text', $artist);
+        $add('type', 'jazz');
+        $add('link', '/events/jazz');
+        $add('image_position', 'left');
+        $add('sort_order', 0);
+        $add('is_active', 1);
+
+        if ($fields === []) {
+            throw new \RuntimeException('Could not build INSERT for events (no matching columns).');
+        }
+
+        $sql = 'INSERT INTO events (' . implode(', ', $fields) . ') VALUES (' . implode(', ', $placeholders) . ')';
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        $eventId = (int) $db->lastInsertId();
+
+        if (in_array('link', $cols, true)) {
+            $upd = $db->prepare('UPDATE events SET link = :link WHERE id = :id');
+            $upd->execute([
+                'link' => '/events/jazz/' . $eventId,
+                'id' => $eventId,
+            ]);
+        }
+
+        return $eventId;
+    }
+
+    private function parseOptionalDateTime(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $value = trim($value);
+        if ($value === '') {
+            return null;
+        }
+        $ts = strtotime(str_replace('T', ' ', $value));
+        if ($ts === false) {
+            return null;
+        }
+
+        return date('Y-m-d H:i:s', $ts);
+    }
+
+    private function tableExists(\PDO $db, string $name): bool
+    {
+        try {
+            $stmt = $db->prepare(
+                'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?'
+            );
+            $stmt->execute([$name]);
+
+            return (int) $stmt->fetchColumn() > 0;
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
 }

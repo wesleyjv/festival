@@ -2,29 +2,38 @@
 
 namespace App\Services;
 
+use App\Repositories\JazzContentRepository;
+
 /**
- * Very small content storage layer for editable page sections.
+ * Editable page sections: JSON files under app/storage/content,
+ * except Jazz pages which use the `jazz_page_contents` table.
  *
- * Stores HTML snippets per page in JSON files under app/storage/content.
- * This is intentionally simple for the assignment and can be swapped
- * for a real database later without changing controllers/views.
+ * Page keys:
+ * - `jazz` — Jazz homepage
+ * - `jazz_{eventId}` — Overrides for a jazz artist detail page
  */
 final class ContentService
 {
     private string $storageDir;
+    private JazzContentRepository $jazzContentRepo;
 
     public function __construct()
     {
         $this->storageDir = __DIR__ . '/../../storage/content';
+        $this->jazzContentRepo = new JazzContentRepository();
     }
 
     /**
-     * Load all editable fields for a given page.
-     *
      * @return array<string,string>
      */
     public function getPageContent(string $page): array
     {
+        if ($this->isJazzDbPage($page) && $this->jazzContentRepo->hasConnection()) {
+            $dbData = $this->jazzContentRepo->getPageContent($page);
+
+            return array_merge($this->getDefaultContent($page), $dbData);
+        }
+
         $path = $this->getPagePath($page);
 
         if (is_file($path)) {
@@ -32,7 +41,7 @@ final class ContentService
             if ($json !== false) {
                 $data = json_decode($json, true);
                 if (is_array($data)) {
-                    return array_map('strval', $data);
+                    return array_merge($this->getDefaultContent($page), array_map('strval', $data));
                 }
             }
         }
@@ -41,19 +50,10 @@ final class ContentService
     }
 
     /**
-     * Persist editable fields for a page.
-     *
      * @param array<string,string> $data
      */
     public function savePageContent(string $page, array $data): void
     {
-        if (!is_dir($this->storageDir)) {
-            mkdir($this->storageDir, 0775, true);
-        }
-
-        $path = $this->getPagePath($page);
-
-        // Only keep scalar string-ish values.
         $clean = [];
         foreach ($data as $key => $value) {
             if (is_scalar($value)) {
@@ -61,23 +61,52 @@ final class ContentService
             }
         }
 
+        $savedToJazzDb = false;
+        if ($this->isJazzDbPage($page)) {
+            $savedToJazzDb = $this->jazzContentRepo->savePageContent($page, $clean);
+        }
+
+        if ($this->isJazzDbPage($page) && $savedToJazzDb) {
+            return;
+        }
+
+        if (!is_dir($this->storageDir)) {
+            mkdir($this->storageDir, 0775, true);
+        }
+
+        $path = $this->getPagePath($page);
         file_put_contents($path, json_encode($clean, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    private function isJazzDbPage(string $page): bool
+    {
+        if ($page === 'jazz') {
+            return true;
+        }
+
+        return (bool) preg_match('/^jazz_\d+$/', $page);
     }
 
     private function getPagePath(string $page): string
     {
         $safe = preg_replace('/[^a-z0-9_\-]/i', '_', $page);
+
         return $this->storageDir . '/' . $safe . '.json';
     }
 
     /**
-     * Default values that mirror the current hard-coded copy,
-     * so existing pages keep their look before any edits.
-     *
      * @return array<string,string>
      */
     private function getDefaultContent(string $page): array
     {
+        if ($page === 'jazz') {
+            return $this->defaultJazzHome();
+        }
+
+        if (preg_match('/^jazz_\d+$/', $page)) {
+            return $this->defaultJazzArtist();
+        }
+
         switch ($page) {
             case 'homepage':
                 return [
@@ -108,15 +137,45 @@ final class ContentService
                     'hero_description' => 'Walk through centuries of rich history with expert guides. Explore Haarlem\'s most iconic landmarks and hidden gems.',
                 ];
 
-            case 'jazz':
-                return [
-                    'intro_heading' => 'Jazz Events',
-                    'intro_text' => 'Discover the best jazz performances at the festival.',
-                ];
-
             default:
                 return [];
         }
     }
-}
 
+    /**
+     * @return array<string,string>
+     */
+    private function defaultJazzHome(): array
+    {
+        return [
+            'hero_title' => "Haarlem Jazz\nLive in the heart of the city",
+            'hero_background_image' => '',
+            'intro_heading' => 'Feel the rhythm of Haarlem',
+            'intro_sub' => 'Soul, swing & late-night sessions',
+            'intro_text' => '<p>Welcome to Haarlem Jazz – where the city resonates with the soulful notes of jazz. Explore the artists, events, and the dynamic vibe of this enchanting Dutch festival right here on our Haarlem Jazz page. Get ready for a musical journey that defines the spirit of jazz in the heart of Haarlem!</p>',
+            'intro_image' => '/img/jazz-festival.jpg',
+            'artists_heading' => 'Line-up',
+            'artists_sub' => 'Filter by day and discover who plays when.',
+            'locations_heading' => 'Festival locations',
+            'locations_sub' => 'Around Haarlem – stroll between venues.',
+            'locations_image' => '',
+            'locations_text' => '<div class="location-list__item"><div class="location-list__name">De Patronaat</div><div class="location-list__addr">Zijlsingel 2, 2013 DN<br>Haarlem</div></div><div class="location-list__item"><div class="location-list__name">Grote Markt</div><div class="location-list__addr">Grote Markt<br>Haarlem</div></div><div class="location-list__item"><div class="location-list__name">Station Haarlem</div><div class="location-list__addr">Stationsplein 1IL<br>2011 LR Haarlem</div></div>',
+        ];
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private function defaultJazzArtist(): array
+    {
+        return [
+            'banner_image' => '',
+            'profile_image' => '',
+            'artist_name' => '',
+            'bio_html' => '',
+            'tracks_heading' => 'Listen to their sounds',
+            'performances_heading' => 'Upcoming performances',
+            'price_note' => 'Included in passes',
+        ];
+    }
+}

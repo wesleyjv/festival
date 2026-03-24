@@ -229,7 +229,7 @@ class UserController
         }
 
         $this->users->updateProfile($userId, $name, $email, !empty($password) ? $password : null, $profileImagePath);
-
+        //Make sure to verify upload content (for security)
         $_SESSION['user_name']  = $name;
         $_SESSION['user_email'] = $email;
         if ($profileImagePath !== null) {
