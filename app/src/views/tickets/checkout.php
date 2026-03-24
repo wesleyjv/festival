@@ -402,7 +402,7 @@
             <!-- Right: Payment -->
             <div class="payment-col">
                 <div class="payment-card">
-                    <h2 class="payment-title">Checkout with Stripe</h2>
+                    <h2 class="payment-title">Complete Checkout</h2>
                     
                     <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-bottom: 25px;">
                         Select your preferred payment method (Credit Card, iDEAL, or PayPal) on the next page.
@@ -421,10 +421,10 @@
                     </div>
 
                     <button type="submit" class="btn-pay" <?= !$viewModel->isLoggedIn ? 'disabled' : '' ?>>
-                        ✦ &nbsp;Pay with Stripe &nbsp;✦
+                        ✦ &nbsp;Pay Now &nbsp;✦
                     </button>
 
-                    <p class="payment-note">🔒 &nbsp;Securely processed via Stripe</p>
+                    <p class="payment-note">🔒 &nbsp;Securely processed</p>
                 </div>
             </div>
 
