@@ -44,7 +44,7 @@
                             </p>
                             <p class="text-muted small mb-4">per person</p>
 
-                            <form action="/cart/add" method="POST">
+                            <form action="/cart/add" method="POST" class="js-cart-add-form">
                                 <?= \App\Security\Csrf::field() ?>
                                 <input type="hidden" name="ticket_id" value="<?= $ticket->id ?>">
                                 <button type="submit" class="btn btn-dark w-100 rounded-3">

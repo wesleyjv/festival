@@ -77,6 +77,7 @@ class EventsController
         $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
 
         $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets($jazzArtists);
         $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
         $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
 
@@ -99,7 +100,9 @@ class EventsController
             return;
         }
 
-        $jazzCartTickets = (new TicketService())->getTicketsByEventId($artist->eventId);
+        $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets([$artist]);
+        $jazzCartTickets = $ticketService->getTicketsByEventId($artist->eventId);
         $jazzCartTicket = $jazzCartTickets[0] ?? null;
 
         require __DIR__ . '/../views/events/jazz/detail.php';

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\JazzEvent;
 use App\Models\Ticket;
 use App\Repositories\TicketRepository;
 
@@ -78,5 +79,26 @@ class TicketService
         }
 
         return $this->ticketRepository->getById($id);
+    }
+
+    /**
+     * Ensure every jazz event has at least one ticket row so cart / checkout work.
+     *
+     * @param JazzEvent[] $jazzEvents
+     */
+    public function syncMissingJazzTickets(array $jazzEvents): void
+    {
+        foreach ($jazzEvents as $ev) {
+            if (!$ev instanceof JazzEvent || $ev->eventId <= 0) {
+                continue;
+            }
+            $existing = $this->ticketRepository->getByEventId($ev->eventId);
+            if ($existing !== []) {
+                continue;
+            }
+            $price = $ev->price !== null ? (float) $ev->price : 0.0;
+            $name = 'Admission — ' . $ev->artist;
+            $this->ticketRepository->insertTicketForEvent($ev->eventId, $name, $price);
+        }
     }
 }

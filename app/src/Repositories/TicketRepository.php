@@ -71,6 +71,34 @@ class TicketRepository
     }
 
     /**
+     * Insert a single saleable ticket row for an event (catalog line used by cart / orders).
+     *
+     * @return int New ticket id
+     */
+    public function insertTicketForEvent(int $eventId, string $name, float $price): int
+    {
+        if ($eventId <= 0) {
+            throw new \InvalidArgumentException('Invalid event id for ticket.');
+        }
+
+        $db = DB::getConnection();
+        $ticketCode = 'JZ-' . $eventId . '-' . strtoupper(bin2hex(random_bytes(5)));
+
+        $stmt = $db->prepare(
+            'INSERT INTO tickets (event_id, name, price, ticket_code, is_scanned)
+             VALUES (:event_id, :name, :price, :ticket_code, 0)'
+        );
+        $stmt->execute([
+            'event_id' => $eventId,
+            'name' => $name,
+            'price' => $price,
+            'ticket_code' => $ticketCode,
+        ]);
+
+        return (int) $db->lastInsertId();
+    }
+
+    /**
      * Retrieve a single ticket by its primary key.
      *
      * @param  int         $id  The ticket’s primary key.

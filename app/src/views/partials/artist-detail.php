@@ -123,7 +123,7 @@ $tracks   = $artist->tracks ?? [];
                         <div class="perf-card__price-note"><?= htmlspecialchars($dc['price_note'] ?? 'Included in passes') ?></div>
                     <?php endif; ?>
                     <?php if ($jazzCartTicket !== null): ?>
-                        <form action="/cart/add" method="post" class="perf-card__cart-form">
+                        <form action="/cart/add" method="post" class="perf-card__cart-form js-cart-add-form">
                             <?= \App\Security\Csrf::field() ?>
                             <input type="hidden" name="ticket_id" value="<?= (int) $jazzCartTicket->id ?>">
                             <div class="perf-card__qty-row">

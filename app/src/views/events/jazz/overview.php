@@ -160,7 +160,7 @@ $heroBg = $jazzContent['hero_background_image'] ?? '';
                                             <td class="jazz-schedule__cell jazz-schedule__cell-price"><?= htmlspecialchars($priceLabel) ?></td>
                                             <td class="jazz-schedule__cell jazz-schedule__cell-cart">
                                                 <?php if ($ticketId !== null): ?>
-                                                    <form action="/cart/add" method="post" class="jazz-schedule__cart-form">
+                                                    <form action="/cart/add" method="post" class="jazz-schedule__cart-form js-cart-add-form">
                                                         <?= \App\Security\Csrf::field() ?>
                                                         <input type="hidden" name="ticket_id" value="<?= (int) $ticketId ?>">
                                                         <label class="jazz-schedule__qty-label"><span class="visually-hidden">Quantity</span>

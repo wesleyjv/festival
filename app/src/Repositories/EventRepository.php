@@ -205,6 +205,16 @@ class EventRepository
 
             $db->commit();
 
+            $ticketPrice = $price !== null ? (float) $price : 0.0;
+            $ticketRepo = new TicketRepository();
+            if ($ticketRepo->getByEventId($eventId) === []) {
+                $ticketRepo->insertTicketForEvent(
+                    $eventId,
+                    'Admission — ' . $artist,
+                    $ticketPrice
+                );
+            }
+
             return $eventId;
         } catch (\Throwable $e) {
             $db->rollBack();
