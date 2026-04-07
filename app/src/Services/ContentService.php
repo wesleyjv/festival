@@ -132,6 +132,12 @@ final class ContentService
                     'hero_subtitle' => 'A curated culinary experience featuring seven restaurants, exclusive festival-only menus.',
                     'explore_heading' => 'Explore Restaurants',
                     'explore_text' => 'Taste the finest culinary experiences in Haarlem.',
+                    'feature_card_one_title' => 'Featured Restaurants',
+                    'feature_card_one_text' => 'Seven participating Haarlem restaurants offer a special festival experience, each serving a unique menu created exclusively for THE FESTIVAL.',
+                    'feature_card_two_title' => 'Festival Only Menus',
+                    'feature_card_two_text' => 'Each restaurant prepares one special menu designed specifically for THE FESTIVAL. These menus are available only during the festival days and offer a curated dining experience.',
+                    'feature_card_three_title' => 'Multiple Sessions',
+                    'feature_card_three_text' => 'Restaurants offer several dining sessions each evening, giving visitors the flexibility to choose a time that fits their festival schedule. Seats are limited, and reservations are required.',
                     // Keep legacy keys so older templates remain functional during migration.
                     'intro_heading' => 'Yummy Events',
                     'intro_text' => 'Taste the finest culinary experiences in Haarlem.',

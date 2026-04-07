@@ -430,25 +430,25 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
 <div class="featured-container">
   <div class="featured-card">
     <div class="icon-wrapper"><img class="card-icon" src="/assets/yummy/image/IconSvg_iconCarrier.png" alt="Featured Restaurants" /></div>
-    <div class="card-title">Featured Restaurants</div>
+    <div class="card-title"><?= htmlspecialchars($content['feature_card_one_title'] ?? '') ?></div>
     <div class="card-content">
-      <p class="card-text">Seven participating Haarlem restaurants offer a special festival experience, each serving a unique menu created exclusively for THE FESTIVAL.</p>
+      <p class="card-text"><?= htmlspecialchars($content['feature_card_one_text'] ?? '') ?></p>
     </div>
   </div>
 
   <div class="featured-card card-alt">
     <div class="icon-wrapper"><img class="card-icon" src="/assets/yummy/image/Room_iconSvg.png" alt="Festival Only Menus" /></div>
-    <div class="card-title">Festival Only Menus</div>
+    <div class="card-title"><?= htmlspecialchars($content['feature_card_two_title'] ?? '') ?></div>
     <div class="card-content">
-      <p class="card-text">Each restaurant prepares one special menu designed specifically for THE FESTIVAL. These menus are available only during the festival days and offer a curated dining experience.</p>
+      <p class="card-text"><?= htmlspecialchars($content['feature_card_two_text'] ?? '') ?></p>
     </div>
   </div>
 
   <div class="featured-card card-alt">
     <div class="icon-wrapper"><img class="card-icon" src="/assets/yummy/image/IconSvg_schdual.png" alt="Multiple Sessions" /></div>
-    <div class="card-title">Multiple Sessions</div>
+    <div class="card-title"><?= htmlspecialchars($content['feature_card_three_title'] ?? '') ?></div>
     <div class="card-content">
-      <p class="card-text">Restaurants offer several dining sessions each evening, giving visitors the flexibility to choose a time that fits their festival schedule. Seats are limited, and reservations are required.</p>
+      <p class="card-text"><?= htmlspecialchars($content['feature_card_three_text'] ?? '') ?></p>
     </div>
   </div>
 </div>

@@ -10,12 +10,14 @@ use App\ViewModels\YummyOverviewViewModel;
 
 class YummyService implements IYummyService
 {
-	private const YUMMY_EVENT_ID = 97;
+	private int $yummyEventId;
 
 	public function __construct(
 		private readonly IYummyRepository $yummyRepository,
 		private readonly ContentService $contentService
 	) {
+		$config = require __DIR__ . '/../Config/yummy.php';
+		$this->yummyEventId = $config['event_id'];
 	}
 
 	public function getOverviewViewModel(?string $selectedCuisine = null): YummyOverviewViewModel
@@ -25,8 +27,8 @@ class YummyService implements IYummyService
 		}
 
 		$content = $this->contentService->getPageContent('yummy');
-		$restaurants = $this->yummyRepository->getAll(self::YUMMY_EVENT_ID, $selectedCuisine);
-		$cuisines = $this->yummyRepository->getAvailableCuisines(self::YUMMY_EVENT_ID);
+		$restaurants = $this->yummyRepository->getAll($this->yummyEventId, $selectedCuisine);
+		$cuisines = $this->yummyRepository->getAvailableCuisines($this->yummyEventId);
 
 		return new YummyOverviewViewModel(
 			content: $content,
@@ -38,6 +40,6 @@ class YummyService implements IYummyService
 
 	public function getRestaurantBySlug(string $slug): ?YummyEvent
 	{
-		return $this->yummyRepository->getBySlug(self::YUMMY_EVENT_ID, $slug);
+		return $this->yummyRepository->getBySlug($this->yummyEventId, $slug);
 	}
 }

@@ -1255,12 +1255,48 @@ use App\Security\Csrf;
                                 >
                             </div>
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold">Intro heading</label>
-                                <textarea name="intro_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($yummyContent['intro_heading'] ?? '', ENT_QUOTES) ?></textarea>
+                                <label class="form-label small fw-semibold">Hero date pill text</label>
+                                <input type="text" name="hero_date" class="form-control" value="<?= htmlspecialchars($yummyContent['hero_date'] ?? '', ENT_QUOTES) ?>">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold">Intro text</label>
-                                <textarea name="intro_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($yummyContent['intro_text'] ?? '', ENT_QUOTES) ?></textarea>
+                                <label class="form-label small fw-semibold">Hero title</label>
+                                <textarea name="hero_title" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Hero subtitle</label>
+                                <textarea name="hero_subtitle" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['hero_subtitle'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Restaurants section heading</label>
+                                <input type="text" name="explore_heading" class="form-control" value="<?= htmlspecialchars($yummyContent['explore_heading'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Restaurants section subtext</label>
+                                <input type="text" name="explore_text" class="form-control" value="<?= htmlspecialchars($yummyContent['explore_text'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 1: title</label>
+                                <input type="text" name="feature_card_one_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_one_title'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 1: text</label>
+                                <textarea name="feature_card_one_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_one_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 2: title</label>
+                                <input type="text" name="feature_card_two_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_two_title'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 2: text</label>
+                                <textarea name="feature_card_two_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_two_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 3: title</label>
+                                <input type="text" name="feature_card_three_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_three_title'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Feature card 3: text</label>
+                                <textarea name="feature_card_three_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_three_text'] ?? '', ENT_QUOTES) ?></textarea>
                             </div>
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary btn-sm">

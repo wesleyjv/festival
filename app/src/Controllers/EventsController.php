@@ -12,6 +12,7 @@ use App\Services\ContentService;
 use App\Services\TicketService;
 use App\Services\Interfaces\IYummyService;
 use App\Services\YummyService;
+use App\ViewModels\YummyDetailViewModel;
 use App\ViewModels\YummyOverviewViewModel;
 
 /**
@@ -28,6 +29,7 @@ class EventsController
     private EventRepository $eventRepository;
     private StoryEventRepository $storyEventRepository;
     private IYummyService $yummyService;
+    private ContentService $contentService;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -36,9 +38,10 @@ class EventsController
     {
         $this->eventRepository = new EventRepository();
         $this->storyEventRepository = new StoryEventRepository();
+        $this->contentService = new ContentService();
         $this->yummyService = new YummyService(
             new YummyEventRepository(),
-            new ContentService()
+            $this->contentService
         );
     }
 
@@ -158,7 +161,7 @@ class EventsController
      *
      * @return void
      */
-    public function yummy(): void
+    public function displayYummyOverviewPage(): void
     {
         try {
             $cuisine = $_GET['cuisine'] ?? null;
@@ -174,7 +177,7 @@ class EventsController
         }
     }
 
-    public function yummyDetail(array $vars = []): void
+    public function displayRestaurantDetailPage(array $vars = []): void
     {
         try {
             $slug = (string) ($vars['slug'] ?? '');
@@ -186,6 +189,9 @@ class EventsController
                 require __DIR__ . '/../views/errors/404.php';
                 return;
             }
+
+            $pageContent = $this->contentService->getPageContent('yummy');
+            $viewModel = new YummyDetailViewModel($restaurant, $pageContent);
 
             require __DIR__ . '/../views/events/yummy/detail.php';
         } catch (Throwable $e) {
