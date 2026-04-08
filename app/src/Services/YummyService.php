@@ -8,6 +8,7 @@ use App\Repositories\Interfaces\IYummyRepository;
 use App\Services\Interfaces\IYummyService;
 use App\ViewModels\YummyOverviewViewModel;
 
+/** Assembles the view models needed by the public Yummy event pages. */
 class YummyService implements IYummyService
 {
 	private int $yummyEventId;
@@ -20,15 +21,19 @@ class YummyService implements IYummyService
 		$this->yummyEventId = $config['event_id'];
 	}
 
+	/**
+	 * Silently drops an unrecognised cuisine filter rather than showing an empty list or an error.
+	 * CuisineType::isValid guards against arbitrary values being passed to the repository.
+	 */
 	public function getOverviewViewModel(?string $selectedCuisine = null): YummyOverviewViewModel
 	{
 		if ($selectedCuisine !== null && $selectedCuisine !== '' && !CuisineType::isValid($selectedCuisine)) {
 			$selectedCuisine = null;
 		}
 
-		$content = $this->contentService->getPageContent('yummy');
-		$restaurants = $this->yummyRepository->getAll($this->yummyEventId, $selectedCuisine);
-		$cuisines = $this->yummyRepository->getAvailableCuisines($this->yummyEventId);
+		$content     = $this->contentService->getPageContent('yummy');
+		$restaurants = $this->yummyRepository->findActiveRestaurantsByEventId($this->yummyEventId, $selectedCuisine);
+		$cuisines    = $this->yummyRepository->findAvailableCuisinesByEventId($this->yummyEventId);
 
 		return new YummyOverviewViewModel(
 			content: $content,
@@ -38,8 +43,9 @@ class YummyService implements IYummyService
 		);
 	}
 
+	/** Returns the restaurant matching the given URL slug, or null if not found or inactive. */
 	public function getRestaurantBySlug(string $slug): ?YummyEvent
 	{
-		return $this->yummyRepository->getBySlug($this->yummyEventId, $slug);
+		return $this->yummyRepository->findActiveRestaurantBySlug($this->yummyEventId, $slug);
 	}
 }

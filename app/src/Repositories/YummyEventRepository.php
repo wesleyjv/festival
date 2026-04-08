@@ -7,6 +7,7 @@ use App\Models\YummyEvent;
 use App\Repositories\Interfaces\IYummyRepository;
 use PDO;
 
+/** Fetches restaurant data from the yummy_event_restaurants and restaurants tables. */
 class YummyEventRepository implements IYummyRepository
 {
 	private PDO $connection;
@@ -17,9 +18,11 @@ class YummyEventRepository implements IYummyRepository
 	}
 
 	/**
+	 * Returns only active restaurants — inactive ones are excluded from the public listing.
+	 *
 	 * @return YummyEvent[]
 	 */
-	public function getAll(int $eventId, ?string $cuisine = null): array
+	public function findActiveRestaurantsByEventId(int $eventId, ?string $cuisineFilter = null): array
 	{
 		$sql = "
 			SELECT
@@ -40,7 +43,7 @@ class YummyEventRepository implements IYummyRepository
 			  AND yer.active = 1
 		";
 
-		if ($cuisine !== null && $cuisine !== '') {
+		if ($cuisineFilter !== null && $cuisineFilter !== '') {
 			$sql .= "
 			  AND r.id IN (
 					SELECT rct2.restaurant_id
@@ -61,8 +64,8 @@ class YummyEventRepository implements IYummyRepository
 		$stmt = $this->connection->prepare($sql);
 		$stmt->bindValue(':event_id', $eventId, PDO::PARAM_INT);
 
-		if ($cuisine !== null && $cuisine !== '') {
-			$stmt->bindValue(':cuisine', $cuisine, PDO::PARAM_STR);
+		if ($cuisineFilter !== null && $cuisineFilter !== '') {
+			$stmt->bindValue(':cuisine', $cuisineFilter, PDO::PARAM_STR);
 		}
 
 		$stmt->execute();
@@ -73,9 +76,11 @@ class YummyEventRepository implements IYummyRepository
 	}
 
 	/**
+	 * Returns the distinct cuisine tag names present for the event, for use in the filter dropdown.
+	 *
 	 * @return string[]
 	 */
-	public function getAvailableCuisines(int $eventId): array
+	public function findAvailableCuisinesByEventId(int $eventId): array
 	{
 		$sql = "
 			SELECT DISTINCT ct.name
@@ -94,7 +99,8 @@ class YummyEventRepository implements IYummyRepository
 		return $stmt->fetchAll(PDO::FETCH_COLUMN);
 	}
 
-	public function getBySlug(int $eventId, string $slug): ?YummyEvent
+	/** Looks up a restaurant by its URL slug; returns null when no match is found. */
+	public function findActiveRestaurantBySlug(int $eventId, string $slug): ?YummyEvent
 	{
 		$sql = "
 			SELECT

@@ -16,7 +16,7 @@ $selectedCuisine = $viewModel->selectedCuisine;
 <link rel="stylesheet" href="/assets/yummy/css/style.css" />
 
 <?php
-$heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg';
+$heroImage = $content['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg';
 ?>
 
 <style>
@@ -391,7 +391,6 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
   }
 </style>
 
-<!-- ✅ HERO BANNER ONLY -->
 <section class="yummy-hero">
   <div class="yummy-hero-content">
     <div class="yummy-pill"><?= htmlspecialchars($content['hero_date'] ?? '') ?></div>
@@ -406,7 +405,6 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
   </div>
 </section>
 
-<!-- ✅ BREADCRUMB SECTION -->
 <div class="BREADCRUMB">
   <div class="nav-breadcrumb">
     <div class="ordered-list">
@@ -426,7 +424,6 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
   </div>
 </div>
 
-<!-- ✅ FEATURED RESTAURANTS CARDS SECTION -->
 <div class="featured-container">
   <div class="featured-card">
     <div class="icon-wrapper"><img class="card-icon" src="/assets/yummy/image/IconSvg_iconCarrier.png" alt="Featured Restaurants" /></div>
@@ -453,7 +450,6 @@ $heroImage = $yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg'
   </div>
 </div>
 
-<!-- ✅ DYNAMIC RESTAURANTS LIST -->
 <section id="restaurants" class="restaurants-section">
   <h2><?= htmlspecialchars($content['explore_heading'] ?? 'Explore Restaurants') ?></h2>
   <p class="muted"><?= htmlspecialchars($content['explore_text'] ?? 'Taste the finest culinary experiences in Haarlem.') ?></p>

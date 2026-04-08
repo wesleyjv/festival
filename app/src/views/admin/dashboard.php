@@ -237,6 +237,12 @@ use App\Security\Csrf;
                 <span>Content</span>
             </button>
         </li>
+        <li class="nav-item">
+            <a class="nav-link w-100 text-start" href="/admin/yummy/restaurants">
+                <i class="bi bi-shop"></i>
+                <span>Yummy Restaurants</span>
+            </a>
+        </li>
     </ul>
 </nav>
 
@@ -317,6 +323,12 @@ use App\Security\Csrf;
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Content</span>
                 </button>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link w-100 text-start" href="/admin/yummy/restaurants" data-bs-dismiss="offcanvas">
+                    <i class="bi bi-shop"></i>
+                    <span>Yummy Restaurants</span>
+                </a>
             </li>
         </ul>
     </div>

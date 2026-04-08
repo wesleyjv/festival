@@ -4,17 +4,23 @@ namespace App\Repositories\Interfaces;
 
 use App\Models\YummyEvent;
 
+/** Contract for reading restaurant data scoped to a Yummy festival event. */
 interface IYummyRepository
 {
     /**
+     * Returns only active restaurants — inactive ones are hidden from visitors.
+     *
      * @return YummyEvent[]
      */
-    public function getAll(int $eventId, ?string $cuisine = null): array;
+    public function findActiveRestaurantsByEventId(int $eventId, ?string $cuisineFilter = null): array;
 
     /**
+     * Returns the distinct cuisine tag names present for the event, for use in the filter dropdown.
+     *
      * @return string[]
      */
-    public function getAvailableCuisines(int $eventId): array;
+    public function findAvailableCuisinesByEventId(int $eventId): array;
 
-    public function getBySlug(int $eventId, string $slug): ?YummyEvent;
+    /** Looks up a restaurant by its URL slug; returns null when no match is found. */
+    public function findActiveRestaurantBySlug(int $eventId, string $slug): ?YummyEvent;
 }

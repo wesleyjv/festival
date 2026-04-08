@@ -156,11 +156,7 @@ class EventsController
         }
     }
 
-    /**
-     * Displays the yummy events overview page.
-     *
-     * @return void
-     */
+    /** Passes the optional cuisine filter from the query string to the service and renders the overview. */
     public function displayYummyOverviewPage(): void
     {
         try {
@@ -177,6 +173,7 @@ class EventsController
         }
     }
 
+    /** Looks up the restaurant by URL slug; renders 404 when not found or inactive. */
     public function displayRestaurantDetailPage(array $vars = []): void
     {
         try {

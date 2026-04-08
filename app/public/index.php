@@ -112,6 +112,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/story-events/create', ['App\\Controllers\\AdminController', 'createStoryEvent']);
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
+
+    $r->addRoute('GET',  '/admin/yummy/restaurants',                              ['App\\Controllers\\AdminYummyController', 'displayRestaurantList']);
+    $r->addRoute('GET',  '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
+    $r->addRoute('GET',  '/admin/yummy/restaurants/edit',                         ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'createRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/update',                       ['App\\Controllers\\AdminYummyController', 'updateRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/delete',              ['App\\Controllers\\AdminYummyController', 'deleteRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/toggle-active',       ['App\\Controllers\\AdminYummyController', 'toggleRestaurantActiveStatus']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -140,6 +148,8 @@ switch ($routeInfo[0]) {
             $ticketPdfService = new App\Services\TicketPdfService();
             $mailService = new App\Services\MailService();
             $controller = new $controllerClass($orderService, $ticketPdfService, $mailService);
+        } elseif ($controllerClass === App\Controllers\AdminYummyController::class) {
+            $controller = new $controllerClass(new App\Services\AdminYummyService());
         } else {
             $controller = new $controllerClass();
         }

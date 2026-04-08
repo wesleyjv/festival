@@ -10,7 +10,6 @@ require __DIR__ . '/../../partials/header.php';
 <link rel="stylesheet" href="/assets/yummy/css/style.css" />
 
 <style>
-  /* Hero */
   .detail-hero {
     position: relative;
     width: 100%;
@@ -67,7 +66,6 @@ require __DIR__ . '/../../partials/header.php';
     align-self: flex-start;
   }
 
-  /* Content card */
   .detail-card {
     max-width: 860px;
     margin: 40px auto 80px auto;
@@ -77,7 +75,6 @@ require __DIR__ . '/../../partials/header.php';
     box-shadow: 0 4px 24px rgba(0,0,0,0.07);
   }
 
-  /* Back link */
   .detail-back {
     display: inline-block;
     margin-bottom: 28px;
@@ -94,7 +91,6 @@ require __DIR__ . '/../../partials/header.php';
     background: #2d3f52;
   }
 
-  /* Rating */
   .detail-rating {
     display: flex;
     align-items: center;
@@ -113,7 +109,6 @@ require __DIR__ . '/../../partials/header.php';
     font-size: 15px;
   }
 
-  /* Cuisine tags */
   .detail-tags {
     display: flex;
     flex-wrap: wrap;
@@ -129,7 +124,6 @@ require __DIR__ . '/../../partials/header.php';
     font-size: 12px;
   }
 
-  /* Address */
   .detail-address {
     display: flex;
     align-items: flex-start;
@@ -216,16 +210,16 @@ require __DIR__ . '/../../partials/header.php';
 
   <?php if ($restaurant->rating !== null): ?>
     <?php
-      $rating  = $restaurant->rating;
-      $full    = min((int) floor($rating), 5);
-      $half    = ($rating - $full) >= 0.5 ? 1 : 0;
-      $empty   = max(0, 5 - $full - $half);
-      $stars   = str_repeat('&#9733;', $full)
-               . str_repeat('&#9734;', $half)
-               . str_repeat('&#9734;', $empty);
+      $rating          = $restaurant->rating;
+      $filledStarCount = min((int) floor($rating), 5);
+      $hasHalfStar     = ($rating - $filledStarCount) >= 0.5 ? 1 : 0;
+      $emptyStarCount  = max(0, 5 - $filledStarCount - $hasHalfStar);
+      $starCharacters  = str_repeat('&#9733;', $filledStarCount)
+                       . str_repeat('&#9734;', $hasHalfStar)
+                       . str_repeat('&#9734;', $emptyStarCount);
     ?>
     <div class="detail-rating">
-      <span class="detail-rating__stars"><?= $stars ?></span>
+      <span class="detail-rating__stars"><?= $starCharacters ?></span>
       <span class="detail-rating__value"><?= htmlspecialchars(number_format($rating, 1)) ?> / 5</span>
     </div>
     <hr class="detail-divider">
