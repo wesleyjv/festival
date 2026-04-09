@@ -2,90 +2,114 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentMethod;
 use App\Models\Order;
 use App\Models\ShoppingCart;
 use App\Repositories\OrderRepository;
+use Exception;
+use Throwable;
 
-/**
- * OrderService – business-logic layer for order operations.
- *
- * Encapsulates the rules for creating, retrieving, and managing orders.
- * The service sits between the controllers and the OrderRepository so
- * that business logic (e.g. generating order numbers, validating carts)
- * is not duplicated across multiple entry points.
- */
 class OrderService
 {
-    /** @var OrderRepository The repository used for order persistence. */
     private OrderRepository $orderRepository;
+    private StripeService $stripeService;
+    private MailService $mailService;
+    private TicketPdfService $ticketPdfService;
+    private InvoicePdfService $invoicePdfService;
 
-    /**
-     * Create a new OrderService.
-     *
-     * @param OrderRepository $orderRepository The repository used for order persistence.
-     */
-    public function __construct(OrderRepository $orderRepository)
-    {
+    public function __construct(
+        OrderRepository $orderRepository,
+        StripeService $stripeService,
+        MailService $mailService,
+        TicketPdfService $ticketPdfService,
+        InvoicePdfService $invoicePdfService
+    ) {
         $this->orderRepository = $orderRepository;
+        $this->stripeService = $stripeService;
+        $this->mailService = $mailService;
+        $this->ticketPdfService = $ticketPdfService;
+        $this->invoicePdfService = $invoicePdfService;
     }
 
-    /**
-     * Validate that the given string is a supported payment method.
-     *
-     * @param  string|null $method The payment method string to validate.
-     * @return bool True when valid, false otherwise.
-     */
-    public function isValidPaymentMethod(?string $method): bool
+    public function initiateStripeSession(ShoppingCart $cart, string $baseUrl, int $userId): string
     {
-        if ($method === null) {
-            return false;
+        if (!$this->stripeService->isConfigured()) {
+            throw new Exception('Payment provider not configured.');
         }
-        return PaymentMethod::tryFrom($method) !== null;
+
+        try {
+            $session = $this->stripeService->createCheckoutSession($cart, $baseUrl, $userId);
+            return $session->url;
+        } catch (Throwable $e) {
+            error_log('Stripe Session Creation Error: ' . $e->getMessage());
+            throw new Exception('Unable to start payment session.');
+        }
     }
 
-    /**
-     * Create a new order from the contents of a shopping cart.
-     *
-     * Builds an Order model, assigns a unique order number, calculates
-     * the total price from the cart items, marks the order as “paid”,
-     * and delegates persistence to the repository.
-     *
-     * @param  ShoppingCart      $cart    The shopping cart containing the items to order.
-     * @param  int               $userId  The ID of the authenticated user placing the order.
-     * @return Order                      The fully persisted Order (including its new ID).
-     * @throws \RuntimeException          When the cart is empty.
-     */
+    public function finalizeStripeOrder(?string $sessionId, ShoppingCart $cart, int $userId): Order
+    {
+        if (!$sessionId) {
+            throw new Exception('Missing payment session information.');
+        }
+
+        try {
+            $session = $this->stripeService->retrieveSession($sessionId);
+            if (!isset($session->payment_status) || $session->payment_status !== 'paid') {
+                throw new Exception('Payment not completed.');
+            }
+        } catch (Throwable $e) {
+            error_log('Stripe Session Retrieval Error: ' . $e->getMessage());
+            throw new Exception('Unable to verify payment.');
+        }
+
+        return $this->createOrderFromCart($cart, $userId);
+    }
+
     public function createOrderFromCart(ShoppingCart $cart, int $userId): Order
     {
-        // Map cart items to database rows and persist the order
         if (empty($cart->items)) {
-            throw new \RuntimeException('Cannot create an order from an empty cart.');
+            throw new Exception('Cannot create an order from an empty cart.');
         }
 
-        // Build the order model from the cart contents
         $order = new Order();
         $order->userId = $userId;
         $order->orderNumber = $this->generateOrderNumber();
         $order->date = new \DateTime();
         $order->items = $cart->items;
-        $order->calculateTotal();  // sums item prices × quantities
-        $order->status = 'paid'; // enum
+        $order->calculateTotal();
+        $order->status = 'paid';
 
-        // Persist the order and its line items to the database
         $this->orderRepository->save($order);
-
         return $order;
+    }
+
+    public function sendOrderDocuments(int $orderId, string $email): void
+    {
+        $order = $this->orderRepository->findByIdWithItems($orderId);
+        if (!$order) {
+            return;
+        }
+
+        $pdfBytes = $this->ticketPdfService->generatePdf($order);
+        $invoiceBytes = $this->invoicePdfService->generatePdf($order);
+
+        $this->mailService->sendWithAttachment(
+            to: $email,
+            subject: 'Your Festival Tickets & Invoice - ' . $order->orderNumber,
+            body: "Hi,\r\n\r\nThank you for your order!\r\n\r\n"
+                . "Order number: " . $order->orderNumber . "\r\n"
+                . "Total: EUR " . number_format($order->totalAmount, 2) . "\r\n\r\n"
+                . "Your tickets and invoice are attached as PDF files.\r\n\r\n"
+                . "See you at the festival!",
+            attachments: [
+                ['data' => $pdfBytes, 'name' => 'tickets-' . $order->orderNumber . '.pdf'],
+                ['data' => $invoiceBytes, 'name' => 'invoice-' . $order->orderNumber . '.pdf'],
+            ]
+        );
     }
 
     private function generateOrderNumber(): string
     {
         return 'ORD-' . strtoupper(bin2hex(random_bytes(6)));
-    }
-
-    public function getOrderById(int $id): ?Order
-    {
-        return $this->orderRepository->findById($id);
     }
 
     public function getOrderByIdWithItems(int $id): ?Order
