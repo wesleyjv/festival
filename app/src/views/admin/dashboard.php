@@ -147,6 +147,66 @@ use App\Security\Csrf;
         .cms-dropzone i {
             font-size: 1rem;
         }
+
+        .story-admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .story-admin-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            background: #fff;
+            padding: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .story-admin-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .story-admin-title {
+            margin: 0;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .story-admin-id {
+            color: #6b7280;
+            font-size: 0.78rem;
+        }
+
+        .story-admin-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .story-admin-chip {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            padding: 0.2rem 0.55rem;
+            font-size: 0.74rem;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .story-admin-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.45rem;
+            margin-top: auto;
+            padding-top: 0.5rem;
+            border-top: 1px solid #f3f4f6;
+        }
     </style>
 </head>
 <body>
@@ -681,40 +741,38 @@ use App\Security\Csrf;
 
             <article class="card stat-card mb-3">
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table align-middle table-hover small">
-                            <thead>
-                            <tr>
-                                <th scope="col">Title</th>
-                                <th scope="col">Day</th>
-                                <th scope="col">Event date</th>
-                                <th scope="col">Time slot</th>
-                                <th scope="col">Location</th>
-                                <th scope="col">Price</th>
-                                <th scope="col">Language</th>
-                                <th scope="col">Category</th>
-                                <th scope="col" class="text-end">Actions</th>
-                            </tr>
-                            </thead>
-                            <tbody>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0">Story Event Library</h2>
+                        <span class="badge text-bg-light border"><?= count($storyEvents) ?> events</span>
+                    </div>
+                    <?php if (empty($storyEvents)): ?>
+                        <div class="text-center text-muted py-4 border rounded bg-light-subtle">
+                            No story events found. Use "New Story Event" to add one.
+                        </div>
+                    <?php else: ?>
+                        <div class="story-admin-grid">
                             <?php foreach ($storyEvents as $e): ?>
-                                <tr>
-                                    <td>
-                                        <div class="fw-semibold">
-                                            <?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?>
+                                <article class="story-admin-card">
+                                    <div class="story-admin-card-head">
+                                        <div>
+                                            <h3 class="story-admin-title"><?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?></h3>
+                                            <div class="story-admin-id">#<?= (int)($e['id'] ?? 0) ?></div>
                                         </div>
-                                        <div class="text-muted">#<?= (int)($e['id'] ?? 0) ?></div>
-                                    </td>
-                                    <td><?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?></td>
-                                    <td><?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?></td>
-                                    <td class="text-end">
+                                        <strong class="text-success">EUR <?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?></strong>
+                                    </div>
+
+                                    <div class="story-admin-meta">
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?></span>
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?></span>
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?></span>
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?></span>
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?></span>
+                                        <span class="story-admin-chip"><?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?></span>
+                                    </div>
+
+                                    <div class="story-admin-actions">
                                         <button
-                                            class="btn btn-sm btn-outline-secondary me-1"
+                                            class="btn btn-sm btn-outline-secondary"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editStoryEventModal"
                                             data-id="<?= (int)($e['id'] ?? 0) ?>"
@@ -728,7 +786,7 @@ use App\Security\Csrf;
                                             data-price="<?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?>"
                                             data-category="<?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?>"
                                         >
-                                            <i class="bi bi-pencil"></i>
+                                            <i class="bi bi-pencil me-1"></i>Edit
                                         </button>
                                         <form method="post"
                                               action="/admin/story-events/<?= (int)($e['id'] ?? 0) ?>/delete"
@@ -736,22 +794,14 @@ use App\Security\Csrf;
                                               onsubmit="return confirm('Delete story event <?= htmlspecialchars(addslashes($e['title'] ?? ''), ENT_QUOTES) ?>?');">
                                             <?= Csrf::field() ?>
                                             <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash"></i>
+                                                <i class="bi bi-trash me-1"></i>Delete
                                             </button>
                                         </form>
-                                    </td>
-                                </tr>
+                                    </div>
+                                </article>
                             <?php endforeach; ?>
-                            <?php if (empty($storyEvents)): ?>
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">
-                                        No story events found. Use "New Story Event" to add one.
-                                    </td>
-                                </tr>
-                            <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </article>
 
@@ -773,7 +823,13 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="create-story-day">Day</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-story-day" name="day" placeholder="Thursday" required>
+                                        <select class="form-select form-select-sm" id="create-story-day" name="day" required>
+                                            <option value="">Select day</option>
+                                            <option value="Thursday">Thursday</option>
+                                            <option value="Friday">Friday</option>
+                                            <option value="Saturday">Saturday</option>
+                                            <option value="Sunday">Sunday</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="create-story-date">Event date</label>
@@ -781,11 +837,11 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="create-story-time">Time slot</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-story-time" name="time_slot" placeholder="16:00-17:00" required>
+                                        <input type="text" class="form-control form-control-sm" id="create-story-time" name="time_slot" placeholder="16:00-17:00" list="story-time-slot-options" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="create-story-location">Location</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-story-location" name="location" required>
+                                        <input type="text" class="form-control form-control-sm" id="create-story-location" name="location" list="story-location-options" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="create-story-age">Age group</label>
@@ -793,7 +849,7 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="create-story-language">Language</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-story-language" name="language" placeholder="EN/NL">
+                                        <input type="text" class="form-control form-control-sm" id="create-story-language" name="language" placeholder="EN/NL" list="story-language-options">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="create-story-price">Price</label>
@@ -801,9 +857,12 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-semibold" for="create-story-category">Category / description</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-story-category" name="category">
+                                        <input type="text" class="form-control form-control-sm" id="create-story-category" name="category" list="story-category-options">
                                     </div>
                                 </div>
+                                <small class="text-muted d-block mt-2">
+                                    Tip: fields with suggestions support typing your own custom value too.
+                                </small>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -832,7 +891,13 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="edit-story-day">Day</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-story-day" name="day" required>
+                                        <select class="form-select form-select-sm" id="edit-story-day" name="day" required>
+                                            <option value="">Select day</option>
+                                            <option value="Thursday">Thursday</option>
+                                            <option value="Friday">Friday</option>
+                                            <option value="Saturday">Saturday</option>
+                                            <option value="Sunday">Sunday</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="edit-story-date">Event date</label>
@@ -840,11 +905,11 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="edit-story-time">Time slot</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-story-time" name="time_slot" required>
+                                        <input type="text" class="form-control form-control-sm" id="edit-story-time" name="time_slot" list="story-time-slot-options" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="edit-story-location">Location</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-story-location" name="location" required>
+                                        <input type="text" class="form-control form-control-sm" id="edit-story-location" name="location" list="story-location-options" required>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-semibold" for="edit-story-age">Age group</label>
@@ -852,7 +917,7 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="edit-story-language">Language</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-story-language" name="language">
+                                        <input type="text" class="form-control form-control-sm" id="edit-story-language" name="language" list="story-language-options">
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-semibold" for="edit-story-price">Price</label>
@@ -860,7 +925,7 @@ use App\Security\Csrf;
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label small fw-semibold" for="edit-story-category">Category / description</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-story-category" name="category">
+                                        <input type="text" class="form-control form-control-sm" id="edit-story-category" name="category" list="story-category-options">
                                     </div>
                                 </div>
                             </div>
@@ -872,6 +937,36 @@ use App\Security\Csrf;
                     </div>
                 </div>
             </div>
+
+            <datalist id="story-time-slot-options">
+                <option value="10:00-11:00"></option>
+                <option value="11:30-12:30"></option>
+                <option value="13:00-14:00"></option>
+                <option value="14:30-15:30"></option>
+                <option value="16:00-17:00"></option>
+                <option value="18:00-19:00"></option>
+                <option value="19:30-20:30"></option>
+            </datalist>
+            <datalist id="story-location-options">
+                <?php foreach ($storyEvents as $eventOption): ?>
+                    <?php $locationName = trim((string)($eventOption['location'] ?? '')); ?>
+                    <?php if ($locationName !== ''): ?>
+                        <option value="<?= htmlspecialchars($locationName, ENT_QUOTES) ?>"></option>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </datalist>
+            <datalist id="story-language-options">
+                <option value="EN"></option>
+                <option value="NL"></option>
+                <option value="EN/NL"></option>
+            </datalist>
+            <datalist id="story-category-options">
+                <option value="Family"></option>
+                <option value="Folklore"></option>
+                <option value="Myths & Legends"></option>
+                <option value="Children"></option>
+                <option value="Interactive"></option>
+            </datalist>
         </section>
 
         <!-- Orders Overview Page -->

@@ -82,54 +82,13 @@ class StoryEventRepository
      */
     public function getEventsByDate(string $date): array
     {
-        $dayMap = [
-            '2026-07-23' => 'Thursday',
-            '2026-07-24' => 'Friday',
-            '2026-07-25' => 'Saturday',
-            '2026-07-26' => 'Sunday',
-        ];
-        $dayName = $dayMap[$date] ?? '';
-
-        $db = DB::getConnection();
-
-        $whereClauses = ["(event_date != '<last weekend of July>' AND event_date = :date)"];
-        $params = [':date' => $date];
-
-        if ($dayName !== '') {
-            $whereClauses[] = "(event_date = '<last weekend of July>' AND day = :day_name)";
-            $params[':day_name'] = $dayName;
-        }
-
-        $sql = "
-            SELECT
-                story_event_id AS id,
-                event_date,
-                day,
-                time_slot,
-                location,
-                age_group,
-                title,
-                language,
-                price,
-                category
-            FROM story_event
-            WHERE " . implode(' OR ', $whereClauses) . "
-            ORDER BY event_date, time_slot, story_event_id
-        ";
-
-        try {
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log('Error fetching story_event rows by date: ' . $e->getMessage());
-            return [];
-        }
-
         $events = [];
-        foreach ($rows as $row) {
-            $events[] = $this->formatEvent($row);
+        foreach ($this->fetchRows() as $row) {
+            if ($this->getDateKeyFromRow($row) === $date) {
+                $events[] = $this->formatEvent($row);
+            }
         }
+
         return $events;
     }
 

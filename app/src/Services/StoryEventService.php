@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\StoryEventRepository;
+use App\ViewModels\StoriesOverviewViewModel;
 
 /**
  * Service layer for storytelling events.
@@ -13,10 +14,12 @@ use App\Repositories\StoryEventRepository;
 final class StoryEventService
 {
     private StoryEventRepository $repository;
+    private ContentService $contentService;
 
     public function __construct()
     {
         $this->repository = new StoryEventRepository();
+        $this->contentService = new ContentService();
     }
 
     /**
@@ -24,14 +27,8 @@ final class StoryEventService
      * the current query string parameters.
      *
      * @param array<string,string|null> $filters
-     * @return array{
-     *   events: array<int,array<string,mixed>>,
-     *   allEvents: array<int,array<string,mixed>>,
-     *   featuredStoryteller: ?array,
-     *   locations: array<int,array<string,mixed>>
-     * }
      */
-    public function getStoriesOverviewData(array $filters): array
+    public function getStoriesOverviewViewModel(array $filters): StoriesOverviewViewModel
     {
         $dayFilter      = $filters['day']      ?? null;
         $dateFilter     = $filters['date']     ?? null;
@@ -68,15 +65,17 @@ final class StoryEventService
             $events = $allEvents;
         }
 
-        $featuredStoryteller = $this->repository->getFeatured();
+        $featuredStoryteller = $this->repository->getFeatured() ?? [];
         $locations           = $this->repository->getLocations();
+        $content             = $this->contentService->getPageContent('stories');
 
-        return [
-            'events'             => $events,
-            'allEvents'          => $allEvents,
-            'featuredStoryteller'=> $featuredStoryteller,
-            'locations'          => $locations,
-        ];
+        return new StoriesOverviewViewModel(
+            events: $events,
+            allEvents: $allEvents,
+            featuredStoryteller: $featuredStoryteller,
+            locations: $locations,
+            content: $content
+        );
     }
 }
 

@@ -6,13 +6,12 @@ use PDO;
 use Throwable;
 
 use App\Repositories\EventRepository;
-use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\StoryEventService;
 use App\Services\TicketService;
 use App\Services\Interfaces\IYummyService;
 use App\Services\YummyService;
-use App\ViewModels\YummyOverviewViewModel;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -26,7 +25,7 @@ class EventsController
      * @var EventRepository Repository used to retrieve event data.
      */
     private EventRepository $eventRepository;
-    private StoryEventRepository $storyEventRepository;
+    private StoryEventService $storyEventService;
     private IYummyService $yummyService;
 
     /**
@@ -35,7 +34,7 @@ class EventsController
     public function __construct()
     {
         $this->eventRepository = new EventRepository();
-        $this->storyEventRepository = new StoryEventRepository();
+        $this->storyEventService = new StoryEventService();
         $this->yummyService = new YummyService(
             new YummyEventRepository(),
             new ContentService()
@@ -117,29 +116,18 @@ class EventsController
     public function stories($vars = [])
     {
         try {
-            // Get filter parameters from GET request
-            $dayFilter = $_GET['day'] ?? null;
-            $timeFilter = $_GET['time'] ?? null;
-            $locationFilter = $_GET['location'] ?? null;
+            $filters = [
+                'day' => $_GET['day'] ?? null,
+                'date' => $_GET['date'] ?? null,
+                'time' => $_GET['time'] ?? null,
+                'location' => $_GET['location'] ?? null,
+            ];
 
-            // Get events based on filters via repository
-            if ($dayFilter) {
-                $events = $this->storyEventRepository->getEventsByDay($dayFilter);
-            } elseif ($timeFilter) {
-                $events = $this->storyEventRepository->getEventsByTime($timeFilter);
-            } elseif ($locationFilter) {
-                $events = $this->storyEventRepository->getEventsByLocation($locationFilter);
-            } else {
-                $events = $this->storyEventRepository->getEvents();
-            }
+            $viewModel = $this->storyEventService->getStoriesOverviewViewModel($filters);
+            $events = $viewModel->events;
 
             $ticketService = new TicketService();
             $storyTicketIds = $ticketService->getStoryTicketIdMap($events);
-
-            // Get additional data via repository
-            $featuredStoryteller = $this->storyEventRepository->getFeatured();
-            $contentService = new ContentService();
-            $storiesContent = $contentService->getPageContent('stories');
 
             // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';
