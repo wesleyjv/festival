@@ -6,7 +6,7 @@
  * Include this partial from any Jazz detail page view.
  *
  * Track JSON format expected in $artist->tracks:
- *   [{"title":"Pinkie Binkie","genre":"Jazz Fusion","url":"/audio/...","duration":"5:15"}, ...]
+ *   [{"title":"...","genre":"...","url":"/uploads/audio/...","duration":"4:10","duration_seconds":250}, ...]
  */
 if (!isset($artist)) {
     return;
@@ -82,21 +82,96 @@ $tracks   = $artist->tracks ?? [];
         <?php if (!empty($tracks)): ?>
             <section class="detail-tracks">
                 <h2 class="detail-tracks__heading"><?= htmlspecialchars($dc['tracks_heading'] ?? 'Listen to their sounds') ?></h2>
-                <?php foreach ($tracks as $track): ?>
-                    <div class="track-item">
-                        <div class="track-item__header">
-                            <span class="track-item__title"><?= htmlspecialchars($track['title'] ?? '') ?></span>
-                            <?php if (!empty($track['genre'])): ?>
-                                <span class="track-item__genre">Genre: <?= htmlspecialchars($track['genre']) ?></span>
-                            <?php endif; ?>
+                <div class="detail-tracks__grid">
+                    <?php foreach ($tracks as $track): ?>
+                        <?php
+                        $tTitle = $track['title'] ?? '';
+                        $tGenre = $track['genre'] ?? '';
+                        $tUrl   = $track['url'] ?? '';
+                        $tDur   = trim((string) ($track['duration'] ?? ''));
+                        $tSec   = (int) ($track['duration_seconds'] ?? 0);
+                        if ($tDur === '' && $tSec > 0) {
+                            $tDur = sprintf('%d:%02d', intdiv($tSec, 60), $tSec % 60);
+                        }
+                        $tDurDisp = $tDur !== '' ? $tDur : '0:00';
+                        ?>
+                        <div class="track-card">
+                            <div class="track-card__body">
+                                <div class="track-card__title"><?= htmlspecialchars($tTitle) ?></div>
+                                <?php if ($tGenre !== ''): ?>
+                                    <div class="track-card__genre"><?= htmlspecialchars($tGenre) ?></div>
+                                <?php endif; ?>
+                                <div class="track-card__time"><span class="track-card__elapsed">0:00</span><span class="track-card__sep"> / </span><span class="track-card__total"><?= htmlspecialchars($tDurDisp) ?></span></div>
+                                <?php if ($tUrl !== ''): ?>
+                                    <button type="button" class="track-card__play" aria-label="Play <?= htmlspecialchars($tTitle, ENT_QUOTES) ?>"><i class="bi bi-play-fill" aria-hidden="true"></i></button>
+                                    <audio class="track-card__audio" preload="metadata" src="<?= htmlspecialchars($tUrl) ?>"></audio>
+                                <?php else: ?>
+                                    <p class="track-card__na small text-muted mb-0">Audio not uploaded yet</p>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <audio controls preload="none">
-                            <?php if (!empty($track['url'])): ?>
-                                <source src="<?= htmlspecialchars($track['url']) ?>">
-                            <?php endif; ?>
-                        </audio>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+            <script>
+            (function () {
+                document.querySelectorAll('.track-card').forEach(function (card) {
+                    var btn = card.querySelector('.track-card__play');
+                    var audio = card.querySelector('.track-card__audio');
+                    var elapsed = card.querySelector('.track-card__elapsed');
+                    if (!btn || !audio || !elapsed) return;
+                    function fmt(t) {
+                        if (!isFinite(t)) t = 0;
+                        var s = Math.floor(t);
+                        var m = Math.floor(s / 60);
+                        s = s % 60;
+                        return m + ':' + (s < 10 ? '0' : '') + s;
+                    }
+                    btn.addEventListener('click', function () {
+                        document.querySelectorAll('.track-card__audio').forEach(function (other) {
+                            if (other !== audio && !other.paused) other.pause();
+                        });
+                        if (audio.paused) {
+                            audio.play().catch(function () {});
+                            btn.innerHTML = '<i class="bi bi-pause-fill" aria-hidden="true"></i>';
+                        } else {
+                            audio.pause();
+                            btn.innerHTML = '<i class="bi bi-play-fill" aria-hidden="true"></i>';
+                        }
+                    });
+                    audio.addEventListener('timeupdate', function () {
+                        elapsed.textContent = fmt(audio.currentTime);
+                    });
+                    audio.addEventListener('ended', function () {
+                        btn.innerHTML = '<i class="bi bi-play-fill" aria-hidden="true"></i>';
+                        elapsed.textContent = '0:00';
+                    });
+                });
+            })();
+            </script>
+        <?php endif; ?>
+
+        <?php
+        $gallery = $artist->images ?? [];
+        $gallery = is_array($gallery) ? $gallery : [];
+        ?>
+        <?php if ($gallery !== []): ?>
+            <section class="detail-gallery" aria-label="Photo gallery">
+                <h2 class="detail-gallery__heading">Gallery</h2>
+                <div class="detail-gallery__grid">
+                    <?php foreach ($gallery as $shot): ?>
+                        <?php
+                        $gu = is_array($shot) ? ($shot['url'] ?? '') : '';
+                        $ga = is_array($shot) ? ($shot['alt'] ?? '') : '';
+                        if ($gu === '') {
+                            continue;
+                        }
+                        ?>
+                        <figure class="detail-gallery__item">
+                            <img src="<?= htmlspecialchars($gu) ?>" alt="<?= htmlspecialchars($ga !== '' ? $ga : $displayName) ?>" loading="lazy">
+                        </figure>
+                    <?php endforeach; ?>
+                </div>
             </section>
         <?php endif; ?>
 

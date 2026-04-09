@@ -121,6 +121,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/jazz/artists/create', ['App\\Controllers\\AdminController', 'createJazzArtist']);
     $r->addRoute('POST', '/admin/jazz/artists/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteJazzArtist']);
     $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);
+    $r->addRoute('POST', '/admin/upload-audio', ['App\\Controllers\\AdminController', 'uploadAudio']);
     $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteUser']);

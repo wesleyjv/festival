@@ -306,7 +306,7 @@
     <div class="navbar-bar">
         <a class="navbar-brand-festival" href="/">
             <span class="brand-icon"><i class="bi bi-music-note-beamed"></i></span>
-            <span>The Haarlem<br>Festival</span>
+            <span>THE HAARLEM<br>FESTIVAL</span>
         </a>
 
         <!-- Desktop center links -->
@@ -344,7 +344,7 @@
             <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
                 <li><a class="btn-program" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a></li>
             <?php endif; ?>
-            <li><a class="btn-program" href="/cart"><i class="bi bi-calendar-event"></i> My Program</a></li>
+            <li><a class="btn-program" href="/cart"><i class="bi bi-bag"></i> My Program</a></li>
         </ul>
 
         <!-- Mobile hamburger -->
@@ -391,7 +391,7 @@
         <?php if (($_SESSION['user_role'] ?? '') === 'admin'): ?>
             <a class="btn-program-mobile" href="/admin" style="background-color:#5c2d91;"><i class="bi bi-shield-lock"></i> CMS</a>
         <?php endif; ?>
-        <a class="btn-program-mobile" href="/cart"><i class="bi bi-calendar-event"></i> My Program</a>
+        <a class="btn-program-mobile" href="/cart"><i class="bi bi-bag"></i> My Program</a>
     </div>
 </nav>
 

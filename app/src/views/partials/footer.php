@@ -1,29 +1,155 @@
 </main>
 
-<footer class="mt-5" style="background: #1e1e1e; color: rgba(255,255,255,0.85);">
-    <div class="container">
-        <div class="row py-5">
-            <!-- Brand & tagline -->
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
-                    <span style="width: 36px; height: 36px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                        <i class="bi bi-music-note-beamed" style="color: #fff; font-size: 1rem;"></i>
-                    </span>
-                    <strong style="font-size: 1rem; text-transform: uppercase; letter-spacing: 1.5px;">The Haarlem Festival</strong>
-                </div>
-                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.6; margin: 0;">
-                    Experience the best of Haarlem's culture, food, music, and history.
-                </p>
-            </div>
+<style>
+    .site-footer {
+        background: #1a252f;
+        color: rgba(255, 255, 255, 0.88);
+        margin-top: 0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .site-footer__inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 20px 32px;
+    }
+    .site-footer__brand {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .site-footer__logo {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        text-decoration: none;
+        color: #fff;
+    }
+    .site-footer__logo-mark {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: linear-gradient(145deg, #f5ead5 0%, #e8dcc4 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+    .site-footer__logo-mark i {
+        font-size: 1.35rem;
+        background: linear-gradient(135deg, #c9a227 0%, #e07b2a 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+    }
+    .site-footer__logo-text {
+        font-weight: 800;
+        font-size: 0.82rem;
+        letter-spacing: 0.2em;
+        line-height: 1.35;
+        text-transform: uppercase;
+        text-align: left;
+    }
+    .site-footer__grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 28px 24px;
+        margin-bottom: 36px;
+    }
+    @media (max-width: 767.98px) {
+        .site-footer__grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    @media (max-width: 479.98px) {
+        .site-footer__grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    .site-footer__col h3 {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 14px;
+        letter-spacing: 0.06em;
+    }
+    .site-footer__col ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .site-footer__col li {
+        margin-bottom: 10px;
+    }
+    .site-footer__col a {
+        color: rgba(255, 255, 255, 0.58);
+        text-decoration: none;
+        font-size: 0.88rem;
+        transition: color 0.2s;
+    }
+    .site-footer__col a:hover {
+        color: #fff;
+    }
+    .site-footer__social {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .site-footer__social a {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.15rem;
+        transition: background 0.2s, color 0.2s;
+    }
+    .site-footer__social a:hover {
+        background: rgba(255, 255, 255, 0.16);
+        color: #fff;
+    }
+    .site-footer__bottom {
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        padding: 22px 20px 28px;
+        text-align: center;
+    }
+    .site-footer__legal {
+        font-size: 0.78rem;
+        color: rgba(255, 255, 255, 0.45);
+        line-height: 1.6;
+        margin: 0;
+    }
+    .site-footer__legal a {
+        color: rgba(255, 255, 255, 0.55);
+        text-decoration: none;
+    }
+    .site-footer__legal a:hover {
+        color: #fff;
+    }
+</style>
 
-            <!-- Events -->
-            <div class="col-6 col-lg-2 mb-4 mb-lg-0">
-                <h6 style="text-transform: uppercase; font-size: 0.72rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 16px;">Events</h6>
-                <ul style="list-style: none; padding: 0; margin: 0;">
-                    <li style="margin-bottom: 10px;"><a href="/events/yummy" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem; transition: color 0.2s;"><i class="bi bi-cup-straw" style="color: #e74c3c; margin-right: 6px;"></i>Yummy</a></li>
-                    <li style="margin-bottom: 10px;"><a href="/events/jazz" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;"><i class="bi bi-music-note" style="color: #9b59b6; margin-right: 6px;"></i>Jazz</a></li>
-                    <li style="margin-bottom: 10px;"><a href="/events/history" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;"><i class="bi bi-bank" style="color: #27ae60; margin-right: 6px;"></i>History</a></li>
-                    <li><a href="/events/stories" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;"><i class="bi bi-book" style="color: #e67e22; margin-right: 6px;"></i>Storytelling</a></li>
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__brand">
+            <a href="/" class="site-footer__logo">
+                <span class="site-footer__logo-mark" aria-hidden="true"><i class="bi bi-stars"></i></span>
+                <span class="site-footer__logo-text">THE HAARLEM<br>FESTIVAL</span>
+            </a>
+        </div>
+
+        <div class="site-footer__grid">
+            <div class="site-footer__col">
+                <h3>Festival</h3>
+                <ul>
+                    <li><a href="/events/yummy">Yummy Food Event</a></li>
+                    <li><a href="/events/jazz">Jazz Event</a></li>
+                    <li><a href="/events/history">History Event</a></li>
+                    <li><a href="/events/stories">Storytelling Event</a></li>
                 </ul>
             </div>
 
@@ -41,26 +167,33 @@
                     <li><a href="/cart" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Program</a></li>
                 </ul>
             </div>
-
-            <!-- Contact -->
-            <div class="col-lg-4">
-                <h6 style="text-transform: uppercase; font-size: 0.72rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 16px;">Contact</h6>
-                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); line-height: 1.7; margin: 0;">
-                    <i class="bi bi-geo-alt" style="margin-right: 6px;"></i>Haarlem, The Netherlands<br>
-                    <i class="bi bi-envelope" style="margin-right: 6px;"></i>info@haarlemfestival.nl
-                </p>
+            <div class="site-footer__col">
+                <h3>Support</h3>
+                <ul>
+                    <li><a href="mailto:info@haarlemfestival.nl">Customer Service</a></li>
+                    <li><a href="/tickets">Booking Help</a></li>
+                    <li><a href="#">Cancellation</a></li>
+                </ul>
+            </div>
+            <div class="site-footer__col">
+                <h3>Follow Us</h3>
+                <div class="site-footer__social">
+                    <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                    <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                    <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Bottom bar -->
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding: 20px 0; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
-            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.4);">&copy; <?= date('Y') ?> The Haarlem Festival. All rights reserved.</span>
-            <div style="display: flex; gap: 16px;">
-                <a href="#" style="color: rgba(255,255,255,0.4); font-size: 1.1rem; transition: color 0.2s;" title="Facebook"><i class="bi bi-facebook"></i></a>
-                <a href="#" style="color: rgba(255,255,255,0.4); font-size: 1.1rem; transition: color 0.2s;" title="Instagram"><i class="bi bi-instagram"></i></a>
-                <a href="#" style="color: rgba(255,255,255,0.4); font-size: 1.1rem; transition: color 0.2s;" title="Twitter"><i class="bi bi-twitter-x"></i></a>
-            </div>
-        </div>
+    <div class="site-footer__bottom">
+        <p class="site-footer__legal">
+            &copy; <?= date('Y') ?> The Festival Haarlem. All rights reserved.
+            <span aria-hidden="true"> | </span>
+            <a href="#">Privacy Policy</a>
+            <span aria-hidden="true"> | </span>
+            <a href="#">Terms of Service</a>
+        </p>
     </div>
 </footer>
 

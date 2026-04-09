@@ -84,6 +84,22 @@ class EventsController
         $contentService = new ContentService();
         $jazzContent = $contentService->getPageContent('jazz');
 
+        $cmsJazzArtist = [];
+        $attachHomepageImage = function (array $events) use (&$cmsJazzArtist, $contentService): void {
+            foreach ($events as $ev) {
+                $id = $ev->eventId;
+                if (!isset($cmsJazzArtist[$id])) {
+                    $cmsJazzArtist[$id] = $contentService->getPageContent('jazz_' . $id);
+                }
+                $cmsHp = trim($cmsJazzArtist[$id]['homepage_image'] ?? '');
+                if ($cmsHp !== '') {
+                    $ev->homepageImage = $cmsHp;
+                }
+            }
+        };
+        $attachHomepageImage($jazzArtists);
+        $attachHomepageImage($jazzSchedule);
+
         require __DIR__ . '/../views/events/jazz/overview.php';
     }
 

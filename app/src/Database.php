@@ -27,7 +27,14 @@ class Database
                     PDO::ATTR_EMULATE_PREPARES => false,
                 ]);
             } catch (PDOException $e) {
-                throw new PDOException("Database connection failed: " . $e->getMessage());
+                $msg = $e->getMessage();
+                $hint = '';
+                if (strpos($msg, 'getaddrinfo') !== false || strpos($msg, '2002') !== false) {
+                    $hint = ' (Host name could not be resolved: check DB_HOST in your environment, internet/VPN, '
+                        . 'and that the database service is running. In Docker, ensure the container can reach the host '
+                        . 'or use a reachable hostname such as host.docker.internal for a DB on your machine.)';
+                }
+                throw new PDOException('Database connection failed: ' . $msg . $hint, (int) $e->getCode());
             }
         }
 

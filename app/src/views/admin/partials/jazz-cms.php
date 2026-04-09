@@ -1,7 +1,7 @@
 <?php
 
 use App\Security\Csrf;
-
+//USE PARTIALS
 /** @var array<string,string> $jazzContent */
 /** @var \App\Models\JazzEvent[] $jazzCmsArtists */
 /** @var array<int, array<string,string>> $jazzArtistContents */
@@ -407,7 +407,7 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                         id="jazz-cms-artist-form-<?= $aid ?>"
 
                         data-artist-id="<?= $aid ?>"
-
+                         
                     >
 
                         <?= Csrf::field() ?>
@@ -459,6 +459,32 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                                 <div class="cms-dropzone-hint">Drop or click</div>
 
                                 <input type="hidden" name="banner_image" value="<?= htmlspecialchars($bi, ENT_QUOTES) ?>">
+
+                            </div>
+
+
+
+                            <div class="jazz-cms-label">Homepage line-up image</div>
+
+                            <p class="small text-muted mb-2">Shown on the Jazz overview (line-up grid and schedule). If empty, the profile image is used.</p>
+
+                            <div class="cms-dropzone mb-2" data-cms-image="homepage_image" data-upload-url="/admin/upload-image">
+
+                                <?php $hi = $ac['homepage_image'] ?? ''; ?>
+
+                                <?php if ($hi): ?>
+
+                                    <img src="<?= htmlspecialchars($hi, ENT_QUOTES) ?>" alt="" class="cms-preview-img">
+
+                                <?php else: ?>
+
+                                    <span class="text-muted small">Drop or click — wide landscape works best</span>
+
+                                <?php endif; ?>
+
+                                <div class="cms-dropzone-hint">Drop or click</div>
+
+                                <input type="hidden" name="homepage_image" value="<?= htmlspecialchars($hi, ENT_QUOTES) ?>">
 
                             </div>
 
@@ -523,6 +549,53 @@ $jazzArtistNotice = $jazzArtistNotice ?? '';
                                 </div>
 
                             </div>
+
+                            <?php
+                            $tracksSeed = $ja->tracks ?? [];
+                            if (!is_array($tracksSeed)) {
+                                $tracksSeed = [];
+                            }
+                            $imagesSeed = $ja->images ?? [];
+                            if (!is_array($imagesSeed)) {
+                                $imagesSeed = [];
+                            }
+                            ?>
+
+                            <div class="jazz-cms-label mt-3">Track previews (saved to database)</div>
+
+                            <p class="small text-muted mb-2">Add title and genre, then upload audio. Duration is detected in your browser.</p>
+
+                            <div class="jazz-tracks-editor border rounded p-2 mb-3 bg-white" data-artist-id="<?= $aid ?>">
+
+                                <div class="jazz-tracks-rows small" id="jazz-tracks-rows-<?= $aid ?>"></div>
+
+                                <button type="button" class="btn btn-sm btn-outline-primary mt-1 jazz-tracks-add" data-artist-id="<?= $aid ?>">Add track</button>
+
+                                <script type="application/json" id="jazz-tracks-seed-<?= $aid ?>" class="jazz-tracks-seed"><?= json_encode($tracksSeed, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
+
+                            </div>
+
+                            <input type="hidden" name="tracks_json" value="<?= htmlspecialchars(json_encode($tracksSeed, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" form="jazz-cms-artist-form-<?= $aid ?>" id="jazz-tracks-post-<?= $aid ?>">
+
+
+
+                            <div class="jazz-cms-label">Gallery images (saved to database)</div>
+
+                            <p class="small text-muted mb-2">Optional extra photos for the artist detail page (URLs stored in the database).</p>
+
+                            <div class="jazz-gallery-editor border rounded p-2 mb-3 bg-white" data-artist-id="<?= $aid ?>">
+
+                                <div class="jazz-gallery-rows small" id="jazz-gallery-rows-<?= $aid ?>"></div>
+
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1 jazz-gallery-add" data-artist-id="<?= $aid ?>">Add image</button>
+
+                                <script type="application/json" id="jazz-gallery-seed-<?= $aid ?>" class="jazz-gallery-seed"><?= json_encode($imagesSeed, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?></script>
+
+                            </div>
+
+                            <input type="hidden" name="images_json" value="<?= htmlspecialchars(json_encode($imagesSeed, JSON_UNESCAPED_UNICODE), ENT_QUOTES, 'UTF-8') ?>" form="jazz-cms-artist-form-<?= $aid ?>" id="jazz-gallery-post-<?= $aid ?>">
+
+
 
                             <div class="mt-2">
 

@@ -1742,10 +1742,260 @@ use App\Security\Csrf;
             });
         }
 
+        function jazzFormatDuration(totalSec) {
+            var s = Math.max(0, Math.floor(totalSec || 0));
+            var m = Math.floor(s / 60);
+            var r = s % 60;
+            return m + ':' + (r < 10 ? '0' : '') + r;
+        }
+
+        function jazzProbeAudioDuration(file, done) {
+            try {
+                var url = URL.createObjectURL(file);
+                var a = new Audio();
+                a.preload = 'metadata';
+                a.onloadedmetadata = function () {
+                    URL.revokeObjectURL(url);
+                    var d = a.duration;
+                    if (!isFinite(d)) d = 0;
+                    done(Math.floor(d));
+                };
+                a.onerror = function () {
+                    URL.revokeObjectURL(url);
+                    done(0);
+                };
+                a.src = url;
+            } catch (e) {
+                done(0);
+            }
+        }
+
+        function jazzUploadAudio(file) {
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('csrf_token', csrfToken);
+            return fetch('/admin/upload-audio', { method: 'POST', body: fd, credentials: 'include' })
+                .then(function (r) {
+                    return r.text().then(function (text) {
+                        var j = null;
+                        try {
+                            j = text ? JSON.parse(text) : null;
+                        } catch (e) {
+                            throw new Error(r.ok ? 'Server did not return JSON.' : 'Upload failed');
+                        }
+                        if (!r.ok) {
+                            throw new Error((j && j.error) ? j.error : 'Upload failed');
+                        }
+                        if (!j || typeof j.location !== 'string') {
+                            throw new Error((j && j.error) ? j.error : 'Invalid upload response');
+                        }
+                        return j.location;
+                    });
+                });
+        }
+
+        function jazzBuildTrackRow(aid, data) {
+            data = data || {};
+            var wrap = document.createElement('div');
+            wrap.className = 'jazz-track-row border rounded p-2 mb-2 bg-light';
+            var secs = parseInt(data.duration_seconds, 10) || 0;
+            var durLabel = (data.duration && String(data.duration).trim()) || (secs ? jazzFormatDuration(secs) : '—');
+            wrap.innerHTML =
+                '<div class="row g-2 align-items-end">' +
+                '<div class="col-md-4"><label class="form-label mb-0">Title</label>' +
+                '<input type="text" class="form-control form-control-sm jazz-track-title" value=""></div>' +
+                '<div class="col-md-3"><label class="form-label mb-0">Genre</label>' +
+                '<input type="text" class="form-control form-control-sm jazz-track-genre" value=""></div>' +
+                '<div class="col-md-3"><label class="form-label mb-0">Length</label>' +
+                '<div class="form-control form-control-sm bg-white jazz-track-dur-label">' + durLabel + '</div></div>' +
+                '<div class="col-md-2 text-md-end">' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary jazz-track-audio me-1">Audio</button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger jazz-track-remove">&times;</button></div></div>' +
+                '<input type="hidden" class="jazz-track-url" value="">' +
+                '<input type="hidden" class="jazz-track-seconds" value="0">';
+            wrap.querySelector('.jazz-track-title').value = data.title || '';
+            wrap.querySelector('.jazz-track-genre').value = data.genre || '';
+            wrap.querySelector('.jazz-track-url').value = data.url || '';
+            wrap.querySelector('.jazz-track-seconds').value = String(secs);
+            wrap.querySelector('.jazz-track-remove').addEventListener('click', function () {
+                wrap.remove();
+            });
+            wrap.querySelector('.jazz-track-audio').addEventListener('click', function () {
+                var fi = document.createElement('input');
+                fi.type = 'file';
+                fi.accept = 'audio/*,.mp3,.wav,.ogg,.webm,.m4a,.aac';
+                fi.onchange = function () {
+                    if (!fi.files || !fi.files[0]) return;
+                    var f = fi.files[0];
+                    jazzProbeAudioDuration(f, function (sec) {
+                        wrap.querySelector('.jazz-track-seconds').value = String(sec);
+                        wrap.querySelector('.jazz-track-dur-label').textContent = jazzFormatDuration(sec);
+                    });
+                    jazzUploadAudio(f)
+                        .then(function (loc) {
+                            wrap.querySelector('.jazz-track-url').value = loc;
+                        })
+                        .catch(function (err) {
+                            alert(err.message || String(err));
+                        });
+                };
+                fi.click();
+            });
+            return wrap;
+        }
+
+        function jazzCollectTracks(aid) {
+            var root = document.getElementById('jazz-tracks-rows-' + aid);
+            if (!root) return [];
+            var out = [];
+            root.querySelectorAll('.jazz-track-row').forEach(function (row) {
+                var title = row.querySelector('.jazz-track-title').value.trim();
+                if (!title) return;
+                var sec = parseInt(row.querySelector('.jazz-track-seconds').value, 10) || 0;
+                out.push({
+                    title: title,
+                    genre: row.querySelector('.jazz-track-genre').value.trim(),
+                    url: row.querySelector('.jazz-track-url').value.trim(),
+                    duration_seconds: sec,
+                    duration: row.querySelector('.jazz-track-dur-label').textContent.trim() === '—' ? '' : row.querySelector('.jazz-track-dur-label').textContent.trim()
+                });
+            });
+            return out;
+        }
+
+        function jazzInitTrackEditors() {
+            document.querySelectorAll('.jazz-tracks-editor').forEach(function (editor) {
+                var aid = editor.getAttribute('data-artist-id');
+                if (!aid) return;
+                var list = document.getElementById('jazz-tracks-rows-' + aid);
+                var seedEl = document.getElementById('jazz-tracks-seed-' + aid);
+                if (!list || !seedEl) return;
+                var seed = [];
+                try {
+                    seed = JSON.parse(seedEl.textContent || '[]');
+                } catch (e) {
+                    seed = [];
+                }
+                if (!Array.isArray(seed)) seed = [];
+                seed.forEach(function (item) {
+                    list.appendChild(jazzBuildTrackRow(aid, item));
+                });
+                var addBtn = editor.querySelector('.jazz-tracks-add');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function () {
+                        list.appendChild(jazzBuildTrackRow(aid, {}));
+                    });
+                }
+            });
+        }
+
+        function jazzBuildGalleryRow(aid, data) {
+            data = data || {};
+            var wrap = document.createElement('div');
+            wrap.className = 'jazz-gallery-row border rounded p-2 mb-2 d-flex flex-wrap align-items-center gap-2 bg-light';
+            var url = data.url || '';
+            wrap.innerHTML =
+                '<div class="jazz-gallery-thumb" style="width:72px;height:72px;background:#eee;border-radius:6px;overflow:hidden;flex-shrink:0;">' +
+                (url ? '<img src="" alt="" style="width:100%;height:100%;object-fit:cover;">' : '<div class="d-flex align-items-center justify-content-center h-100 text-muted small">No img</div>') +
+                '</div>' +
+                '<div class="flex-grow-1" style="min-width:180px;"><label class="form-label mb-0">URL</label>' +
+                '<input type="text" class="form-control form-control-sm jazz-gallery-url" readonly value=""></div>' +
+                '<div style="min-width:120px;"><label class="form-label mb-0">Alt</label>' +
+                '<input type="text" class="form-control form-control-sm jazz-gallery-alt" value=""></div>' +
+                '<button type="button" class="btn btn-sm btn-outline-secondary jazz-gallery-upload">Upload</button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger jazz-gallery-remove">&times;</button>' +
+                '<input type="hidden" class="jazz-gallery-url-hidden" value="">';
+            var img = wrap.querySelector('.jazz-gallery-thumb img');
+            var urlInput = wrap.querySelector('.jazz-gallery-url');
+            var hidden = wrap.querySelector('.jazz-gallery-url-hidden');
+            hidden.value = url;
+            urlInput.value = url;
+            if (img && url) {
+                img.src = url;
+            }
+            wrap.querySelector('.jazz-gallery-alt').value = data.alt || '';
+            wrap.querySelector('.jazz-gallery-remove').addEventListener('click', function () {
+                wrap.remove();
+            });
+            wrap.querySelector('.jazz-gallery-upload').addEventListener('click', function () {
+                var fi = document.createElement('input');
+                fi.type = 'file';
+                fi.accept = 'image/*';
+                fi.onchange = function () {
+                    if (!fi.files || !fi.files[0]) return;
+                    jazzUploadImage(fi.files[0])
+                        .then(function (loc) {
+                            hidden.value = loc;
+                            urlInput.value = loc;
+                            var th = wrap.querySelector('.jazz-gallery-thumb');
+                            th.innerHTML = '<img alt="" style="width:100%;height:100%;object-fit:cover;">';
+                            th.querySelector('img').src = loc;
+                        })
+                        .catch(function (err) {
+                            alert(err.message || String(err));
+                        });
+                };
+                fi.click();
+            });
+            return wrap;
+        }
+
+        function jazzCollectGallery(aid) {
+            var root = document.getElementById('jazz-gallery-rows-' + aid);
+            if (!root) return [];
+            var out = [];
+            root.querySelectorAll('.jazz-gallery-row').forEach(function (row) {
+                var url = row.querySelector('.jazz-gallery-url-hidden').value.trim();
+                if (!url) return;
+                out.push({
+                    url: url,
+                    alt: row.querySelector('.jazz-gallery-alt').value.trim()
+                });
+            });
+            return out;
+        }
+
+        function jazzInitGalleryEditors() {
+            document.querySelectorAll('.jazz-gallery-editor').forEach(function (editor) {
+                var aid = editor.getAttribute('data-artist-id');
+                if (!aid) return;
+                var list = document.getElementById('jazz-gallery-rows-' + aid);
+                var seedEl = document.getElementById('jazz-gallery-seed-' + aid);
+                if (!list || !seedEl) return;
+                var seed = [];
+                try {
+                    seed = JSON.parse(seedEl.textContent || '[]');
+                } catch (e) {
+                    seed = [];
+                }
+                if (!Array.isArray(seed)) seed = [];
+                seed.forEach(function (item) {
+                    list.appendChild(jazzBuildGalleryRow(aid, item));
+                });
+                var addBtn = editor.querySelector('.jazz-gallery-add');
+                if (addBtn) {
+                    addBtn.addEventListener('click', function () {
+                        list.appendChild(jazzBuildGalleryRow(aid, {}));
+                    });
+                }
+            });
+        }
+
+        jazzInitTrackEditors();
+        jazzInitGalleryEditors();
+
         document.querySelectorAll('.jazz-cms-artist-form').forEach(function (form) {
             form.addEventListener('submit', function () {
                 var id = form.getAttribute('data-artist-id');
                 jazzAppendCmsFields(form, '#jazz-cms-artist-hidden-' + id);
+                var tIn = document.getElementById('jazz-tracks-post-' + id);
+                var gIn = document.getElementById('jazz-gallery-post-' + id);
+                if (tIn) {
+                    tIn.value = JSON.stringify(jazzCollectTracks(id));
+                }
+                if (gIn) {
+                    gIn.value = JSON.stringify(jazzCollectGallery(id));
+                }
             });
         });
 
