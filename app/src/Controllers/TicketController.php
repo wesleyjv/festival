@@ -34,15 +34,17 @@ class TicketController
     }
 
     /**
-     * GET /tickets – List all tickets for a specific event.
+     * Render order page for the History event.
      *
-     * Reads the `event_id` query parameter from the URL. If the parameter
-     * is missing the user is redirected to the event history page. Otherwise
-     * the matching tickets are fetched through the service layer and passed
-     * to the tickets index view for rendering.
-     *
-     * @return void Outputs the view or redirects.
+     * @param array $vars Route variables (unused)
+     * @return void
      */
+    public function historyTickets(array $vars = []): void
+    {
+
+        require __DIR__ . '/../views/events/history/order.php';
+    }
+
     public function index(): void
     {
         // Read the event_id from the query string (?event_id=...)

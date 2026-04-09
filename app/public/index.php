@@ -2,6 +2,7 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
+
 /**
  * Load environment variables from the .env file at the project root.
  * This makes getenv() work regardless of how the app is started.
@@ -16,6 +17,18 @@ if (file_exists($envPath)) {
         if (strpos($line, '=') !== false) {
             putenv(trim($line));
         }
+    }
+    // Debug: log which Stripe env var (if any) is visible to the PHP process
+    $stripeNames = ['STRIPE_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_API_SECRET', 'STRIPE_KEY', 'STRIPE_PRIVATE'];
+    $found = null;
+    foreach ($stripeNames as $n) {
+        $v = getenv($n);
+        if ($v !== false && strlen($v) > 0) { $found = $n; break; }
+    }
+    if ($found === null) {
+        error_log('ENV DEBUG: No Stripe secret env var found (checked: ' . implode(', ', $stripeNames) . ')');
+    } else {
+        error_log('ENV DEBUG: Stripe secret visible in env var: ' . $found);
     }
 }
 
@@ -80,6 +93,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'yummyDetail']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
+    $r->addRoute('GET', '/events/history/order', ['App\\Controllers\\TicketController', 'historyTickets']);
 
     $r->addRoute('GET', '/employee/scan', ['App\\Controllers\\TicketScanController', 'index']);
     $r->addRoute('POST', '/employee/scan', ['App\\Controllers\\TicketScanController', 'scan']);
@@ -90,6 +104,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/checkout', ['App\\Controllers\\OrderController', 'checkout']);
     $r->addRoute('POST', '/checkout', ['App\\Controllers\\OrderController', 'placeOrder']);
     $r->addRoute('GET', '/checkout/confirmation', ['App\\Controllers\\OrderController', 'confirmation']);
+    $r->addRoute('GET', '/checkout/complete', ['App\\Controllers\\OrderController', 'completeCheckout']);
 
     $r->addRoute('POST', '/cart/add', ['App\\Controllers\\CartController', 'add']);
     $r->addRoute('POST', '/cart/remove', ['App\\Controllers\\CartController', 'remove']);
@@ -139,7 +154,8 @@ switch ($routeInfo[0]) {
             $orderService = new App\Services\OrderService($orderRepository);
             $ticketPdfService = new App\Services\TicketPdfService();
             $mailService = new App\Services\MailService();
-            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService);
+            $stripeService = new App\Services\StripeService();
+            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
         } else {
             $controller = new $controllerClass();
         }

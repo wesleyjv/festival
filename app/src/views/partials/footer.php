@@ -38,7 +38,7 @@
                         <li style="margin-bottom: 10px;"><a href="/login" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Login</a></li>
                         <li style="margin-bottom: 10px;"><a href="/register" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Register</a></li>
                     <?php endif; ?>
-                    <li><a href="#" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Program</a></li>
+                    <li><a href="/cart" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Program</a></li>
                 </ul>
             </div>
 
