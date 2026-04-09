@@ -46,6 +46,48 @@ class TicketRepository
     }
 
     /**
+     * Look up a ticket by its unique ticket_code (case-insensitive).
+     */
+    public function findByTicketCode(string $ticketCode): ?Ticket
+    {
+        $ticketCode = trim($ticketCode);
+        if ($ticketCode === '') {
+            return null;
+        }
+
+        $db = DB::getConnection();
+        $stmt = $db->prepare('SELECT * FROM tickets WHERE UPPER(ticket_code) = UPPER(:code) LIMIT 1');
+        $stmt->execute(['code' => $ticketCode]);
+        $row = $stmt->fetch();
+
+        if (!$row) {
+            return null;
+        }
+
+        return $this->mapRowToTicket($row);
+    }
+
+    /**
+     * Set is_scanned and scanned_at when the ticket was not yet scanned.
+     *
+     * @return int Number of rows updated (1 on first scan, 0 if already scanned or missing)
+     */
+    public function markScannedIfNotYet(int $id): int
+    {
+        if ($id <= 0) {
+            return 0;
+        }
+
+        $db = DB::getConnection();
+        $stmt = $db->prepare(
+            'UPDATE tickets SET is_scanned = 1, scanned_at = NOW() WHERE id = :id AND is_scanned = 0'
+        );
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->rowCount();
+    }
+
+    /**
      * Convert an associative database row into a Ticket model.
      *
      * Handles type-casting (int, float, bool) and nullable columns so that

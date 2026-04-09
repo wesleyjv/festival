@@ -1,0 +1,193 @@
+.page-stories {
+  font-family: Outfit, "Segoe UI", system-ui, sans-serif;
+}
+
+.storytelling-page {
+  background: #fff;
+}
+
+.storytelling-jazz-hero {
+  margin-top: 56px;
+}
+
+.storytelling-jazz-hero .highlight {
+  color: #e8d48a;
+}
+
+.storytelling-jazz-hero__content {
+  max-width: 980px;
+}
+
+.storytelling-jazz-hero__kicker {
+  display: inline-block;
+  margin-bottom: 0.85rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.24);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.storytelling-jazz-hero__description {
+  margin-top: 0.9rem;
+  margin-bottom: 1.15rem;
+  max-width: 760px;
+  font-size: 0.96rem;
+  line-height: 1.72;
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.storytelling-jazz-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.storytelling-jazz-hero__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #1a1a2e;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.62rem 1rem;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.storytelling-jazz-hero__btn:hover {
+  background: #2e2e5e;
+  color: #fff;
+}
+
+.storytelling-jazz-hero__btn--ghost {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.storytelling-jazz-hero__btn--ghost:hover {
+  background: rgba(0, 0, 0, 0.38);
+}
+
+.storytelling-main {
+  max-width: 1140px;
+  padding-top: 3.5rem;
+}
+
+.storytelling-featured {
+  background: #fdf6ee;
+  border-radius: 16px;
+  border: 1px solid rgba(26, 26, 46, 0.07);
+  box-shadow: 0 6px 22px rgba(26, 26, 46, 0.08);
+}
+
+.storytelling-schedule {
+  background: linear-gradient(180deg, #e8e2d8 0%, #f2ebe3 40%, #ebe4da 100%);
+  padding: 3rem 1.5rem;
+  border-radius: 16px;
+}
+
+.schedule-title {
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.storytelling-filter {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 6px -1px rgba(26, 26, 46, 0.06), 0 12px 40px -8px rgba(26, 26, 46, 0.12);
+}
+
+.filter-btn.active,
+.filter-btn:hover {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+}
+
+.story-artist-card {
+  border-radius: 14px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.09);
+  background: #fafafa;
+  border: 1px solid #eee7dc;
+}
+
+.story-artist-card .artist-card__body {
+  padding: 1rem 1.1rem 1.1rem;
+}
+
+.story-artist-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.story-artist-card__price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  white-space: nowrap;
+}
+
+.story-artist-card .artist-card__blurb {
+  margin-bottom: 0.75rem;
+}
+
+.story-artist-card__actions {
+  margin-top: auto;
+}
+
+.story-artist-card .storytelling-event-cart-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.story-artist-card .storytelling-event-qty {
+  width: 3.25rem;
+  text-align: center;
+  padding: 0.35rem 0.3rem;
+  border-radius: 8px;
+  border: 1px solid #d9d3c9;
+  font-weight: 600;
+}
+
+.story-artist-card .storytelling-event-qty-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #5e5a53;
+}
+
+.story-artist-card .artist-card__btn {
+  padding: 0.48rem 0.9rem;
+  font-size: 0.66rem;
+}
+
+.storytelling-info {
+  background: #fdf6ee;
+  border-left-color: #c9a227;
+}
+
+@media (max-width: 767.98px) {
+  .storytelling-main {
+    padding-top: 2rem;
+  }
+
+  .storytelling-schedule {
+    padding: 2rem 0.75rem;
+  }
+}

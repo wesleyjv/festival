@@ -3,11 +3,15 @@
 namespace App\Controllers;
 
 use PDO;
+use Throwable;
 
 use App\Repositories\EventRepository;
-use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Services\ContentService;
+use App\Services\StoryEventService;
+use App\Services\TicketService;
+use App\Services\Interfaces\IYummyService;
+use App\Services\YummyService;
 
 /**
  * Controller responsible for handling event-related page requests.
@@ -21,8 +25,8 @@ class EventsController
      * @var EventRepository Repository used to retrieve event data.
      */
     private EventRepository $eventRepository;
-    private StoryEventRepository $storyEventRepository;
-    private YummyEventRepository $yummyEventRepository;
+    private StoryEventService $storyEventService;
+    private IYummyService $yummyService;
 
     /**
      * Initializes the controller with a new EventRepository instance.
@@ -30,8 +34,11 @@ class EventsController
     public function __construct()
     {
         $this->eventRepository = new EventRepository();
-        $this->storyEventRepository = new StoryEventRepository();
-        $this->yummyEventRepository = new YummyEventRepository();
+        $this->storyEventService = new StoryEventService();
+        $this->yummyService = new YummyService(
+            new YummyEventRepository(),
+            new ContentService()
+        );
     }
 
     /**
@@ -59,14 +66,20 @@ class EventsController
      */
     public function jazz($vars = [])
     {
-        if (isset($_GET['day']) && $_GET['day'] === 'all') {
-            header('Location: /events/jazz');
-            exit;
+        $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
+        $dayFilter = $_GET['day'] ?? 'thursday';
+        if (!in_array($dayFilter, $validDays, true)) {
+            $dayFilter = 'thursday';
         }
 
-        $dayFilter = $_GET['day'] ?? 'all';
+        // Full lineup in the page; day filter is applied in the browser (no reload).
+        $jazzArtists = $this->eventRepository->getJazzEvents(null, 'artist');
+        $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
 
-        $jazzArtists = $this->eventRepository->getJazzEvents($dayFilter !== 'all' ? $dayFilter : null);
+        $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets($jazzArtists);
+        $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
+        $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
 
         $contentService = new ContentService();
         $jazzContent = $contentService->getPageContent('jazz');
@@ -74,12 +87,7 @@ class EventsController
         require __DIR__ . '/../views/events/jazz/overview.php';
     }
 
-    /**
-     * Displays the detail page for a single jazz artist.
-     *
-     * @param array $vars Route parameters; expects 'id' (int).
-     * @return void
-     */
+
     public function jazzDetail($vars = [])
     {
         $id = (int) ($vars['id'] ?? 0);
@@ -91,6 +99,11 @@ class EventsController
             require __DIR__ . '/../views/errors/404.php';
             return;
         }
+
+        $ticketService = new TicketService();
+        $ticketService->syncMissingJazzTickets([$artist]);
+        $jazzCartTickets = $ticketService->getTicketsByEventId($artist->eventId);
+        $jazzCartTicket = $jazzCartTickets[0] ?? null;
 
         require __DIR__ . '/../views/events/jazz/detail.php';
     }
@@ -104,34 +117,24 @@ class EventsController
     public function stories($vars = [])
     {
         try {
-            // Get filter parameters from GET request
-            $dateFilter = $_GET['date'] ?? null;
-            $timeFilter = $_GET['time'] ?? null;
-            $locationFilter = $_GET['location'] ?? null;
+            $filters = [
+                'day' => $_GET['day'] ?? null,
+                'date' => $_GET['date'] ?? null,
+                'time' => $_GET['time'] ?? null,
+                'location' => $_GET['location'] ?? null,
+            ];
 
-            // Get events based on filters via repository
-            if ($dateFilter) {
-                $events = $this->storyEventRepository->getEventsByDate($dateFilter);
-            } elseif ($timeFilter) {
-                $events = $this->storyEventRepository->getEventsByTime($timeFilter);
-            } elseif ($locationFilter) {
-                $events = $this->storyEventRepository->getEventsByLocation($locationFilter);
-            } else {
-                $events = $this->storyEventRepository->getEvents();
-            }
+            $viewModel = $this->storyEventService->getStoriesOverviewViewModel($filters);
+            $events = $viewModel->events;
 
-            // Get additional data via repository
-            $featuredStoryteller = $this->storyEventRepository->getFeatured();
-            $locations = $this->storyEventRepository->getLocations();
-
-            $contentService = new ContentService();
-            $storiesContent = $contentService->getPageContent('stories');
+            $ticketService = new TicketService();
+            $storyTicketIds = $ticketService->getStoryTicketIdMap($events);
 
             // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';
 
-        } catch (Exception $e) {
-            error_log("Error in stories controller: " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log('Error in stories controller: ' . $e->getMessage());
 
             // Fallback to static view with error handling
             http_response_code(500);
@@ -144,13 +147,43 @@ class EventsController
      *
      * @return void
      */
-    public function yummy()
+    public function yummy(): void
     {
-        $cuisine = $_GET['cuisine'] ?? null;
+        try {
+            $cuisine = $_GET['cuisine'] ?? null;
+            $viewModel = $this->yummyService->getOverviewViewModel($cuisine);
 
-        $restaurants = $this->yummyEventRepository->getAll($cuisine);
+            require __DIR__ . '/../views/events/yummy/overview.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummy controller: ' . $e->getMessage());
 
-        require __DIR__ . '/../views/events/yummy/overview.php';
+            http_response_code(500);
+            $message = 'Unable to load the Yummy page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
+    }
+
+    public function yummyDetail(array $vars = []): void
+    {
+        try {
+            $slug = (string) ($vars['slug'] ?? '');
+            $restaurant = $this->yummyService->getRestaurantBySlug($slug);
+
+            if ($restaurant === null) {
+                http_response_code(404);
+                $message = 'Restaurant not found.';
+                require __DIR__ . '/../views/errors/404.php';
+                return;
+            }
+
+            require __DIR__ . '/../views/events/yummy/detail.php';
+        } catch (Throwable $e) {
+            error_log('Error in yummyDetail controller: ' . $e->getMessage());
+
+            http_response_code(500);
+            $message = 'Unable to load the restaurant page.';
+            require __DIR__ . '/../views/errors/500.php';
+        }
     }
 
 }

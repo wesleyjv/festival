@@ -226,6 +226,7 @@
             <?php endif; ?>
 
             <form method="POST" action="/register" novalidate>
+                <?= \App\Security\Csrf::field() ?>
                 <div class="form-group-custom">
                     <label for="name"><i class="bi bi-person"></i> Username</label>
                     <input type="text"

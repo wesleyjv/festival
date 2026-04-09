@@ -56,6 +56,8 @@ ini_set('session.cookie_httponly', '1');
 
 session_start();
 
+\App\Security\Csrf::getToken();
+
 /**
  * Auto-login via "Remember me" cookie.
  * If the user has no active session but carries a valid remember token cookie,
@@ -88,9 +90,13 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/jazz/{id:\d+}', ['App\\Controllers\\EventsController', 'jazzDetail']);
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
+    $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'yummyDetail']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
     $r->addRoute('GET', '/events/history/order', ['App\\Controllers\\TicketController', 'historyTickets']);
+
+    $r->addRoute('GET', '/employee/scan', ['App\\Controllers\\TicketScanController', 'index']);
+    $r->addRoute('POST', '/employee/scan', ['App\\Controllers\\TicketScanController', 'scan']);
 
     $r->addRoute('GET', '/orders', ['App\\Controllers\\OrderController', 'orders']);
     $r->addRoute('GET', '/orders/{id:\d+}/download', ['App\\Controllers\\OrderController', 'download']);
@@ -112,14 +118,21 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/profile/update', ['App\\Controllers\\UserController', 'handleUpdateProfile']);
     $r->addRoute('GET',  '/admin', ['App\\Controllers\\AdminController', 'dashboard']);
     $r->addRoute('POST', '/admin/content/save', ['App\\Controllers\\AdminController', 'saveContent']);
+    $r->addRoute('POST', '/admin/jazz/artists/create', ['App\\Controllers\\AdminController', 'createJazzArtist']);
+    $r->addRoute('POST', '/admin/jazz/artists/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteJazzArtist']);
     $r->addRoute('POST', '/admin/upload-image', ['App\\Controllers\\AdminController', 'uploadImage']);
     $r->addRoute('POST', '/admin/users/create', ['App\\Controllers\\AdminController', 'createUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateUser']);
     $r->addRoute('POST', '/admin/users/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteUser']);
+    $r->addRoute('POST', '/admin/story-events/create', ['App\\Controllers\\AdminController', 'createStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
+    $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
 $uri = strtok($_SERVER['REQUEST_URI'], '?');
+// Match routes registered without a trailing slash (e.g. /admin vs /admin/)
+$uri = $uri !== '/' ? rtrim($uri, '/') : '/';
 $routeInfo = $dispatcher->dispatch($httpMethod, $uri);
 
 switch ($routeInfo[0]) {

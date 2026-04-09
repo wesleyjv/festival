@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Models\ShoppingCart;
+use App\Security\Csrf;
 use App\Services\TicketService;
 use App\ViewModels\CartViewModel;
 
@@ -21,16 +22,22 @@ class CartController
 
     public function add()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ticketId = $_POST['ticket_id'] ?? null;
             $quantity = isset($_POST['quantity']) ? max(1, (int)$_POST['quantity']) : 1;
             $redirect = $_POST['redirect'] ?? null;
 
-            if ($ticketId) {
-                // Look up the ticket through the service (includes ID validation)
-                $ticket = $this->ticketService->getTicketById((int)$ticketId);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'Invalid request.');
+            }
+            header('Location: /cart');
+            exit;
+        }
 
                 if ($ticket) {
                     // Retrieve existing cart from session or create a new one
@@ -87,6 +94,11 @@ class CartController
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!Csrf::validateRequest()) {
+                header('Location: /cart');
+                exit;
+            }
+
             $index = $_POST['item_index'] ?? null;
 
             if ($index !== null && isset($_SESSION['cart'])) {

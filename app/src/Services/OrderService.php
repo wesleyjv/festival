@@ -69,7 +69,7 @@ class OrderService
         $order->date = new \DateTime();
         $order->items = $cart->items;
         $order->calculateTotal();  // sums item prices × quantities
-        $order->status = 'paid';
+        $order->status = 'paid'; // enum
 
         // Persist the order and its line items to the database
         $this->orderRepository->save($order);

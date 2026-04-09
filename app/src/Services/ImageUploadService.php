@@ -3,19 +3,6 @@
 namespace App\Services;
 
 
- * Validates and saves an uploaded image file.
- *
- * Defaults to the profiles upload directory. Pass custom paths to the
- * constructor to reuse for other upload locations (e.g. WYSIWYG editor).
- *
- * Usage (profile image):
- *   $path = (new ImageUploadService())->upload($_FILES['profile_image'], 'profile_' . $userId);
- *
- * Usage (custom directory):
- *   $path = (new ImageUploadService('/var/www/public/uploads/', '/uploads/'))->upload($_FILES['file'], 'img');
- *
- * Returns the public URL path to the saved image, or throws on failure.
- */
 class ImageUploadService
 {
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -24,13 +11,12 @@ class ImageUploadService
     private string $uploadDir;
     private string $uploadUrlPath;
 
-    public function __construct(string $uploadDir = null, string $uploadUrlPath = null)
+    public function __construct(?string $uploadDir = null, ?string $uploadUrlPath = null)
     {
-        $this->uploadDir     = $uploadDir     ?? __DIR__ . '/../../public/uploads/profiles/';
+        $this->uploadDir     = $uploadDir ?? __DIR__ . '/../../public/uploads/profiles/';
         $this->uploadUrlPath = $uploadUrlPath ?? '/uploads/profiles/';
     }
 
-    /**
      * @throws \InvalidArgumentException if the file type or size is not allowed.
      * @throws \RuntimeException         if the file could not be moved to the upload directory.
      */
@@ -58,7 +44,7 @@ class ImageUploadService
         if (!is_dir($this->uploadDir)) {
             mkdir($this->uploadDir, 0755, true);
         }
-
+        //There is still vulnerability here, called the 'Polygot File Attack', which I don't know how to fix yet.
         $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
         $filename  = $filenamePrefix . '_' . uniqid('', true) . '.' . $extension;
 
