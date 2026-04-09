@@ -4,21 +4,40 @@ require __DIR__ . '/../vendor/autoload.php';
 
 
 /**
- * Load environment variables from the .env file at the project root.
- * This makes getenv() work regardless of how the app is started.
+ * Load environment variables from the .env file.
+ * We check common locations relative to this file.
  */
-$envPath = __DIR__ . '/../../.env';
-if (file_exists($envPath)) {
+$possibleEnvPaths = [
+    __DIR__ . '/../../.env',    // Local dev: root/.env (from app/public/index.php)
+    __DIR__ . '/../.env',       // Alternative: app/.env
+    '/app/.env',                // Docker absolute path
+];
+
+$envPath = null;
+foreach ($possibleEnvPaths as $p) {
+    if (file_exists($p)) {
+        $envPath = $p;
+        break;
+    }
+}
+
+if ($envPath) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (str_starts_with(trim($line), '#')) {
+        $line = trim($line);
+        if (empty($line) || str_starts_with($line, '#')) {
             continue;
         }
         if (strpos($line, '=') !== false) {
-            putenv(trim($line));
+            putenv($line);
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
-    // Debug: log which Stripe env var (if any) is visible to the PHP process
+    // Debug: log detection
     $stripeNames = ['STRIPE_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_API_SECRET', 'STRIPE_KEY', 'STRIPE_PRIVATE'];
     $found = null;
     foreach ($stripeNames as $n) {
@@ -26,10 +45,12 @@ if (file_exists($envPath)) {
         if ($v !== false && strlen($v) > 0) { $found = $n; break; }
     }
     if ($found === null) {
-        error_log('ENV DEBUG: No Stripe secret env var found (checked: ' . implode(', ', $stripeNames) . ')');
+        error_log('ENV DEBUG: .env found at ' . $envPath . ' but no Stripe key detected.');
     } else {
-        error_log('ENV DEBUG: Stripe secret visible in env var: ' . $found);
+        error_log('ENV DEBUG: .env found at ' . $envPath . '. Stripe key detected in: ' . $found);
     }
+} else {
+    error_log('ENV DEBUG: No .env file found in checked paths: ' . implode(', ', $possibleEnvPaths));
 }
 
 /**
@@ -156,6 +177,10 @@ switch ($routeInfo[0]) {
             $mailService = new App\Services\MailService();
             $stripeService = new App\Services\StripeService();
             $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
+        } elseif ($controllerClass === App\Controllers\AdminController::class) {
+            $orderRepository = new App\Repositories\OrderRepository();
+            $orderService = new App\Services\OrderService($orderRepository);
+            $controller = new $controllerClass($orderService);
         } else {
             $controller = new $controllerClass();
         }

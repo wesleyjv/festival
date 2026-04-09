@@ -58,6 +58,7 @@ class OrderService
      */
     public function createOrderFromCart(ShoppingCart $cart, int $userId): Order
     {
+        // Map cart items to database rows and persist the order
         if (empty($cart->items)) {
             throw new \RuntimeException('Cannot create an order from an empty cart.');
         }
@@ -95,5 +96,15 @@ class OrderService
     public function getOrdersByUserId(int $userId): array
     {
         return $this->orderRepository->findByUserId($userId);
+    }
+
+    public function getAllOrders(): array
+    {
+        return $this->orderRepository->findAll();
+    }
+
+    public function getTotalOrdersCount(): int
+    {
+        return $this->orderRepository->countAll();
     }
 }

@@ -360,6 +360,7 @@
         <?php endif; ?>
 
         <form action="/checkout" method="POST" class="checkout-container">
+            <?= \App\Security\Csrf::field() ?>
 
             <!-- Left: Order Summary -->
             <div class="order-col">

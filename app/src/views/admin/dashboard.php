@@ -439,7 +439,7 @@ use App\Security\Csrf;
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h2 class="h6 text-muted text-uppercase mb-1">Total Orders</h2>
-                                <p class="h4 mb-0">3,587</p>
+                                <p class="h4 mb-0"><?= number_format($totalOrders) ?></p>
                                 <small class="text-success">
                                     <i class="bi bi-arrow-up-right me-1"></i>7% vs last week
                                 </small>
@@ -1019,67 +1019,43 @@ use App\Security\Csrf;
                             <tr>
                                 <th scope="col">Order</th>
                                 <th scope="col">Customer</th>
-                                <th scope="col">Event</th>
                                 <th scope="col">Total</th>
                                 <th scope="col">Status</th>
+                                <th scope="col">Date</th>
                                 <th scope="col" class="text-end">Actions</th>
                             </tr>
                             </thead>
                             <tbody class="small">
+                            <?php foreach ($orders as $o): ?>
                             <tr>
                                 <td>
-                                    <div class="fw-semibold">#3490</div>
-                                    <div class="text-muted">Feb 10, 2026</div>
+                                    <div class="fw-semibold">#<?= htmlspecialchars($o->orderNumber, ENT_QUOTES) ?></div>
+                                    <div class="text-muted">ID: <?= $o->id ?></div>
                                 </td>
-                                <td>john.doe@example.com</td>
-                                <td>Summer Festival 2026</td>
-                                <td>$120.00</td>
-                                <td><span class="badge bg-success-subtle text-success-emphasis">Paid</span></td>
+                                <td><?= htmlspecialchars($o->userEmail ?? 'Guest', ENT_QUOTES) ?></td>
+                                <td>EUR <?= number_format($o->totalAmount, 2) ?></td>
+                                <td>
+                                    <?php
+                                        $statusClass = 'bg-secondary-subtle text-secondary-emphasis';
+                                        if ($o->status === 'paid') $statusClass = 'bg-success-subtle text-success-emphasis';
+                                        elseif ($o->status === 'pending') $statusClass = 'bg-warning-subtle text-warning-emphasis';
+                                        elseif ($o->status === 'cancelled') $statusClass = 'bg-danger-subtle text-danger-emphasis';
+                                    ?>
+                                    <span class="badge <?= $statusClass ?>"><?= ucfirst(htmlspecialchars($o->status, ENT_QUOTES)) ?></span>
+                                </td>
+                                <td><?= $o->date->format('M j, Y H:i') ?></td>
                                 <td class="text-end">
                                     <button class="btn btn-sm btn-outline-secondary me-1">
                                         <i class="bi bi-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
                                 </td>
                             </tr>
+                            <?php endforeach; ?>
+                            <?php if (empty($orders)): ?>
                             <tr>
-                                <td>
-                                    <div class="fw-semibold">#3489</div>
-                                    <div class="text-muted">Feb 9, 2026</div>
-                                </td>
-                                <td>jane.smith@example.com</td>
-                                <td>Spring Music Night</td>
-                                <td>$60.00</td>
-                                <td><span class="badge bg-warning-subtle text-warning-emphasis">Pending</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                </td>
+                                <td colspan="6" class="text-center text-muted py-4">No orders found.</td>
                             </tr>
-                            <tr>
-                                <td>
-                                    <div class="fw-semibold">#3488</div>
-                                    <div class="text-muted">Feb 8, 2026</div>
-                                </td>
-                                <td>alex.johnson@example.com</td>
-                                <td>New Year Celebration 2025</td>
-                                <td>$180.00</td>
-                                <td><span class="badge bg-danger-subtle text-danger-emphasis">Cancelled</span></td>
-                                <td class="text-end">
-                                    <button class="btn btn-sm btn-outline-secondary me-1">
-                                        <i class="bi bi-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                </td>
-                            </tr>
+                            <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
@@ -1373,13 +1349,40 @@ use App\Security\Csrf;
                             <?= Csrf::field() ?>
                             <input type="hidden" name="page" value="history">
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero title</label>
+                                <label class="form-label small fw-semibold">Hero title (supports HTML)</label>
                                 <textarea name="hero_title" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($historyContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
                             </div>
                             <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero description</label>
-                                <textarea name="hero_description" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($historyContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
+                                <label class="form-label small fw-semibold">Hero subtitle</label>
+                                <input type="text" name="hero_subtitle" class="form-control form-control-sm" value="<?= htmlspecialchars($historyContent['hero_subtitle'] ?? '', ENT_QUOTES) ?>">
                             </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Tour description (hero box)</label>
+                                <textarea name="hero_description" class="form-control form-control-sm" rows="2"><?= htmlspecialchars($historyContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+                            
+                            <hr class="my-4">
+                            <h5 class="h6 mb-3">Editorial Section 1</h5>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Section 1 Title</label>
+                                <input type="text" name="editorial_1_title" class="form-control form-control-sm" value="<?= htmlspecialchars($historyContent['editorial_1_title'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Section 1 Text (supports HTML)</label>
+                                <textarea name="editorial_1_text" class="form-control wysiwyg" rows="4"><?= htmlspecialchars($historyContent['editorial_1_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+
+                            <hr class="my-4">
+                            <h5 class="h6 mb-3">Editorial Section 2</h5>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold">Section 2 Title</label>
+                                <input type="text" name="editorial_2_title" class="form-control form-control-sm" value="<?= htmlspecialchars($historyContent['editorial_2_title'] ?? '', ENT_QUOTES) ?>">
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label small fw-semibold">Section 2 Text (supports HTML)</label>
+                                <textarea name="editorial_2_text" class="form-control wysiwyg" rows="4"><?= htmlspecialchars($historyContent['editorial_2_text'] ?? '', ENT_QUOTES) ?></textarea>
+                            </div>
+
                             <div class="text-end">
                                 <button type="submit" class="btn btn-primary btn-sm">
                                     <i class="bi bi-save me-1"></i>Save History Content

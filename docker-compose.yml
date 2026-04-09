@@ -17,6 +17,7 @@ services:
             dockerfile: PHP.Dockerfile
         volumes:
             - ./app:/app
+            - ./.env:/app/.env
         # This loads the credentials from your .env file into the container
         env_file:
             - .env

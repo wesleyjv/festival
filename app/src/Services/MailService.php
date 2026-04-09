@@ -30,10 +30,9 @@ class MailService
         string $to,
         string $subject,
         string $body,
-        ?string $attachmentData = null,
-        string $attachmentName = 'attachment.pdf',
-        string $attachmentMime = 'application/pdf',
+        array $attachments = [], // format: [['data' => '...', 'name' => '...', 'mime' => '...'], ...]
     ): bool {
+        // Send an email with multiple optional attachments (e.g., Tickets and Invoice)
         $mail = new PHPMailer(true);
 
         try {
@@ -54,8 +53,13 @@ class MailService
             $mail->Body = nl2br(htmlspecialchars($body));
             $mail->AltBody = $body;
 
-            if ($attachmentData !== null) {
-                $mail->addStringAttachment($attachmentData, $attachmentName, 'base64', $attachmentMime);
+            foreach ($attachments as $attachment) {
+                $data = $attachment['data'] ?? null;
+                $name = $attachment['name'] ?? 'attachment.pdf';
+                $mime = $attachment['mime'] ?? 'application/pdf';
+                if ($data !== null) {
+                    $mail->addStringAttachment($data, $name, 'base64', $mime);
+                }
             }
 
             $mail->send();

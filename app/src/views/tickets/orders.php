@@ -279,6 +279,7 @@ require __DIR__ . '/../partials/header.php';
                                     </td>
                                     <td class="text-end">
                                         <form action="/orders/<?= $order->id ?>/email" method="POST" class="d-inline">
+                                            <?= \App\Security\Csrf::field() ?>
                                             <button type="submit" class="btn btn-email-tickets">
                                                 <i class="bi bi-envelope-at"></i>
                                                 <span>Email Tickets</span>

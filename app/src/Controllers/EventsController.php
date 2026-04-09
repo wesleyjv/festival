@@ -51,9 +51,14 @@ class EventsController
      */
     public function history()
     {
+        // Fetch all history events from the repository
         $events = $this->eventRepository->getHistoryEvents();
+        
+        // Load the page content managed through the CMS
+        $contentService = new ContentService();
+        $historyContent = $contentService->getPageContent('history');
 
-        // Render the history overview page. Content is embedded directly in the view.
+        // Render the history overview page
         require __DIR__ . '/../views/events/history/overview.php';
     }
 

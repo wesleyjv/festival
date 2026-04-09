@@ -41,6 +41,7 @@ class StripeService
 
     public function createCheckoutSession(ShoppingCart $cart, string $baseUrl, int $userId): Session
     {
+        // Convert cart items into Stripe line items and create a checkout session
         if (!$this->configured || !$this->stripe) {
             throw new \RuntimeException('Stripe is not configured. Missing API secret key.');
         }
@@ -74,6 +75,7 @@ class StripeService
 
     public function retrieveSession(string $sessionId): Session
     {
+        // Fetch the session details from Stripe's API for server-side verification
         if (!$this->configured || !$this->stripe) {
             throw new \RuntimeException('Stripe is not configured. Missing API secret key.');
         }

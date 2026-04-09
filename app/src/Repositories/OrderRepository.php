@@ -66,20 +66,23 @@ class OrderRepository
                 // Always create a NEW row in the tickets table for this specific purchase.
                 // This gives the customer their own unique ticket_code and QR code.
                 $ticketInsert = $this->db->prepare(
-                    'INSERT INTO tickets (order_id, event_id, user_id, name, price, ticket_code, qr_code_path, is_scanned)
-                     VALUES (:order_id, :event_id, :user_id, :name, :price, :ticket_code, :qr_code_path, :is_scanned)'
+                    'INSERT INTO tickets (order_id, event_id, user_id, name, event_date, event_time, event_language, price, ticket_code, qr_code_path, is_scanned)
+                     VALUES (:order_id, :event_id, :user_id, :name, :event_date, :event_time, :event_language, :price, :ticket_code, :qr_code_path, :is_scanned)'
                 );
 
                 $ticketCode = 'GEN-' . strtoupper(bin2hex(random_bytes(6)));
                 $ticketInsert->execute([
-                    'order_id'     => $orderId,
-                    'event_id'     => $eventId,
-                    'user_id'      => $order->userId ?? null,
-                    'name'         => $ticketName,
-                    'price'        => $price,
-                    'ticket_code'  => $ticketCode,
-                    'qr_code_path' => null,
-                    'is_scanned'   => 0,
+                    'order_id'       => $orderId,
+                    'event_id'       => $eventId,
+                    'user_id'        => $order->userId ?? null,
+                    'name'           => $ticketName,
+                    'event_date'     => $item->ticket->eventDate ?? null,
+                    'event_time'     => $item->ticket->eventTime ?? null,
+                    'event_language' => $item->ticket->eventLanguage ?? null,
+                    'price'          => $price,
+                    'ticket_code'    => $ticketCode,
+                    'qr_code_path'   => null,
+                    'is_scanned'     => 0,
                 ]);
 
                 $newTicketId = (int)$this->db->lastInsertId();
@@ -212,6 +215,40 @@ class OrderRepository
         $order->items = $items;
 
         return $order;
+    }
+
+    /**
+     * Find all orders with user email, newest first.
+     *
+     * @return array
+     */
+    public function findAll(): array
+    {
+        $stmt = $this->db->query(
+            "SELECT o.*, u.email as user_email
+             FROM orders o
+             LEFT JOIN users u ON o.user_id = u.id
+             ORDER BY o.order_date DESC"
+        );
+
+        $results = [];
+        foreach ($stmt as $row) {
+            $order = $this->mapRowToOrder($row);
+            // We can dynamically add the email for the admin view
+            $order->userEmail = $row['user_email'] ?? 'Guest';
+            $results[] = $order;
+        }
+        return $results;
+    }
+
+    /**
+     * Count total number of orders.
+     *
+     * @return int
+     */
+    public function countAll(): int
+    {
+        return (int) $this->db->query('SELECT COUNT(*) FROM orders')->fetchColumn();
     }
 
     /**

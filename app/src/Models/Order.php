@@ -33,6 +33,9 @@ class Order
     /** @var CartItem[] The line items that make up this order. */
     public array $items = [];
 
+    /** @var string|null The email of the user who placed the order (for admin views). */
+    public ?string $userEmail = null;
+
     /**
      * Recalculate the order total from its line items.
      *
