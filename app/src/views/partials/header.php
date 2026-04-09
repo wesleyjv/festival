@@ -401,4 +401,4 @@ document.getElementById('navToggler').addEventListener('click', function() {
 });
 </script>
 
-<main class="<?= isset($mainClass) ? htmlspecialchars($mainClass, ENT_QUOTES, 'UTF-8') : 'container mt-4' ?>">
+<main class="<?= isset($mainClass) ? htmlspecialchars($mainClass, ENT_QUOTES, 'UTF-8') : 'container-fluid p-0 mt-4' ?>">

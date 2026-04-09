@@ -77,51 +77,21 @@ class OrderService
         return $order;
     }
 
-    /**
-     * Generate a unique, human-readable order number.
-     *
-     * Format: "ORD-" followed by 12 random hexadecimal characters
-     * (e.g. "ORD-A3F1B2C9D4E5"). Uses cryptographically secure
-     * random bytes to minimise collision risk.
-     *
-     * @return string The generated order number.
-     */
     private function generateOrderNumber(): string
     {
         return 'ORD-' . strtoupper(bin2hex(random_bytes(6)));
     }
 
-    /**
-     * Find a single order by its primary key.
-     *
-     * @param  int        $id  The order’s primary key.
-     * @return Order|null      The Order model, or null when not found.
-     */
     public function getOrderById(int $id): ?Order
     {
         return $this->orderRepository->findById($id);
     }
 
-    /**
-     * Find a single order by its primary key with line items and tickets loaded.
-     *
-     * @param  int        $id  The order's primary key.
-     * @return Order|null      The Order model with items populated, or null when not found.
-     */
     public function getOrderByIdWithItems(int $id): ?Order
     {
         return $this->orderRepository->findByIdWithItems($id);
     }
 
-    /**
-     * Find all orders belonging to a given user.
-     *
-     * Results are returned in reverse-chronological order (newest first)
-     * as determined by the repository query.
-     *
-     * @param  int     $userId  The user’s primary key.
-     * @return Order[]          An array of Order models (may be empty).
-     */
     public function getOrdersByUserId(int $userId): array
     {
         return $this->orderRepository->findByUserId($userId);

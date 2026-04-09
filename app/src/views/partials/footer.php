@@ -152,12 +152,19 @@
                     <li><a href="/events/stories">Storytelling Event</a></li>
                 </ul>
             </div>
-            <div class="site-footer__col">
-                <h3>Information</h3>
-                <ul>
-                    <li><a href="/#about">About</a></li>
-                    <li><a href="#">Accessibility</a></li>
-                    <li><a href="mailto:info@haarlemfestival.nl">Contact</a></li>
+
+            <!-- Account -->
+            <div class="col-6 col-lg-2 mb-4 mb-lg-0">
+                <h6 style="text-transform: uppercase; font-size: 0.72rem; letter-spacing: 2px; color: rgba(255,255,255,0.4); margin-bottom: 16px;">Account</h6>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <?php if (!empty($_SESSION['user_id'])): ?>
+                        <li style="margin-bottom: 10px;"><a href="/profile" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Profile</a></li>
+                        <li style="margin-bottom: 10px;"><a href="/logout" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Logout</a></li>
+                    <?php else: ?>
+                        <li style="margin-bottom: 10px;"><a href="/login" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Login</a></li>
+                        <li style="margin-bottom: 10px;"><a href="/register" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">Register</a></li>
+                    <?php endif; ?>
+                    <li><a href="/cart" style="color: rgba(255,255,255,0.75); text-decoration: none; font-size: 0.88rem;">My Program</a></li>
                 </ul>
             </div>
             <div class="site-footer__col">

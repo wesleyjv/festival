@@ -9,6 +9,7 @@ use App\Security\Csrf;
 use App\Models\ShoppingCart;
 use App\Services\MailService;
 use App\Services\OrderService;
+use App\Services\StripeService;
 use App\Services\TicketPdfService;
 use App\ViewModels\CheckoutViewModel;
 use App\ViewModels\OrderConfirmationViewModel;
@@ -19,15 +20,18 @@ class OrderController
     private OrderService $orderService;
     private TicketPdfService $ticketPdfService;
     private MailService $mailService;
+    private StripeService $stripeService;
 
     public function __construct(
         OrderService $orderService,
         TicketPdfService $ticketPdfService,
         MailService $mailService,
+        StripeService $stripeService,
     ) {
         $this->orderService = $orderService;
         $this->ticketPdfService = $ticketPdfService;
         $this->mailService = $mailService;
+        $this->stripeService = $stripeService;
     }
 
     public function orders(): void
@@ -93,10 +97,84 @@ class OrderController
             exit;
         }
 
-        $paymentMethod = $_POST['payment_method'] ?? null;
-        if (!$this->orderService->isValidPaymentMethod($paymentMethod)) {
-            $_SESSION['checkout_error'] = 'Please select a valid payment method.';
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
             header('Location: /checkout');
+            exit;
+        }
+
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $baseUrl = $protocol . '://' . $host;
+
+        try {
+            // Use StripeService to create a Checkout Session
+            $session = $this->stripeService->createCheckoutSession(
+                cart: $cart,
+                baseUrl: $baseUrl,
+                userId: (int) $_SESSION['user_id']
+            );
+
+            // Redirect the user to Stripe's payment page
+            header('Location: ' . $session->url);
+            exit;
+        } catch (\Throwable $e) {
+            error_log('Stripe Session Creation Error: ' . $e->getMessage());
+            $_SESSION['checkout_error'] = 'Unable to start payment session. Please try again.';
+            header('Location: /checkout');
+            exit;
+        }
+    }
+
+
+    public function completeCheckout(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        if (empty($_SESSION['user_id'])) {
+            $_SESSION['checkout_error'] = 'You must be logged in to complete your purchase.';
+            header('Location: /checkout');
+            exit;
+        }
+
+        // Get the session ID from Stripe to verify payment
+        $sessionId = $_GET['session_id'] ?? null;
+        if (!$sessionId) {
+            $_SESSION['checkout_error'] = 'Missing payment session information.';
+            header('Location: /checkout');
+            exit;
+        }
+
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
+            header('Location: /checkout');
+            exit;
+        }
+
+        try {
+            // Use StripeService to retrieve the payment session
+            $session = $this->stripeService->retrieveSession($sessionId);
+        } catch (\Throwable $e) {
+            error_log('Stripe Session Retrieval Error: ' . $e->getMessage());
+            $_SESSION['checkout_error'] = 'Unable to verify payment. Please contact support.';
+            header('Location: /checkout');
+            exit;
+        }
+
+        // Check if the payment was actually successful
+        if (!isset($session->payment_status) || $session->payment_status !== 'paid') {
+            $_SESSION['checkout_error'] = 'Payment not completed. Please try again.';
+            header('Location: /checkout');
+            exit;
+        }
+
+        // Payment succeeded: create the order in our database from the cart
+        $cart = $_SESSION['cart'] ?? new ShoppingCart();
+        if (empty($cart->items)) {
+            $_SESSION['checkout_error'] = 'Your cart is empty. Nothing to complete.';
+            header('Location: /cart');
             exit;
         }
 
@@ -104,7 +182,6 @@ class OrderController
             $order = $this->orderService->createOrderFromCart($cart, (int) $_SESSION['user_id']);
             unset($_SESSION['cart']);
 
-            // Generate ticket PDF and email it to the user
             $userEmail = $_SESSION['user_email'] ?? null;
             if ($userEmail !== null) {
                 $orderWithItems = $this->orderService->getOrderByIdWithItems($order->id);
@@ -130,7 +207,9 @@ class OrderController
             header('Location: /checkout/confirmation');
             exit;
         } catch (\Exception $e) {
-            $_SESSION['checkout_error'] = 'Something went wrong placing your order. Please try again.';
+            error_log('Checkout finalization error: ' . $e->getMessage());
+            error_log($e->getTraceAsString());
+            $_SESSION['checkout_error'] = 'Something went wrong finalizing your order. Please contact support.';
             header('Location: /checkout');
             exit;
         }

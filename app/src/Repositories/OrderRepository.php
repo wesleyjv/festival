@@ -8,53 +8,21 @@ use App\Models\CartItem;
 use App\Models\Ticket;
 use PDO;
 
-/**
- * OrderRepository – data-access layer for the `orders` and `order_items` tables.
- *
- * Handles persisting new orders (including their line items within a
- * database transaction), retrieving orders by ID or user, and updating
- * order status. Raw database rows are converted into Order models via
- * `mapRowToOrder()`.
- *
- * Tables:
- *   orders      (id, user_id, order_number, order_date, status, total_amount)
- *   order_items (id, order_id, session_id, quantity, unit_price, vat_rate)
- */
+
 class OrderRepository
 {
-    /** @var PDO The active database connection. */
     private PDO $db;
 
-    /**
-     * Create a new OrderRepository.
-     *
-     * Obtains a PDO connection from the central DB helper.
-     */
     public function __construct()
     {
         $this->db = DB::getConnection();
     }
 
-    /**
-     * Persist a new order and all its line items inside a database transaction.
-     *
-     * 1. Inserts a row into `orders` with the order header data.
-     * 2. Iterates over the order’s items and inserts each one into `order_items`.
-     * 3. Commits the transaction on success; rolls back on any failure.
-     *
-     * The Order model’s `id` property is set to the auto-generated primary
-     * key after the insert.
-     *
-     * @param  Order $order  The order to persist (items must already be set).
-     * @return int           The newly generated order ID.
-     * @throws \Exception    Re-thrown after a rollback when the insert fails.
-     */
     public function save(Order $order): int
     {
         $this->db->beginTransaction();
 
         try {
-            // Insert the order header row
             $stmt = $this->db->prepare(
                 'INSERT INTO orders (user_id, order_number, order_date, status, total_amount)
                  VALUES (:user_id, :order_number, :order_date, :status, :total_amount)'
@@ -67,7 +35,7 @@ class OrderRepository
                 'total_amount' => $order->totalAmount,
             ]);
 
-            // Capture the auto-incremented ID for the order
+   
             $orderId = (int) $this->db->lastInsertId();
             $order->id = $orderId;
 
@@ -78,12 +46,52 @@ class OrderRepository
             );
 
             foreach ($order->items as $item) {
+                // Determine ticket properties from the template in the cart
+                $ticketName = 'Festival Ticket';
+                $eventId = 0;
+                $price = $item->price;
+
+                if (!empty($item->ticket)) {
+                    if (!empty($item->ticket->name)) {
+                        $ticketName = $item->ticket->name;
+                    }
+                    if (!empty($item->ticket->eventId)) {
+                        $eventId = (int)$item->ticket->eventId;
+                    }
+                    if ($item->ticket->price > 0) {
+                        $price = $item->ticket->price;
+                    }
+                }
+
+                // Always create a NEW row in the tickets table for this specific purchase.
+                // This gives the customer their own unique ticket_code and QR code.
+                $ticketInsert = $this->db->prepare(
+                    'INSERT INTO tickets (order_id, event_id, user_id, name, price, ticket_code, qr_code_path, is_scanned)
+                     VALUES (:order_id, :event_id, :user_id, :name, :price, :ticket_code, :qr_code_path, :is_scanned)'
+                );
+
+                $ticketCode = 'GEN-' . strtoupper(bin2hex(random_bytes(6)));
+                $ticketInsert->execute([
+                    'order_id'     => $orderId,
+                    'event_id'     => $eventId,
+                    'user_id'      => $order->userId ?? null,
+                    'name'         => $ticketName,
+                    'price'        => $price,
+                    'ticket_code'  => $ticketCode,
+                    'qr_code_path' => null,
+                    'is_scanned'   => 0,
+                ]);
+
+                $newTicketId = (int)$this->db->lastInsertId();
+
+                // Link the order item to the newly created ticket.
+                // Note: The column is called 'session_id' in the database but stores the ticket ID.
                 $itemStmt->execute([
                     'order_id'   => $orderId,
-                    'session_id' => $item->ticket ? $item->ticket->id : null,
+                    'session_id' => $newTicketId,
                     'quantity'   => $item->quantity,
                     'unit_price' => $item->price,
-                    'vat_rate'   => 21.00,  
+                    'vat_rate'   => 21.00,
                 ]);
             }
 
