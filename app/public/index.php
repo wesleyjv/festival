@@ -98,10 +98,6 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/register', ['App\\Controllers\\UserController', 'handleRegister']);
     $r->addRoute('GET', '/login', ['App\\Controllers\\UserController', 'login']);
     $r->addRoute('POST', '/login', ['App\\Controllers\\UserController', 'handleLogin']);
-    $r->addRoute('GET', '/forgot-password', ['App\\Controllers\\UserController', 'forgotPassword']);
-    $r->addRoute('POST', '/forgot-password', ['App\\Controllers\\UserController', 'handleForgotPassword']);
-    $r->addRoute('GET', '/reset-password', ['App\\Controllers\\UserController', 'resetPassword']);
-    $r->addRoute('POST', '/reset-password', ['App\\Controllers\\UserController', 'handleResetPassword']);
     $r->addRoute('GET', '/logout', ['App\\Controllers\\UserController', 'logout']);
     $r->addRoute('GET', '/profile', ['App\\Controllers\\UserController', 'profile']);
     $r->addRoute('POST', '/profile/update', ['App\\Controllers\\UserController', 'handleUpdateProfile']);

@@ -156,18 +156,6 @@
         user-select: none;
     }
 
-    .forgot-password-link {
-        font-size: 0.82rem;
-        font-weight: 600;
-        color: #2c3e50;
-        text-decoration: none;
-    }
-
-    .forgot-password-link:hover {
-        color: #1a252f;
-        text-decoration: underline;
-    }
-
     .btn-login {
         background: linear-gradient(135deg, #2c3e50, #34495e);
         border: none;
@@ -298,7 +286,6 @@
                         <input type="checkbox" id="remember" name="remember" value="1">
                         <label for="remember">Remember me</label>
                     </div>
-                    <a href="/forgot-password" class="forgot-password-link">Forgot password?</a>
                 </div>
 
                 <button type="submit" class="btn btn-login">

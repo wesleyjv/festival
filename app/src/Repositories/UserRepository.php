@@ -224,46 +224,4 @@ class UserRepository
         );
         $stmt->execute(['name' => $name, 'email' => $email, 'role' => $role, 'id' => $id]);
     }
-
-    public function setPasswordReset(int $userId, string $tokenHash, string $expiresAt): void
-    {
-        $stmt = $this->db->prepare(
-            'UPDATE users SET password_reset_token = :token, password_reset_expires_at = :expires WHERE id = :id'
-        );
-        $stmt->execute(['token' => $tokenHash, 'expires' => $expiresAt, 'id' => $userId]);
-    }
-
-    public function clearPasswordReset(int $userId): void
-    {
-        $stmt = $this->db->prepare(
-            'UPDATE users SET password_reset_token = NULL, password_reset_expires_at = NULL WHERE id = :id'
-        );
-        $stmt->execute(['id' => $userId]);
-    }
-
-    public function findByValidPasswordResetToken(string $tokenHash): ?User
-    {
-        $stmt = $this->db->prepare(
-            'SELECT * FROM users WHERE password_reset_token = :token
-             AND password_reset_expires_at IS NOT NULL
-             AND password_reset_expires_at > NOW()
-             LIMIT 1'
-        );
-        $stmt->execute(['token' => $tokenHash]);
-        $row = $stmt->fetch();
-
-        if (!$row) {
-            return null;
-        }
-
-        return new User($row['id'], $row['name'], $row['email'], $row['password_hash'], $row['role'], $row['profile_image'] ?? null, $row['created_at'] ?? null);
-    }
-
-    public function updatePasswordHashAndClearReset(int $userId, string $passwordHash): void
-    {
-        $stmt = $this->db->prepare(
-            'UPDATE users SET password_hash = :password_hash, password_reset_token = NULL, password_reset_expires_at = NULL WHERE id = :id'
-        );
-        $stmt->execute(['password_hash' => $passwordHash, 'id' => $userId]);
-    }
 }
