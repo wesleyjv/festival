@@ -39,26 +39,29 @@ class CartController
                     $_SESSION['cart'] = $cart;
                 }
             } else {
-                // Fallback: allow adding an ad-hoc ticket by name/price (used by standalone event ordering pages).
+                // Fallback: allow adding an ad-hoc ticket by name (used by standalone event ordering pages).
                 $ticketName = $_POST['ticket_name'] ?? null;
-                $price = isset($_POST['price']) ? (float)$_POST['price'] : null;
 
                 // Support combined 'ticket' field (value: "Name|Price") used by the history order form
+                // We ignore the price sent by the client for security.
                 if (empty($ticketName) && isset($_POST['ticket'])) {
                     $parts = explode('|', (string)$_POST['ticket'], 2);
                     $ticketName = trim($parts[0] ?? '');
-                    if (isset($parts[1])) {
-                        $p = preg_replace('/[^0-9,\.\-]/', '', $parts[1]);
-                        $price = (float) str_replace(',', '.', $p);
-                    }
                 }
 
-                if ($ticketName && $price !== null) {
+                // Map of allowed ad-hoc tickets and their authoritative prices
+                $adHocPrices = [
+                    'Admission Ticket' => 17.50,
+                    'Family Ticket' => 60.00
+                ];
+
+                if ($ticketName && isset($adHocPrices[$ticketName])) {
+                    $price = $adHocPrices[$ticketName];
                     $ticket = new \App\Models\Ticket();
                     $ticket->id = 0; // synthetic ID for cart-only items
                     $ticket->eventId = 0;
                     $ticket->name = (string)$ticketName;
-                    $ticket->price = (float)$price;
+                    $ticket->price = $price;
                     $ticket->ticketCode = '';
 
                     $cart = $_SESSION['cart'] ?? new ShoppingCart();
