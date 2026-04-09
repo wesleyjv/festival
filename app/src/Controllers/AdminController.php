@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Security\Csrf;
 use App\Services\ContentService;
+use App\Services\AudioUploadService;
 use App\Services\ImageUploadService;
 use App\Services\Validator;
 use App\Repositories\UserRepository;
@@ -89,7 +90,15 @@ class AdminController
         $data = $_POST;
         unset($data['page'], $data[Csrf::FIELD_NAME]);
 
+        $tracksJson = (string) ($data['tracks_json'] ?? '');
+        $imagesJson = (string) ($data['images_json'] ?? '');
+        unset($data['tracks_json'], $data['images_json']);
+
         (new ContentService())->savePageContent($page, $data);
+
+        if (preg_match('/^jazz_(\d+)$/', $page, $m)) {
+            (new EventRepository())->syncJazzArtistMediaFromAdmin((int) $m[1], $data, $tracksJson, $imagesJson);
+        }
 
         header('Location: /admin?saved=1#content');
         exit;
@@ -133,6 +142,49 @@ class AdminController
         $stray = ob_get_clean();
         if ($stray !== '') {
             error_log('admin uploadImage stray output (PHP warnings/notices): ' . $stray);
+        }
+
+        http_response_code($status);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload);
+    }
+
+    /**
+     * Audio upload for jazz track previews. Returns JSON: { "location": "/uploads/audio/..." }
+     */
+    public function uploadAudio($vars = []): void
+    {
+        ob_start();
+        $status  = 200;
+        $payload = ['error' => 'Unexpected error'];
+
+        try {
+            if (!Csrf::validateRequest()) {
+                $status = 403;
+                $payload = ['error' => 'Invalid CSRF token'];
+            } elseif (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
+                $status = 403;
+                $payload = ['error' => 'Unauthorized'];
+            } elseif (!isset($_FILES['file']) || ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                $status = 400;
+                $payload = ['error' => 'No file uploaded'];
+            } else {
+                $audioService = new AudioUploadService(
+                    __DIR__ . '/../../public/uploads/audio/',
+                    '/uploads/audio/'
+                );
+                $path = $audioService->upload($_FILES['file'], 'track');
+                $payload = ['location' => $path];
+            }
+        } catch (\Throwable $e) {
+            $status = 400;
+            $payload = ['error' => $e->getMessage()];
+            error_log('admin uploadAudio: ' . $e->getMessage());
+        }
+
+        $stray = ob_get_clean();
+        if ($stray !== '') {
+            error_log('admin uploadAudio stray output: ' . $stray);
         }
 
         http_response_code($status);

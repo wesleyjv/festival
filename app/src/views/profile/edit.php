@@ -270,7 +270,7 @@
                         accept="image/jpeg,image/png,image/gif,image/webp"
                     >
                     <img id="imagePreview" class="preview-img" src="#" alt="Preview">
-                    <small class="text-muted d-block mt-1">JPEG, PNG, GIF or WebP · max 2 MB · leave empty to keep current</small>
+                    <small class="text-muted d-block mt-1">JPEG, PNG, GIF or WebP | max 2 MB | leave empty to keep current</small>
                 </div>
 
                 <div class="section-divider">Change Password</div>
@@ -292,7 +292,7 @@
                     </div>
                     <div class="password-hint">
                         <i class="bi bi-info-circle"></i>
-                        <span>Min 10 characters · uppercase &amp; lowercase · digit · special character (!@#$%^&amp;*)</span>
+                        <span>Min 10 characters | uppercase &amp; lowercase | digit | special character (!@#$%^&amp;*)</span>
                     </div>
                 </div>
 

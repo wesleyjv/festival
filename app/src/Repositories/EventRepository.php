@@ -58,8 +58,10 @@ class EventRepository
     {
         $db = DB::getConnection();
 
+        $imgCols = $this->jazzEventImageColumnsSql();
         $sql = "SELECT je.event_id, je.artist, je.style, je.description,
-                       je.profile_image, je.banner_image, je.location,
+                       {$imgCols}
+                       je.location,
                        je.start_time, je.end_time, je.price, je.seats,
                        je.images, je.tracks
                 FROM jazz_events je
@@ -88,6 +90,8 @@ class EventRepository
             $event->description  = $row['description'] ?? '';
             $event->profileImage = $row['profile_image'] ?? null;
             $event->bannerImage  = $row['banner_image'] ?? null;
+            $hp = $row['homepage_image'] ?? null;
+            $event->homepageImage = ($hp !== null && $hp !== '') ? $hp : null;
             $event->location     = $row['location'] ?? null;
             $event->startTime    = $row['start_time'] ?? null;
             $event->endTime      = $row['end_time'] ?? null;
@@ -111,8 +115,10 @@ class EventRepository
     {
         $db = DB::getConnection();
 
+        $imgCols = $this->jazzEventImageColumnsSql();
         $sql = "SELECT je.event_id, je.artist, je.style, je.description,
-                       je.profile_image, je.banner_image, je.location,
+                       {$imgCols}
+                       je.location,
                        je.start_time, je.end_time, je.price, je.seats,
                        je.images, je.tracks
                 FROM jazz_events je
@@ -135,6 +141,8 @@ class EventRepository
         $event->description  = $row['description'] ?? '';
         $event->profileImage = $row['profile_image'] ?? null;
         $event->bannerImage  = $row['banner_image'] ?? null;
+        $hp = $row['homepage_image'] ?? null;
+        $event->homepageImage = ($hp !== null && $hp !== '') ? $hp : null;
         $event->location     = $row['location'] ?? null;
         $event->startTime    = $row['start_time'] ?? null;
         $event->endTime      = $row['end_time'] ?? null;
@@ -266,6 +274,186 @@ class EventRepository
         } catch (\Throwable $e) {
             $db->rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Persist jazz_events media columns (paths + JSON) from the admin artist form.
+     * Paths are stored as VARCHAR URLs (same as CMS); files live on disk under /public/uploads.
+     *
+     * @param array<string,string> $pageData POST body after CSRF/page keys removed (includes profile_image, etc.)
+     */
+    public function syncJazzArtistMediaFromAdmin(int $eventId, array $pageData, string $tracksJson, string $imagesJson): void
+    {
+        if ($eventId <= 0) {
+            return;
+        }
+
+        $db = DB::getConnection();
+        $chk = $db->prepare(
+            'SELECT 1 FROM jazz_events je INNER JOIN events e ON e.id = je.event_id
+             WHERE je.event_id = :id AND e.type = \'jazz\' LIMIT 1'
+        );
+        $chk->execute(['id' => $eventId]);
+        if (!$chk->fetchColumn()) {
+            return;
+        }
+
+        $cols = $this->getJazzEventsTableColumns($db);
+        $tracks = $this->sanitizeTracksJsonForDb($tracksJson);
+        $images = $this->sanitizeImagesJsonForDb($imagesJson);
+
+        $normPath = static function ($v): ?string {
+            $v = trim((string) $v);
+
+            return $v === '' ? null : $v;
+        };
+
+        $sets   = [];
+        $params = ['event_id' => $eventId];
+
+        if (in_array('profile_image', $cols, true)) {
+            $sets[]                    = 'profile_image = :profile_image';
+            $params['profile_image']   = $normPath($pageData['profile_image'] ?? '');
+        }
+        if (in_array('banner_image', $cols, true)) {
+            $sets[]                   = 'banner_image = :banner_image';
+            $params['banner_image']   = $normPath($pageData['banner_image'] ?? '');
+        }
+        if (in_array('homepage_image', $cols, true)) {
+            $sets[]                    = 'homepage_image = :homepage_image';
+            $params['homepage_image']  = $normPath($pageData['homepage_image'] ?? '');
+        }
+        if (in_array('tracks', $cols, true)) {
+            $sets[]            = 'tracks = :tracks';
+            $params['tracks']  = $tracks === [] ? null : json_encode($tracks, JSON_UNESCAPED_UNICODE);
+        }
+        if (in_array('images', $cols, true)) {
+            $sets[]            = 'images = :images';
+            $params['images']  = $images === [] ? null : json_encode($images, JSON_UNESCAPED_UNICODE);
+        }
+
+        if ($sets === []) {
+            return;
+        }
+
+        $sql = 'UPDATE jazz_events SET ' . implode(', ', $sets) . ' WHERE event_id = :event_id';
+        $db->prepare($sql)->execute($params);
+    }
+
+    /**
+     * @return list<array{title:string, genre:string, url:string, duration:string, duration_seconds:int}>
+     */
+    private function sanitizeTracksJsonForDb(string $json): array
+    {
+        if (strlen($json) > 120000) {
+            return [];
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data)) {
+            return [];
+        }
+        $out = [];
+        foreach (array_slice($data, 0, 24) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $title = trim((string) ($row['title'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+            $genre = trim((string) ($row['genre'] ?? ''));
+            $url   = trim((string) ($row['url'] ?? ''));
+            if ($url !== '' && !preg_match('#^(/uploads/|https?://)#i', $url)) {
+                $url = '';
+            }
+            $dur        = trim((string) ($row['duration'] ?? ''));
+            $durSeconds = (int) ($row['duration_seconds'] ?? 0);
+            if ($durSeconds < 0) {
+                $durSeconds = 0;
+            }
+            if ($dur === '' && $durSeconds > 0) {
+                $dur = sprintf('%d:%02d', intdiv($durSeconds, 60), $durSeconds % 60);
+            }
+            $out[] = [
+                'title'             => $title,
+                'genre'             => $genre,
+                'url'               => $url,
+                'duration'          => $dur,
+                'duration_seconds'  => $durSeconds,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<array{url:string, alt:string}>
+     */
+    private function sanitizeImagesJsonForDb(string $json): array
+    {
+        if (strlen($json) > 120000) {
+            return [];
+        }
+        $data = json_decode($json, true);
+        if (!is_array($data)) {
+            return [];
+        }
+        $out = [];
+        foreach (array_slice($data, 0, 24) as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $url = trim((string) ($row['url'] ?? ''));
+            if ($url === '' || !preg_match('#^(/uploads/|https?://)#i', $url)) {
+                continue;
+            }
+            $alt = trim((string) ($row['alt'] ?? ''));
+            $out[] = ['url' => $url, 'alt' => $alt];
+        }
+
+        return $out;
+    }
+
+    /**
+     * SQL fragment: profile + banner (+ homepage_image when column exists).
+     */
+    private function jazzEventImageColumnsSql(): string
+    {
+        static $fragment = null;
+        if ($fragment !== null) {
+            return $fragment;
+        }
+        try {
+            $db = DB::getConnection();
+            $q  = $db->query("SHOW COLUMNS FROM jazz_events WHERE Field = 'homepage_image'");
+            $fragment = ($q && $q->fetch())
+                ? 'je.profile_image, je.banner_image, je.homepage_image,'
+                : 'je.profile_image, je.banner_image,';
+        } catch (\Throwable $e) {
+            $fragment = 'je.profile_image, je.banner_image,';
+        }
+
+        return $fragment;
+    }
+
+    /**
+     * @return string[]
+     */
+    private function getJazzEventsTableColumns(\PDO $db): array
+    {
+        try {
+            $stmt = $db->query('SHOW COLUMNS FROM jazz_events');
+            $out  = [];
+            while ($row = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+                if (!empty($row['Field'])) {
+                    $out[] = $row['Field'];
+                }
+            }
+
+            return $out;
+        } catch (\Throwable $e) {
+            return [];
         }
     }
 

@@ -91,9 +91,9 @@ class UserController
     {
         $errors  = $_SESSION['login_errors']     ?? [];
         $old     = $_SESSION['login_old']        ?? [];
-        $success = $_SESSION['register_success'] ?? '';
+        $success = $_SESSION['register_success'] ?? $_SESSION['login_success'] ?? '';
 
-        unset($_SESSION['login_errors'], $_SESSION['login_old'], $_SESSION['register_success']);
+        unset($_SESSION['login_errors'], $_SESSION['login_old'], $_SESSION['register_success'], $_SESSION['login_success']);
 
         require __DIR__ . '/../views/auth/login.php';
     }
@@ -169,6 +169,163 @@ class UserController
         session_destroy();
 
         header('Location: /');
+        exit;
+    }
+
+    // -------------------------------------------------------------------------
+    // Password reset (email link)
+    // -------------------------------------------------------------------------
+
+    public function forgotPassword($vars = [])
+    {
+        $errors  = $_SESSION['forgot_password_errors']  ?? [];
+        $success = $_SESSION['forgot_password_success'] ?? '';
+        $old     = $_SESSION['forgot_password_old']     ?? [];
+        $smtpConsoleLog = $_SESSION['forgot_password_smtp_console'] ?? null;
+
+        unset(
+            $_SESSION['forgot_password_errors'],
+            $_SESSION['forgot_password_success'],
+            $_SESSION['forgot_password_old'],
+            $_SESSION['forgot_password_smtp_console'],
+        );
+
+        require __DIR__ . '/../views/auth/forgot-password.php';
+    }
+
+    public function handleForgotPassword($vars = [])
+    {
+        if (!Csrf::validateRequest()) {
+            $_SESSION['forgot_password_errors'] = ['Invalid session. Please try again.'];
+            header('Location: /forgot-password');
+            exit;
+        }
+
+        $email = trim($_POST['email'] ?? '');
+
+        $validator = new Validator();
+        $validator
+            ->validateRequired($email, 'Email')
+            ->validateEmail($email);
+
+        if ($validator->hasErrors()) {
+            $_SESSION['forgot_password_errors'] = $validator->getErrors();
+            $_SESSION['forgot_password_old']    = ['email' => $email];
+            header('Location: /forgot-password');
+            exit;
+        }
+
+        $user = $this->users->findByEmail($email);
+        if ($user) {
+            $token     = bin2hex(random_bytes(32));
+            $tokenHash = hash('sha256', $token);
+            $expires   = date('Y-m-d H:i:s', time() + 3600);
+            $this->users->setPasswordReset($user->id, $tokenHash, $expires);
+
+            $resetUrl    = $this->appBaseUrl() . '/reset-password?token=' . rawurlencode($token);
+            $mailService = new MailService();
+            $sent        = $mailService->sendPasswordResetEmail($user->email, $user->name, $resetUrl);
+
+            if (!$sent) {
+                $this->users->clearPasswordReset($user->id);
+                $errors = ['We could not send the email. Please try again later.'];
+                if ($this->isAppDebug()) {
+                    $detail = $mailService->getLastSendError();
+                    $dbg    = $mailService->getLastSendDebug();
+                    if ($detail !== null && $detail !== '') {
+                        $tech = 'Technical detail (APP_DEBUG): ' . $detail;
+                        if (!empty($dbg['exceptionThrownIn'])) {
+                            $tech .= ' [exception thrown in ' . $dbg['exceptionThrownIn'] . ']';
+                        }
+                        if (!empty($dbg['handledInMailService'])) {
+                            $tech .= ' [handled in ' . $dbg['handledInMailService'] . ']';
+                        }
+                        if (!empty($dbg['calledFrom'])) {
+                            $tech .= ' [app caller ' . $dbg['calledFrom'] . ']';
+                        }
+                        $errors[] = $tech;
+                    }
+                    $encEnv = trim((string) (getenv('MAIL_ENCRYPTION') ?: ''));
+                    $_SESSION['forgot_password_smtp_console'] = array_merge(
+                        [
+                            'MAIL_HOST'         => getenv('MAIL_HOST') ?: '(default smtp.gmail.com)',
+                            'MAIL_PORT'         => getenv('MAIL_PORT') ?: '(default 587)',
+                            'MAIL_ENCRYPTION'   => $encEnv !== '' ? $encEnv : '(auto by port)',
+                            'MAIL_USERNAME_set' => trim((string) getenv('MAIL_USERNAME')) !== '',
+                        ],
+                        $dbg ?? []
+                    );
+                }
+                $_SESSION['forgot_password_errors'] = $errors;
+                $_SESSION['forgot_password_old']    = ['email' => $email];
+                header('Location: /forgot-password');
+                exit;
+            }
+        }
+
+        $_SESSION['forgot_password_success'] =
+            'If an account exists for that email address, we sent a link to reset your password. Check your inbox.';
+        header('Location: /forgot-password');
+        exit;
+    }
+
+    public function resetPassword($vars = [])
+    {
+        $token  = trim($_GET['token'] ?? '');
+        $errors = $_SESSION['reset_password_errors'] ?? [];
+        unset($_SESSION['reset_password_errors']);
+
+        $resetToken = null;
+        if ($token !== '') {
+            $user = $this->users->findByValidPasswordResetToken(hash('sha256', $token));
+            if ($user) {
+                $resetToken = $token;
+            } else {
+                $errors[] = 'This reset link is invalid or has expired. Please request a new one.';
+            }
+        }
+
+        require __DIR__ . '/../views/auth/reset-password.php';
+    }
+
+    public function handleResetPassword($vars = [])
+    {
+        if (!Csrf::validateRequest()) {
+            $_SESSION['reset_password_errors'] = ['Invalid session. Please try again.'];
+            header('Location: /reset-password');
+            exit;
+        }
+
+        $token                = trim($_POST['token'] ?? '');
+        $password             = $_POST['password'] ?? '';
+        $passwordConfirmation = $_POST['password_confirmation'] ?? '';
+
+        $validator = new Validator();
+        $validator
+            ->validateRequired($token, 'Reset link')
+            ->validateRequired($password, 'Password')
+            ->validatePasswordStrength($password)
+            ->validatePasswordConfirmation($password, $passwordConfirmation);
+
+        if ($validator->hasErrors()) {
+            $_SESSION['reset_password_errors'] = $validator->getErrors();
+            header('Location: /reset-password?token=' . rawurlencode($token));
+            exit;
+        }
+
+        $user = $this->users->findByValidPasswordResetToken(hash('sha256', $token));
+        if (!$user) {
+            $_SESSION['reset_password_errors'] = ['This reset link is invalid or has expired. Please request a new one.'];
+            header('Location: /reset-password');
+            exit;
+        }
+
+        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $this->users->updatePasswordHashAndClearReset($user->id, $hash);
+        $this->users->clearRememberToken($user->id);
+
+        $_SESSION['login_success'] = 'Your password has been reset. You can log in with your new password.';
+        header('Location: /login');
         exit;
     }
 
@@ -272,6 +429,26 @@ class UserController
             header('Location: /login');
             exit;
         }
+    }
+
+    private function appBaseUrl(): string
+    {
+        $fromEnv = getenv('APP_URL');
+        if (is_string($fromEnv) && $fromEnv !== '') {
+            return rtrim($fromEnv, '/');
+        }
+
+        $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+        $host  = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        return ($https ? 'https://' : 'http://') . $host;
+    }
+
+    private function isAppDebug(): bool
+    {
+        $v = strtolower((string) getenv('APP_DEBUG'));
+
+        return in_array($v, ['1', 'true', 'yes'], true);
     }
 
     private function setRememberMeCookies(int $userId, UserRepository $users): void

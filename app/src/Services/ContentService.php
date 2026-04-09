@@ -177,6 +177,7 @@ final class ContentService
     {
         return [
             'banner_image' => '',
+            'homepage_image' => '',
             'profile_image' => '',
             'artist_name' => '',
             'bio_html' => '',

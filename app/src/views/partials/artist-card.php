@@ -3,7 +3,8 @@
  * Reusable artist card component for Jazz events.
  *
  * Expects $artist (JazzEvent) with:
- *   - profileImage  : cover image path (null shows a placeholder)
+ *   - homepageImage : line-up card image from CMS (preferred)
+ *   - profileImage  : fallback cover if homepage image is empty
  *   - artist        : artist name
  *   - startTime     : datetime string  (e.g. "2025-06-20 21:00:00")
  *   - endTime       : datetime string
@@ -17,7 +18,8 @@ if (!isset($artist)) {
 $day       = $artist->startTime ? date('l', strtotime($artist->startTime)) : '';
 $timeFrom  = $artist->startTime ? date('H:i', strtotime($artist->startTime)) : '';
 $timeTo    = $artist->endTime   ? date('H:i', strtotime($artist->endTime))   : '';
-$imgSrc    = $artist->profileImage ? htmlspecialchars($artist->profileImage) : null;
+$coverPath = $artist->homepageImage ?? $artist->profileImage ?? null;
+$imgSrc    = $coverPath ? htmlspecialchars($coverPath) : null;
 $name      = htmlspecialchars($artist->artist);
 $blurb     = htmlspecialchars($artist->description);
 $detailUrl = '/events/jazz/' . $artist->eventId;
