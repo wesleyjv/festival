@@ -199,42 +199,6 @@
         margin-bottom: 25px;
     }
 
-    /* --- Payment method options --- */
-    .method-option {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 18px;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        background-color: #fff;
-        margin-bottom: 10px;
-        cursor: pointer;
-        transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .method-option:hover {
-        border-color: var(--gold-accent);
-    }
-    .method-option input[type="radio"] {
-        accent-color: var(--primary-brown);
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-    }
-    .method-option input[type="radio"]:checked ~ .method-label {
-        color: var(--primary-brown);
-    }
-    .method-option:has(input:checked) {
-        border-color: var(--primary-brown);
-        background-color: var(--card-bg);
-        box-shadow: 0 4px 15px rgba(54, 41, 30, 0.1);
-    }
-    .method-label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--text-dark);
-    }
-
     /* --- Warning box --- */
     .warning-box {
         background-color: rgba(195, 154, 59, 0.1);
@@ -349,7 +313,7 @@
 
         <header class="checkout-header">
             <h1 class="checkout-title">Checkout</h1>
-            <p class="checkout-subtitle">Review your order &amp; complete payment</p>
+            <p class="checkout-subtitle">Review your order—payment happens on the next secure step</p>
             <p class="checkout-meta">Secure &bull; Encrypted &bull; Instant Confirmation</p>
         </header>
 
@@ -360,6 +324,7 @@
         <?php endif; ?>
 
         <form action="/checkout" method="POST" class="checkout-container">
+            <?= \App\Security\Csrf::field() ?>
 
             <!-- Left: Order Summary -->
             <div class="order-col">
@@ -405,7 +370,7 @@
                     <h2 class="payment-title">Complete Checkout</h2>
                     
                     <p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-bottom: 25px;">
-                        Select your preferred payment method (Credit Card, iDEAL, or PayPal) on the next page.
+                        No payment method to choose here. Continue to our secure payment page, where you can pay with card, iDEAL, or PayPal.
                     </p>
 
                     <?php if (!$viewModel->isLoggedIn): ?>
@@ -421,7 +386,7 @@
                     </div>
 
                     <button type="submit" class="btn-pay" <?= !$viewModel->isLoggedIn ? 'disabled' : '' ?>>
-                        ✦ &nbsp;Pay Now &nbsp;✦
+                        ✦ &nbsp;Continue to payment &nbsp;✦
                     </button>
 
                     <p class="payment-note">🔒 &nbsp;Securely processed</p>

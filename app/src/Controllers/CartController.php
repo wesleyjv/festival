@@ -11,6 +11,8 @@ use App\ViewModels\CartViewModel;
 
 class CartController
 {
+    use HandlesControllerErrors;
+
     private TicketService $ticketService;
 
 
@@ -20,16 +22,14 @@ class CartController
     }
 
 
-    public function add()
+    public function add(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $ticketId = $_POST['ticket_id'] ?? null;
-            $quantity = isset($_POST['quantity']) ? max(1, (int)$_POST['quantity']) : 1;
-            $redirect = $_POST['redirect'] ?? null;
+        $wantsJson = isset($_POST['ajax']) && (string) $_POST['ajax'] === '1';
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             if ($wantsJson) {
@@ -39,58 +39,98 @@ class CartController
             exit;
         }
 
-                if ($ticket) {
-                    // Retrieve existing cart from session or create a new one
-                    $cart = $_SESSION['cart'] ?? new ShoppingCart();
-                    $cart->addItem($ticket, $quantity);
-                    $_SESSION['cart'] = $cart;
-                }
-            } else {
-                // Fallback: allow adding an ad-hoc ticket by name (used by standalone event ordering pages).
-                $ticketName = $_POST['ticket_name'] ?? null;
+        if (!Csrf::validateRequest()) {
+            if ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'Invalid session. Please refresh the page and try again.');
+            }
+            header('Location: /cart');
+            exit;
+        }
 
-                // Support combined 'ticket' field (value: "Name|Price") used by the history order form
-                // We ignore the price sent by the client for security.
-                if (empty($ticketName) && isset($_POST['ticket'])) {
-                    $parts = explode('|', (string)$_POST['ticket'], 2);
-                    $ticketName = trim($parts[0] ?? '');
-                }
+        $ticketIdRaw = $_POST['ticket_id'] ?? null;
+        $quantity = isset($_POST['quantity']) ? max(1, (int) $_POST['quantity']) : 1;
+        $redirect = $_POST['redirect'] ?? null;
 
-                // Map of allowed ad-hoc tickets and their authoritative prices
-                $adHocPrices = [
-                    'Admission Ticket' => 17.50,
-                    'Family Ticket' => 60.00
-                ];
+        $added = false;
 
-                if ($ticketName && isset($adHocPrices[$ticketName])) {
-                    $price = $adHocPrices[$ticketName];
-                    $ticket = new \App\Models\Ticket();
-                    $ticket->id = 0; // synthetic ID for cart-only items
-                    $ticket->eventId = 0;
-                    $ticket->name = (string)$ticketName;
-                    $ticket->price = $price;
-                    $ticket->ticketCode = '';
+        if ($ticketIdRaw !== null && $ticketIdRaw !== '' && (int) $ticketIdRaw > 0) {
+            $ticket = $this->ticketService->getTicketById((int) $ticketIdRaw);
+            if ($ticket !== null) {
+                $cart = $_SESSION['cart'] ?? new ShoppingCart();
+                $cart->addItem($ticket, $quantity);
+                $_SESSION['cart'] = $cart;
+                $added = true;
+            } elseif ($wantsJson) {
+                $this->jsonCartAddResponse(false, 'That ticket could not be found.');
+            }
+        } else {
+            // Fallback: ad-hoc ticket by name (standalone event pages). Prices are server-side only.
+            $ticketName = $_POST['ticket_name'] ?? null;
 
-                    $cart = $_SESSION['cart'] ?? new ShoppingCart();
-                    $cart->addItem($ticket, $quantity);
-                    $_SESSION['cart'] = $cart;
-                }
+            if (empty($ticketName) && isset($_POST['ticket'])) {
+                $parts = explode('|', (string) $_POST['ticket'], 2);
+                $ticketName = trim($parts[0] ?? '');
             }
 
-            // If the form set redirect=checkout, send straight to checkout
-            if ($redirect === 'checkout') {
-                header('Location: /checkout');
-                exit;
+            $adHocPrices = [
+                'Admission Ticket' => 17.50,
+                'Family Ticket' => 60.00,
+            ];
+
+            if (is_string($ticketName) && $ticketName !== '' && isset($adHocPrices[$ticketName])) {
+                $price = $adHocPrices[$ticketName];
+                $ticket = new \App\Models\Ticket();
+                $ticket->id = 0;
+                $ticket->eventId = 0;
+                $ticket->name = $ticketName;
+                $ticket->price = $price;
+                $ticket->ticketCode = '';
+
+                $cart = $_SESSION['cart'] ?? new ShoppingCart();
+                $cart->addItem($ticket, $quantity);
+                $_SESSION['cart'] = $cart;
+                $added = true;
             }
         }
 
+        if ($wantsJson) {
+            if ($added) {
+                $this->jsonCartAddResponse(true, 'Added to your cart.');
+            }
+            $this->jsonCartAddResponse(false, 'Could not add ticket.');
+        }
+
+        if ($added && $redirect === 'checkout') {
+            header('Location: /checkout');
+            exit;
+        }
+
         header('Location: /cart');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $wantsJson = isset($_POST['ajax']) && (string) $_POST['ajax'] === '1';
+            if ($wantsJson) {
+                $this->respondWithServerError(true, ['ok' => false, 'message' => 'Something went wrong.']);
+            }
+            $this->respondWithServerError();
+        }
+    }
+
+    /**
+     * JSON body for AJAX add-to-cart (see footer.js-cart-add-form handler).
+     */
+    private function jsonCartAddResponse(bool $ok, string $message): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['ok' => $ok, 'message' => $message], JSON_THROW_ON_ERROR);
         exit;
     }
 
 
     public function remove()
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -115,10 +155,15 @@ class CartController
 
         header('Location: /cart');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function index(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
 
@@ -128,5 +173,9 @@ class CartController
         );
 
         require __DIR__ . '/../views/tickets/cart.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 }
