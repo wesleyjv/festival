@@ -89,8 +89,11 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/jazz', ['App\\Controllers\\EventsController', 'jazz']);
     $r->addRoute('GET', '/events/jazz/{id:\d+}', ['App\\Controllers\\EventsController', 'jazzDetail']);
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
-    $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'yummy']);
-    $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'yummyDetail']);
+    $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'displayYummyOverviewPage']);
+    $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'displayRestaurantDetailPage']);
+    $r->addRoute('GET',  '/events/yummy/reservation/overview', ['App\\Controllers\\EventsController', 'displayReservationOverviewPage']);
+    $r->addRoute('POST', '/events/yummy/reservation/confirm',  ['App\\Controllers\\EventsController', 'confirmReservation']);
+    $r->addRoute('GET',  '/events/yummy/reservation/success',  ['App\\Controllers\\EventsController', 'displayReservationSuccessPage']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
     $r->addRoute('GET', '/events/history/order', ['App\\Controllers\\TicketController', 'historyTickets']);
@@ -128,6 +131,17 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/story-events/create', ['App\\Controllers\\AdminController', 'createStoryEvent']);
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
+
+    $r->addRoute('GET',  '/admin/yummy/restaurants',                              ['App\\Controllers\\AdminYummyController', 'displayRestaurantList']);
+    $r->addRoute('GET',  '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
+    $r->addRoute('GET',  '/admin/yummy/restaurants/edit',                         ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'createRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/update',                       ['App\\Controllers\\AdminYummyController', 'updateRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/delete',              ['App\\Controllers\\AdminYummyController', 'deleteRestaurant']);
+    $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/toggle-active',       ['App\\Controllers\\AdminYummyController', 'toggleRestaurantActiveStatus']);
+    $r->addRoute('GET',  '/admin/yummy/menu-items/edit',                          ['App\\Controllers\\AdminYummyController', 'displayMenuItemEditForm']);
+    $r->addRoute('POST', '/admin/yummy/menu-items/save',                          ['App\\Controllers\\AdminYummyController', 'saveMenuItem']);
+    $r->addRoute('POST', '/admin/yummy/menu-items/delete',                        ['App\\Controllers\\AdminYummyController', 'deleteMenuItem']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -157,6 +171,8 @@ switch ($routeInfo[0]) {
             $mailService = new App\Services\MailService();
             $stripeService = new App\Services\StripeService();
             $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
+        } elseif ($controllerClass === App\Controllers\AdminYummyController::class) {
+            $controller = new $controllerClass(new App\Services\AdminYummyService());
         } else {
             $controller = new $controllerClass();
         }

@@ -2,11 +2,11 @@
 
 namespace App\Controllers;
 
-use PDO;
 use Throwable;
 
 use App\Repositories\EventRepository;
 use App\Repositories\YummyEventRepository;
+use App\Security\Csrf;
 use App\Services\ContentService;
 use App\Services\StoryEventService;
 use App\Services\TicketService;
@@ -23,40 +23,26 @@ class EventsController
 {
     use HandlesControllerErrors;
 
-    /**
-     * @var EventRepository Repository used to retrieve event data.
-     */
     private EventRepository $eventRepository;
     private StoryEventService $storyEventService;
     private IYummyService $yummyService;
+    private ContentService $contentService;
 
-    /**
-     * Initializes the controller with a new EventRepository instance.
-     */
     public function __construct()
     {
-        $this->eventRepository = new EventRepository();
+        $this->eventRepository   = new EventRepository();
         $this->storyEventService = new StoryEventService();
-        $this->yummyService = new YummyService(
+        $this->contentService    = new ContentService();
+        $this->yummyService      = new YummyService(
             new YummyEventRepository(),
-            new ContentService()
+            $this->contentService
         );
     }
 
-    /**
-     * Displays the history events overview page.
-     *
-     * Retrieves all history events from the repository and passes them
-     * to the history overview view.
-     *
-     * @return void
-     */
     public function history()
     {
         try {
             $events = $this->eventRepository->getHistoryEvents();
-
-            // Render the history overview page. Content is embedded directly in the view.
             require __DIR__ . '/../views/events/history/overview.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -64,145 +50,119 @@ class EventsController
         }
     }
 
-
-    /**
-     * Displays the jazz events overview page.
-     *
-     * @param array $vars Optional route parameters passed to the view.
-     * @return void
-     */
     public function jazz($vars = [])
     {
         try {
-        $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
-        $dayFilter = $_GET['day'] ?? 'thursday';
-        if (!in_array($dayFilter, $validDays, true)) {
-            $dayFilter = 'thursday';
-        }
-
-        // Full lineup in the page; day filter is applied in the browser (no reload).
-        $jazzArtists = $this->eventRepository->getJazzEvents(null, 'artist');
-        $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
-
-        $ticketService = new TicketService();
-        $ticketService->syncMissingJazzTickets($jazzArtists);
-        $scheduleIds = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
-        $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
-
-        $contentService = new ContentService();
-        $jazzContent = $contentService->getPageContent('jazz');
-
-        $cmsJazzArtist = [];
-        $attachHomepageImage = function (array $events) use (&$cmsJazzArtist, $contentService): void {
-            foreach ($events as $ev) {
-                $id = $ev->eventId;
-                if (!isset($cmsJazzArtist[$id])) {
-                    $cmsJazzArtist[$id] = $contentService->getPageContent('jazz_' . $id);
-                }
-                $cmsHp = trim($cmsJazzArtist[$id]['homepage_image'] ?? '');
-                if ($cmsHp !== '') {
-                    $ev->homepageImage = $cmsHp;
-                }
+            $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
+            $dayFilter = $_GET['day'] ?? 'thursday';
+            if (!in_array($dayFilter, $validDays, true)) {
+                $dayFilter = 'thursday';
             }
-        };
-        $attachHomepageImage($jazzArtists);
-        $attachHomepageImage($jazzSchedule);
 
-        require __DIR__ . '/../views/events/jazz/overview.php';
+            $jazzArtists  = $this->eventRepository->getJazzEvents(null, 'artist');
+            $jazzSchedule = $this->eventRepository->getJazzEvents(null, 'start_time');
+
+            $ticketService = new TicketService();
+            $ticketService->syncMissingJazzTickets($jazzArtists);
+            $scheduleIds   = array_map(static fn ($e) => $e->eventId, $jazzSchedule);
+            $jazzTicketIds = $ticketService->getFirstTicketIdByEventIds($scheduleIds);
+
+            $contentService = new ContentService();
+            $jazzContent    = $contentService->getPageContent('jazz');
+
+            $cmsJazzArtist = [];
+            $attachHomepageImage = function (array $events) use (&$cmsJazzArtist, $contentService): void {
+                foreach ($events as $ev) {
+                    $id = $ev->eventId;
+                    if (!isset($cmsJazzArtist[$id])) {
+                        $cmsJazzArtist[$id] = $contentService->getPageContent('jazz_' . $id);
+                    }
+                    $cmsHp = trim($cmsJazzArtist[$id]['homepage_image'] ?? '');
+                    if ($cmsHp !== '') {
+                        $ev->homepageImage = $cmsHp;
+                    }
+                }
+            };
+            $attachHomepageImage($jazzArtists);
+            $attachHomepageImage($jazzSchedule);
+
+            require __DIR__ . '/../views/events/jazz/overview.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
         }
     }
-
 
     public function jazzDetail($vars = [])
     {
         try {
-        $id = (int) ($vars['id'] ?? 0);
-        $artist = $this->eventRepository->getJazzEventById($id);
+            $id     = (int) ($vars['id'] ?? 0);
+            $artist = $this->eventRepository->getJazzEventById($id);
 
-        if ($artist === null) {
-            http_response_code(404);
-            $message = 'Artist not found.';
-            require __DIR__ . '/../views/errors/404.php';
-            return;
-        }
+            if ($artist === null) {
+                http_response_code(404);
+                $message = 'Artist not found.';
+                require __DIR__ . '/../views/errors/404.php';
+                return;
+            }
 
-        $ticketService = new TicketService();
-        $ticketService->syncMissingJazzTickets([$artist]);
-        $jazzCartTickets = $ticketService->getTicketsByEventId($artist->eventId);
-        $jazzCartTicket = $jazzCartTickets[0] ?? null;
+            $ticketService   = new TicketService();
+            $ticketService->syncMissingJazzTickets([$artist]);
+            $jazzCartTickets = $ticketService->getTicketsByEventId($artist->eventId);
+            $jazzCartTicket  = $jazzCartTickets[0] ?? null;
 
-        require __DIR__ . '/../views/events/jazz/detail.php';
+            require __DIR__ . '/../views/events/jazz/detail.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
         }
     }
 
-    /**
-     * Displays the stories events overview page.
-     *
-     * @param array $vars Optional route parameters passed to the view.
-     * @return void
-     */
     public function stories($vars = [])
     {
         try {
             $filters = [
-                'day' => $_GET['day'] ?? null,
-                'date' => $_GET['date'] ?? null,
-                'time' => $_GET['time'] ?? null,
+                'day'      => $_GET['day']      ?? null,
+                'date'     => $_GET['date']     ?? null,
+                'time'     => $_GET['time']     ?? null,
                 'location' => $_GET['location'] ?? null,
             ];
 
-            $viewModel = $this->storyEventService->getStoriesOverviewViewModel($filters);
-            $events = $viewModel->events;
+            $viewModel      = $this->storyEventService->getStoriesOverviewViewModel($filters);
+            $events         = $viewModel->events;
 
-            $ticketService = new TicketService();
+            $ticketService  = new TicketService();
             $storyTicketIds = $ticketService->getStoryTicketIdMap($events);
 
-            // Pass data to view
             require __DIR__ . '/../views/events/stories/overview.php';
-
-        } catch (Throwable $e) {
-            error_log('Error in stories controller: ' . $e->getMessage());
-
-            // Fallback to static view with error handling
-            http_response_code(500);
-            require __DIR__ . '/../views/events/stories/overview.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
         }
     }
 
-    /**
-     * Displays the yummy events overview page.
-     *
-     * @return void
-     */
-    public function yummy(): void
+    /** Passes the optional cuisine filter from the query string to the service and renders the overview. */
+    public function displayYummyOverviewPage(): void
     {
         try {
-            $cuisine = $_GET['cuisine'] ?? null;
+            $cuisine   = $_GET['cuisine'] ?? null;
             $viewModel = $this->yummyService->getOverviewViewModel($cuisine);
 
             require __DIR__ . '/../views/events/yummy/overview.php';
         } catch (Throwable $e) {
-            error_log('Error in yummy controller: ' . $e->getMessage());
-
-            http_response_code(500);
-            $message = 'Unable to load the Yummy page.';
-            require __DIR__ . '/../views/errors/500.php';
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
         }
     }
 
-    public function yummyDetail(array $vars = []): void
+    /** Looks up the restaurant by URL slug; renders 404 when not found or inactive. */
+    public function displayRestaurantDetailPage(array $vars = []): void
     {
         try {
-            $slug = (string) ($vars['slug'] ?? '');
-            $restaurant = $this->yummyService->getRestaurantBySlug($slug);
+            $slug      = (string) ($vars['slug'] ?? '');
+            $viewModel = $this->yummyService->getRestaurantDetailViewModel($slug);
 
-            if ($restaurant === null) {
+            if ($viewModel === null) {
                 http_response_code(404);
                 $message = 'Restaurant not found.';
                 require __DIR__ . '/../views/errors/404.php';
@@ -211,12 +171,91 @@ class EventsController
 
             require __DIR__ . '/../views/events/yummy/detail.php';
         } catch (Throwable $e) {
-            error_log('Error in yummyDetail controller: ' . $e->getMessage());
-
-            http_response_code(500);
-            $message = 'Unable to load the restaurant page.';
-            require __DIR__ . '/../views/errors/500.php';
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
         }
     }
 
+    /**
+     * Reads reservation parameters from the query string, validates them via the
+     * service, and renders the reservation overview page.
+     */
+    public function displayReservationOverviewPage(): void
+    {
+        try {
+            if (empty($_GET['restaurant_id']) || empty($_GET['festival_date']) || empty($_GET['session_number'])) {
+                header('Location: /events/yummy');
+                exit;
+            }
+
+            $viewModel = $this->yummyService->buildReservationOverviewViewModel($_GET);
+
+            require __DIR__ . '/../views/events/yummy/reservation-overview.php';
+        } catch (Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    /**
+     * Validates CSRF, saves the reservation via the service, stores a summary in
+     * session, and redirects to the success page.
+     */
+    public function confirmReservation(): void
+    {
+        try {
+            if (!Csrf::validateRequest()) {
+                header('Location: /events/yummy');
+                exit;
+            }
+
+            // Build the view model first — this validates all params before touching the DB.
+            $viewModel             = $this->yummyService->buildReservationOverviewViewModel($_POST);
+            $params                = $_POST;
+            $params['user_id']     = $_SESSION['user_id'] ?? null;
+            $reservationId         = $this->yummyService->saveReservation($params);
+
+            $_SESSION['yummy_reservation_success'] = [
+                'reservation_id'        => $reservationId,
+                'restaurant_name'       => $viewModel->restaurant->restaurantName,
+                'restaurant_slug'       => $viewModel->restaurant->slug,
+                'restaurant_image_path' => $viewModel->restaurant->restaurantImagePath,
+                'festival_date'         => $viewModel->festivalDate,
+                'session_start'         => $viewModel->sessionStartTime,
+                'session_end'           => $viewModel->sessionEndTime,
+                'adults'                => $viewModel->adults,
+                'children'              => $viewModel->children,
+                'reservation_fee_cents' => $viewModel->reservationFeeCents,
+            ];
+
+            header('Location: /events/yummy/reservation/success');
+            exit;
+        } catch (Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    /**
+     * Reads the reservation summary stored in session after a successful confirmation
+     * and renders the success page. Redirects to /events/yummy when no session data exists.
+     */
+    public function displayReservationSuccessPage(): void
+    {
+        try {
+            $successData = $_SESSION['yummy_reservation_success'] ?? null;
+
+            if ($successData === null) {
+                header('Location: /events/yummy');
+                exit;
+            }
+
+            unset($_SESSION['yummy_reservation_success']);
+
+            require __DIR__ . '/../views/events/yummy/reservation-success.php';
+        } catch (Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
 }
