@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Enums\PaymentMethod;
 use App\Security\Csrf;
 use App\Models\ShoppingCart;
 use App\Services\MailService;
@@ -17,6 +16,8 @@ use App\ViewModels\OrderHistoryViewModel;
 
 class OrderController
 {
+    use HandlesControllerErrors;
+
     private OrderService $orderService;
     private TicketPdfService $ticketPdfService;
     private MailService $mailService;
@@ -36,6 +37,7 @@ class OrderController
 
     public function orders(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -46,10 +48,15 @@ class OrderController
         $orders = $this->orderService->getOrdersByUserId((int) $_SESSION['user_id']);
         $viewModel = new OrderHistoryViewModel($orders);
         require __DIR__ . '/../views/tickets/orders.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function checkout(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
@@ -68,14 +75,18 @@ class OrderController
             total: $total,
             error: $error,
             isLoggedIn: !empty($_SESSION['user_id']),
-            paymentMethods: PaymentMethod::toViewArray(),
         );
 
         require __DIR__ . '/../views/tickets/checkout.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function placeOrder(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (!Csrf::validateRequest()) {
@@ -125,11 +136,16 @@ class OrderController
             header('Location: /checkout');
             exit;
         }
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
 
     public function completeCheckout(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -213,10 +229,15 @@ class OrderController
             header('Location: /checkout');
             exit;
         }
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function confirmation(): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $orderNumber = $_SESSION['last_order_number'] ?? null;
@@ -236,10 +257,15 @@ class OrderController
         );
 
         require __DIR__ . '/../views/tickets/confirmation.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function emailTickets(array $vars): void
     {
+        try {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -287,5 +313,9 @@ class OrderController
         $_SESSION['email_success'] = 'Tickets have been sent to ' . $userEmail;
         header('Location: /orders');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 }

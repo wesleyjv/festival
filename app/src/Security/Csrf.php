@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Security;
 
-/**
- * Session-bound CSRF tokens for form posts and AJAX (header / multipart field).
- */
+
+ //ession-bound CSRF tokens for form posts and AJAX (header / multipart field).
+ 
 final class Csrf
 {
     public const SESSION_KEY = '_csrf_token';
@@ -16,9 +16,9 @@ final class Csrf
     /** @var non-empty-string */
     public const HEADER_NAME = 'X-CSRF-Token';
 
-    /**
-     * Ensure a token exists and return it (call once per request after session_start).
-     */
+    
+     //Ensure a token exists and return it (call once per request after session_start).
+     
     public static function getToken(): string
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -30,9 +30,9 @@ final class Csrf
         return $_SESSION[self::SESSION_KEY];
     }
 
-    /**
-     * HTML hidden input for traditional form posts.
-     */
+    
+     // HTML hidden input for traditional form posts.
+     
     public static function field(): string
     {
         $t = htmlspecialchars(self::getToken(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -40,9 +40,9 @@ final class Csrf
         return '<input type="hidden" name="' . self::FIELD_NAME . '" value="' . $t . '">';
     }
 
-    /**
-     * True when POST body field or X-CSRF-Token header matches the session token.
-     */
+    
+     // True when POST body field or X-CSRF-Token header matches the session token.
+    
     public static function validateRequest(): bool
     {
         if (session_status() === PHP_SESSION_NONE) {

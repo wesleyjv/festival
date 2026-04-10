@@ -10,6 +10,8 @@ use App\Services\Validator;
 
 class UserController
 {
+    use HandlesControllerErrors;
+
     private const RECAPTCHA_SITE_KEY   = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
     private const RECAPTCHA_SECRET_KEY = '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe';
 
@@ -26,6 +28,7 @@ class UserController
 
     public function register($vars = [])
     {
+        try {
         $errors           = $_SESSION['register_errors'] ?? [];
         $old              = $_SESSION['register_old']    ?? [];
         $recaptchaSiteKey = self::RECAPTCHA_SITE_KEY;
@@ -33,10 +36,15 @@ class UserController
         unset($_SESSION['register_errors'], $_SESSION['register_old']);
 
         require __DIR__ . '/../views/auth/register.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function handleRegister($vars = [])
     {
+        try {
         if (!Csrf::validateRequest()) {
             $_SESSION['register_errors'] = ['Invalid session. Please try again.'];
             header('Location: /register');
@@ -81,6 +89,10 @@ class UserController
         $_SESSION['register_success'] = 'Account created successfully! You can now log in.';
         header('Location: /login');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -89,6 +101,7 @@ class UserController
 
     public function login($vars = [])
     {
+        try {
         $errors  = $_SESSION['login_errors']     ?? [];
         $old     = $_SESSION['login_old']        ?? [];
         $success = $_SESSION['register_success'] ?? '';
@@ -96,10 +109,15 @@ class UserController
         unset($_SESSION['login_errors'], $_SESSION['login_old'], $_SESSION['register_success']);
 
         require __DIR__ . '/../views/auth/login.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function handleLogin($vars = [])
     {
+        try {
         if (!Csrf::validateRequest()) {
             $_SESSION['login_errors'] = ['Invalid session. Please try again.'];
             header('Location: /login');
@@ -147,10 +165,15 @@ class UserController
 
         header('Location: ' . ($user->isAdmin() ? '/admin' : '/'));
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function logout($vars = [])
     {
+        try {
         if (!empty($_SESSION['user_id'])) {
             $this->users->clearRememberToken($_SESSION['user_id']);
         }
@@ -170,6 +193,10 @@ class UserController
 
         header('Location: /');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -178,6 +205,7 @@ class UserController
 
     public function profile($vars = [])
     {
+        try {
         $this->requireAuth();
 
         $user = $this->users->findById((int) $_SESSION['user_id']);
@@ -191,10 +219,15 @@ class UserController
         unset($_SESSION['profile_errors'], $_SESSION['profile_success'], $_SESSION['profile_old']);
 
         require __DIR__ . '/../views/profile/edit.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function handleUpdateProfile($vars = [])
     {
+        try {
         $this->requireAuth();
 
         if (!Csrf::validateRequest()) {
@@ -260,6 +293,10 @@ class UserController
         $_SESSION['profile_success'] = 'Your profile has been updated successfully.';
         header('Location: /profile');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     // -------------------------------------------------------------------------

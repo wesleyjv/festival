@@ -22,17 +22,4 @@ enum PaymentMethod: string
             self::PAYPAL => 'PayPal',
         };
     }
-
-    /**
-     * Return every case as an array of ['value' => …, 'label' => …] maps.
-     *
-     * @return array<int, array{value: string, label: string}>
-     */
-    public static function toViewArray(): array
-    {
-        return array_map(
-            fn (self $case) => ['value' => $case->value, 'label' => $case->label()],
-            self::cases(),
-        );
-    }
 }

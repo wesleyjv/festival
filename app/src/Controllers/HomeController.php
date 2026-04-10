@@ -6,11 +6,18 @@ use App\Services\ContentService;
 
 class HomeController
 {
+    use HandlesControllerErrors;
+
     public function home($vars = [])
     {
-        $contentService = new ContentService();
-        $homepageContent = $contentService->getPageContent('homepage');
+        try {
+            $contentService = new ContentService();
+            $homepageContent = $contentService->getPageContent('homepage');
 
-        require __DIR__ . '/../views/main/homepage.php';
+            require __DIR__ . '/../views/main/homepage.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 }

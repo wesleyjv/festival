@@ -12,6 +12,8 @@ use App\Services\TicketService;
  */
 class TicketScanController
 {
+    use HandlesControllerErrors;
+
     private TicketService $ticketService;
 
     public function __construct(?TicketService $ticketService = null)
@@ -21,6 +23,7 @@ class TicketScanController
 
     public function index($vars = []): void
     {
+        try {
         if (!$this->ensureStaff()) {
             return;
         }
@@ -29,10 +32,15 @@ class TicketScanController
         $mainClass = 'ticket-scan-main';
 
         require __DIR__ . '/../views/employee/ticket-scan.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function scan($vars = []): void
     {
+        try {
         header('Content-Type: application/json; charset=utf-8');
 
         if (!$this->ensureStaffJson()) {
@@ -81,6 +89,10 @@ class TicketScanController
         }
 
         echo json_encode($payload);
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError(true);
+        }
     }
 
     private function ensureStaff(): bool

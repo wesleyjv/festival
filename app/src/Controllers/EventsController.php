@@ -21,6 +21,8 @@ use App\Services\YummyService;
  */
 class EventsController
 {
+    use HandlesControllerErrors;
+
     /**
      * @var EventRepository Repository used to retrieve event data.
      */
@@ -51,10 +53,15 @@ class EventsController
      */
     public function history()
     {
-        $events = $this->eventRepository->getHistoryEvents();
+        try {
+            $events = $this->eventRepository->getHistoryEvents();
 
-        // Render the history overview page. Content is embedded directly in the view.
-        require __DIR__ . '/../views/events/history/overview.php';
+            // Render the history overview page. Content is embedded directly in the view.
+            require __DIR__ . '/../views/events/history/overview.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
 
@@ -66,6 +73,7 @@ class EventsController
      */
     public function jazz($vars = [])
     {
+        try {
         $validDays = ['all', 'thursday', 'friday', 'saturday', 'sunday'];
         $dayFilter = $_GET['day'] ?? 'thursday';
         if (!in_array($dayFilter, $validDays, true)) {
@@ -101,11 +109,16 @@ class EventsController
         $attachHomepageImage($jazzSchedule);
 
         require __DIR__ . '/../views/events/jazz/overview.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
 
     public function jazzDetail($vars = [])
     {
+        try {
         $id = (int) ($vars['id'] ?? 0);
         $artist = $this->eventRepository->getJazzEventById($id);
 
@@ -122,6 +135,10 @@ class EventsController
         $jazzCartTicket = $jazzCartTickets[0] ?? null;
 
         require __DIR__ . '/../views/events/jazz/detail.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     /**
