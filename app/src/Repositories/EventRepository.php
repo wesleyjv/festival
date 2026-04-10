@@ -188,7 +188,7 @@ class EventRepository
 
         $db->beginTransaction();
         try {
-            $eventId = $this->insertEventsJazzRow($db, $artist, $description);
+            $eventId = $this->insertEventsListingRow($db, $artist, $description, 'jazz', '/events/jazz', true);
 
             $insJazz = $db->prepare(
                 'INSERT INTO jazz_events (
@@ -474,10 +474,122 @@ class EventRepository
     }
 
     /**
-     * Insert a jazz event row using only columns that exist (supports name vs title, optional homepage fields).
+     * Insert a parent `events` row for a history walking tour (links to `history_events`).
      */
-    private function insertEventsJazzRow(\PDO $db, string $artist, string $description): int
+    public function insertHistoryListingEvent(\PDO $db, string $title, string $description): int
     {
+        return $this->insertEventsListingRow($db, $title, $description, 'history', '/events/history', false);
+    }
+
+    /**
+     * Update listing title/description on `events` for a typed festival event.
+     */
+    public function updateListingEventTitleDescription(
+        \PDO $db,
+        int $eventId,
+        string $title,
+        string $description
+    ): void {
+        $cols = $this->getEventsTableColumns($db);
+        $titleCol = in_array('name', $cols, true)
+            ? 'name'
+            : (in_array('title', $cols, true) ? 'title' : null);
+        if ($titleCol === null) {
+            return;
+        }
+
+        $sets = ['`' . str_replace('`', '', $titleCol) . '` = :t'];
+        $params = ['t' => $title, 'id' => $eventId];
+        if (in_array('description', $cols, true)) {
+            $sets[] = 'description = :d';
+            $params['d'] = $description;
+        }
+
+        $sql = 'UPDATE events SET ' . implode(', ', $sets) . ' WHERE id = :id';
+        $db->prepare($sql)->execute($params);
+    }
+
+    /**
+     * Persist editable jazz schedule fields from the admin Events tab.
+     *
+     * @param array<string, string> $input
+     */
+    public function updateJazzArtist(int $eventId, array $input): void
+    {
+        if ($eventId <= 0) {
+            throw new \InvalidArgumentException('Invalid artist id.');
+        }
+
+        $artist = trim($input['artist'] ?? '');
+        $description = trim($input['description'] ?? '');
+        if ($artist === '' || $description === '') {
+            throw new \InvalidArgumentException('Artist name and description are required.');
+        }
+
+        $style = trim($input['style'] ?? '');
+        $location = trim($input['location'] ?? '');
+        $location = $location !== '' ? $location : null;
+
+        $startTime = $this->parseOptionalDateTime($input['start_time'] ?? null);
+        $endTime = $this->parseOptionalDateTime($input['end_time'] ?? null);
+
+        $price = null;
+        if (isset($input['price']) && $input['price'] !== '' && is_numeric($input['price'])) {
+            $price = (float) $input['price'];
+        }
+        $seats = null;
+        if (isset($input['seats']) && $input['seats'] !== '' && is_numeric($input['seats'])) {
+            $seats = (int) $input['seats'];
+        }
+
+        $db = DB::getConnection();
+        $chk = $db->prepare(
+            'SELECT 1 FROM jazz_events je INNER JOIN events e ON e.id = je.event_id
+             WHERE je.event_id = :id AND e.type = \'jazz\' LIMIT 1'
+        );
+        $chk->execute(['id' => $eventId]);
+        if (!$chk->fetchColumn()) {
+            throw new \RuntimeException('Jazz artist not found.');
+        }
+
+        $db->beginTransaction();
+        try {
+            $this->updateListingEventTitleDescription($db, $eventId, $artist, $description);
+
+            $db->prepare(
+                'UPDATE jazz_events SET artist = :a, style = :st, description = :d, location = :l,
+                 start_time = :s1, end_time = :s2, price = :p, seats = :se
+                 WHERE event_id = :id'
+            )->execute([
+                'a' => $artist,
+                'st' => $style,
+                'd' => $description,
+                'l' => $location,
+                's1' => $startTime,
+                's2' => $endTime,
+                'p' => $price,
+                'se' => $seats,
+                'id' => $eventId,
+            ]);
+
+            $db->commit();
+        } catch (\Throwable $e) {
+            $db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Insert an `events` listing row (supports name vs title column). Optionally rewrite link with new id (jazz detail URLs).
+     */
+    private function insertEventsListingRow(
+        \PDO $db,
+        string $title,
+        string $description,
+        string $type,
+        string $link,
+        bool $permalLinkWithId
+    ): int {
         $cols = $this->getEventsTableColumns($db);
 
         $titleCol = in_array('name', $cols, true)
@@ -500,12 +612,14 @@ class EventRepository
             $params[$column] = $value;
         };
 
-        $add($titleCol, $artist);
+        $image = $type === 'history' ? '/img/history-tour.jpg' : '/img/jazz-festival.jpg';
+
+        $add($titleCol, $title);
         $add('description', $description);
-        $add('image', '/img/jazz-festival.jpg');
-        $add('alt_text', $artist);
-        $add('type', 'jazz');
-        $add('link', '/events/jazz');
+        $add('image', $image);
+        $add('alt_text', $title);
+        $add('type', $type);
+        $add('link', $link);
         $add('image_position', 'left');
         $add('sort_order', 0);
         $add('is_active', 1);
@@ -519,7 +633,7 @@ class EventRepository
         $stmt->execute($params);
         $eventId = (int) $db->lastInsertId();
 
-        if (in_array('link', $cols, true)) {
+        if ($permalLinkWithId && in_array('link', $cols, true)) {
             $upd = $db->prepare('UPDATE events SET link = :link WHERE id = :id');
             $upd->execute([
                 'link' => '/events/jazz/' . $eventId,
@@ -547,7 +661,7 @@ class EventRepository
         return date('Y-m-d H:i:s', $ts);
     }
 
-    private function tableExists(\PDO $db, string $name): bool
+    public function tableExists(\PDO $db, string $name): bool
     {
         try {
             $stmt = $db->prepare(
