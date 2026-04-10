@@ -16,6 +16,7 @@ class OrderController
 {
     use HandlesControllerErrors;
 
+    // Service responsible for order, payment, and document operations.
     private OrderService $orderService;
 
     public function __construct(OrderService $orderService) {
@@ -25,6 +26,7 @@ class OrderController
     public function orders(): void
     {
         try {
+        // Ensure session exists and require login to view order history.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -44,6 +46,7 @@ class OrderController
     public function checkout(): void
     {
         try {
+        // Load current cart and render checkout page.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
@@ -70,6 +73,7 @@ class OrderController
     public function placeOrder(): void
     {
         try {
+        // Validate request and start Stripe checkout flow.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (!$this->validateRequest()) {
@@ -82,6 +86,7 @@ class OrderController
         $baseUrl = $protocol . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
         try {
+            // Create Stripe session and redirect customer to hosted payment page.
             $url = $this->orderService->initiateStripeSession($cart, $baseUrl, (int) $_SESSION['user_id']);
             header('Location: ' . $url);
             exit;
@@ -99,6 +104,7 @@ class OrderController
     public function completeCheckout(): void
     {
         try {
+        // Verify Stripe result, create order, clear cart, and send documents.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -135,6 +141,7 @@ class OrderController
     public function confirmation(): void
     {
         try {
+        // Render confirmation page using last completed order details.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $orderNumber = $_SESSION['last_order_number'] ?? null;
@@ -160,6 +167,7 @@ class OrderController
     public function emailTickets(array $vars): void
     {
         try {
+        // Re-send ticket and invoice for a user-owned order.
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -187,6 +195,7 @@ class OrderController
 
     private function validateRequest(): bool
     {
+        // Shared request guards for checkout actions.
         if (!Csrf::validateRequest()) {
             $_SESSION['checkout_error'] = 'Invalid session.';
             return false;
