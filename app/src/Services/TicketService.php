@@ -64,6 +64,29 @@ class TicketService
     }
 
     /**
+     * First ticket id per event (same ordering as {@see TicketRepository::getByEventId}: name ASC).
+     *
+     * @param array<int,int|string> $eventIds
+     * @return array<int,int> event_id => ticket id
+     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        $map = [];
+        foreach ($eventIds as $eventId) {
+            $id = (int) $eventId;
+            if ($id <= 0) {
+                continue;
+            }
+            $tickets = $this->ticketRepository->getByEventId($id);
+            if ($tickets !== []) {
+                $map[$id] = (int) $tickets[0]->id;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * Ensure every story event has at least one ticket row so cart / checkout work.
      *
      * @param array<int,array<string,mixed>> $storyEvents

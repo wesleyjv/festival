@@ -42,7 +42,7 @@ require __DIR__ . '/../partials/header.php';
     inset: 0;
     background:
         linear-gradient(180deg, rgba(21, 37, 53, 0.45) 0%, rgba(21, 37, 53, 0.75) 100%),
-        url('https://images.unsplash.com/photo-1512470876142-10542d935885?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+        url('/img/hero-homepage-haarlem.png') center/cover no-repeat;
 }
 .hp-hero__inner {
     position: relative;
@@ -216,6 +216,7 @@ require __DIR__ . '/../partials/header.php';
     height: 100%;
     min-height: 420px;
     object-fit: cover;
+    object-position: left center;
     display: block;
 }
 .hp-label {
@@ -423,6 +424,9 @@ require __DIR__ . '/../partials/header.php';
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+.hp-ecard__media--jazz-promo img {
+    object-position: center bottom;
 }
 .hp-ecard__tag {
     position: absolute;
@@ -727,7 +731,7 @@ require __DIR__ . '/../partials/header.php';
 <section class="hp-about" id="about">
     <div class="hp-about__grid">
         <div class="hp-about__img">
-            <img src="https://images.unsplash.com/photo-1582810618747-30fe107a72aa?auto=format&fit=crop&w=900&q=80" alt="Haarlem cityscape at dusk" loading="lazy" width="600" height="800">
+            <img src="/img/about-haarlem-windmill-sunset.png" alt="De Adriaan windmill and the Spaarne at sunset, Haarlem" loading="lazy" width="1024" height="685">
         </div>
         <div class="hp-about__copy">
             <p class="hp-label">About the Festival</p>
@@ -797,8 +801,8 @@ require __DIR__ . '/../partials/header.php';
     </div>
     <div class="hp-event-grid">
         <article class="hp-ecard">
-            <div class="hp-ecard__media">
-                <img src="https://images.unsplash.com/photo-1415201364774-f6f0a35c87b9?auto=format&fit=crop&w=800&q=80" alt="Jazz performance" loading="lazy" width="600" height="400">
+            <div class="hp-ecard__media hp-ecard__media--jazz-promo">
+                <img src="/img/event-jazz-homepage.png" alt="Haarlem Jazz &amp; more — live outdoor performance at night" loading="lazy" width="1024" height="576">
                 <span class="hp-ecard__tag hp-ecard__tag--jazz">Jazz</span>
             </div>
             <div class="hp-ecard__body">
