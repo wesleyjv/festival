@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Config\FestivalEventConfig;
 use App\Enums\CuisineType;
 use App\Models\YummyEvent;
 use App\Repositories\Interfaces\IYummyRepository;
@@ -10,8 +11,6 @@ use App\ViewModels\YummyOverviewViewModel;
 
 class YummyService implements IYummyService
 {
-	private const YUMMY_EVENT_ID = 97;
-
 	public function __construct(
 		private readonly IYummyRepository $yummyRepository,
 		private readonly ContentService $contentService
@@ -25,8 +24,9 @@ class YummyService implements IYummyService
 		}
 
 		$content = $this->contentService->getPageContent('yummy');
-		$restaurants = $this->yummyRepository->getAll(self::YUMMY_EVENT_ID, $selectedCuisine);
-		$cuisines = $this->yummyRepository->getAvailableCuisines(self::YUMMY_EVENT_ID);
+		$eid = FestivalEventConfig::yummyEventId();
+		$restaurants = $this->yummyRepository->getAll($eid, $selectedCuisine);
+		$cuisines = $this->yummyRepository->getAvailableCuisines($eid);
 
 		return new YummyOverviewViewModel(
 			content: $content,
@@ -38,6 +38,6 @@ class YummyService implements IYummyService
 
 	public function getRestaurantBySlug(string $slug): ?YummyEvent
 	{
-		return $this->yummyRepository->getBySlug(self::YUMMY_EVENT_ID, $slug);
+		return $this->yummyRepository->getBySlug(FestivalEventConfig::yummyEventId(), $slug);
 	}
 }

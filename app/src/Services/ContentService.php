@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Config\CmsPageDefinitions;
 use App\Repositories\JazzContentRepository;
 
 /**
@@ -107,46 +108,12 @@ final class ContentService
             return $this->defaultJazzArtist();
         }
 
-        switch ($page) {
-            case 'homepage':
-                return [
-                    'hero_title' => "Welcome to<br>The Haarlem Festival",
-                    'hero_subtitle' => 'Discover the best of food, music, stories, and history in the heart of Haarlem.',
-                    'cta_heading' => 'Ready to experience Haarlem?',
-                    'cta_text' => 'Secure your spot before events sell out.',
-                ];
-
-            case 'stories':
-                return [
-                    'hero_title' => 'The Art of <span class="highlight">Storytelling</span>',
-                    'hero_description' => 'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.',
-                    'info_paragraph' => 'All storytelling events are suitable for ages 12 and above unless specifically marked as children\'s events. Tickets can be purchased online or at the venue 30 minutes before each performance. In case of rain, outdoor events will be moved to covered locations nearby.',
-                    'hero_image' => '/img/storytelling-hero.jpg',
-                    'featured_image' => '/img/featured-storyteller.jpg',
-                ];
-
-            case 'yummy':
-                return [
-                    'hero_date' => 'JULY 23-26, 2026',
-                    'hero_title' => 'YUMMY! GOURMET WITH A TWIST',
-                    'hero_subtitle' => 'A curated culinary experience featuring seven restaurants, exclusive festival-only menus.',
-                    'explore_heading' => 'Explore Restaurants',
-                    'explore_text' => 'Taste the finest culinary experiences in Haarlem.',
-                    // Keep legacy keys so older templates remain functional during migration.
-                    'intro_heading' => 'Yummy Events',
-                    'intro_text' => 'Taste the finest culinary experiences in Haarlem.',
-                    'hero_image' => '/assets/yummy/image/yummy-hero.jpg',
-                ];
-
-            case 'history':
-                return [
-                    'hero_title' => 'Historic Haarlem',
-                    'hero_description' => 'Walk through centuries of rich history with expert guides. Explore Haarlem\'s most iconic landmarks and hidden gems.',
-                ];
-
-            default:
-                return [];
+        $fromRegistry = CmsPageDefinitions::defaultStringsForPage($page);
+        if ($fromRegistry !== []) {
+            return $fromRegistry;
         }
+
+        return [];
     }
 
     /**

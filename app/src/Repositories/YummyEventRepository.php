@@ -9,8 +9,6 @@ use PDO;
 
 class YummyEventRepository implements IYummyRepository
 {
-	private const YUMMY_EVENT_ID = 97;
-
 	private PDO $connection;
 
 	public function __construct()
