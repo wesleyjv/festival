@@ -43,6 +43,7 @@ class EventsController
     {
         try {
             $events = $this->eventRepository->getHistoryEvents();
+            $historyContent = $this->contentService->getPageContent('history');
             require __DIR__ . '/../views/events/history/overview.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);

@@ -5,16 +5,6 @@ namespace App\Repositories;
 use App\DB;
 use App\Models\Ticket;
 
-/**
- * TicketRepository – data-access layer for the `tickets` table.
- *
- * This class is responsible for all direct database interactions related to
- * tickets. It uses PDO prepared statements to prevent SQL injection and
- * converts raw database rows into Ticket model objects via `mapRowToTicket()`.
- *
- * The repository is consumed by TicketService; controllers should never
- * call repository methods directly.
- */
 class TicketRepository
 {
 
@@ -45,9 +35,26 @@ class TicketRepository
         return $this->mapRowToTicket($row);
     }
 
-    /**
-     * Look up a ticket by its unique ticket_code (case-insensitive).
-     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        if (empty($eventIds)) {
+            return [];
+        }
+
+        $db = DB::getConnection();
+        // Simple strategy: Group by event_id and pick the MIN(id)
+        $placeholders = implode(',', array_fill(0, count($eventIds), '?'));
+        $stmt = $db->prepare("SELECT event_id, MIN(id) as ticket_id FROM tickets WHERE event_id IN ($placeholders) GROUP BY event_id");
+        $stmt->execute(array_values($eventIds));
+
+        $results = [];
+        foreach ($stmt as $row) {
+            $results[(int)$row['event_id']] = (int)$row['ticket_id'];
+        }
+
+        return $results;
+    }
+
     public function findByTicketCode(string $ticketCode): ?Ticket
     {
         $ticketCode = trim($ticketCode);
@@ -67,11 +74,6 @@ class TicketRepository
         return $this->mapRowToTicket($row);
     }
 
-    /**
-     * Set is_scanned and scanned_at when the ticket was not yet scanned.
-     *
-     * @return int Number of rows updated (1 on first scan, 0 if already scanned or missing)
-     */
     public function markScannedIfNotYet(int $id): int
     {
         if ($id <= 0) {
@@ -87,15 +89,50 @@ class TicketRepository
         return $stmt->rowCount();
     }
 
-    /**
-     * Convert an associative database row into a Ticket model.
-     *
-     * Handles type-casting (int, float, bool) and nullable columns so that
-     * the rest of the application can work with strongly-typed properties.
-     *
-     * @param  array  $row  An associative array fetched from the `tickets` table.
-     * @return Ticket       A fully populated Ticket model instance.
-     */
+    public function insertTicketForEvent(int $eventId, string $name, float $price): int
+    {
+        $db = DB::getConnection();
+        $stmt = $db->prepare(
+            "INSERT INTO tickets (event_id, name, price, ticket_code, is_scanned)
+             VALUES (:event_id, :name, :price, :ticket_code, 0)"
+        );
+        $ticketCode = 'TMP-' . strtoupper(bin2hex(random_bytes(4)));
+        $stmt->execute([
+            'event_id' => $eventId,
+            'name' => $name,
+            'price' => $price,
+            'ticket_code' => $ticketCode
+        ]);
+
+        return (int)$db->lastInsertId();
+    }
+
+    public function countSoldHistoryTickets(string $date, string $time): int
+    {
+        // Calculate the total number of spots taken in a specific tour slot
+        $db = DB::getConnection();
+        // Admission tickets count as 1, Family tickets count as 4 (as they cover up to 4 persons)
+        // Only count tickets from paid or pending orders.
+        $stmt = $db->prepare(
+            "SELECT t.name, oi.quantity 
+             FROM tickets t
+             JOIN order_items oi ON t.id = oi.session_id
+             JOIN orders o ON t.order_id = o.id
+             WHERE t.event_date = :date 
+               AND t.event_time = :time
+               AND o.status IN ('paid', 'pending', 'confirmed')"
+        );
+        $stmt->execute(['date' => $date, 'time' => $time]);
+        
+        $total = 0;
+        while ($row = $stmt->fetch()) {
+            $multiplier = (str_contains((string)$row['name'], 'Family')) ? 4 : 1;
+            $total += ($row['quantity'] * $multiplier);
+        }
+        
+        return $total;
+    }
+
     private function mapRowToTicket(array $row): Ticket
     {
         $ticket = new Ticket();
@@ -104,6 +141,9 @@ class TicketRepository
         $ticket->eventId = (int)$row['event_id'];
         $ticket->userId = isset($row['user_id']) ? (int)$row['user_id'] : null;
         $ticket->name = $row['name'];
+        $ticket->eventDate = $row['event_date'] ?? null;
+        $ticket->eventTime = $row['event_time'] ?? null;
+        $ticket->eventLanguage = $row['event_language'] ?? null;
         $ticket->price = (float)$row['price'];
         $ticket->ticketCode = $row['ticket_code'];
         $ticket->qrCodePath = $row['qr_code_path'] ?? null;

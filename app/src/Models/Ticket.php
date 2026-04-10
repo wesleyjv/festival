@@ -26,6 +26,10 @@ class Ticket
     /** @var string Display name / type of the ticket (e.g. "Early Bird", "VIP"). */
     public string $name;
 
+    public ?string $eventDate = null;
+    public ?string $eventTime = null;
+    public ?string $eventLanguage = null;
+
     /** @var float Price of the ticket in euros. */
     public float $price;
 

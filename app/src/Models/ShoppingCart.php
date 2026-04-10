@@ -27,6 +27,7 @@ class ShoppingCart
      */
     public function addItem(Ticket $ticket, int $qty): void
     {
+        // Add a new item to the cart or increase quantity if it exists
         $item = new CartItem();
         $item->ticket = $ticket;
         $item->quantity = $qty;
@@ -74,6 +75,7 @@ class ShoppingCart
      */
     public function getTotal(): float
     {
+        // Iterate through all items to calculate the grand total
         $total = 0.0;
         foreach ($this->items as $item) {
             $total += $item->price * $item->quantity;

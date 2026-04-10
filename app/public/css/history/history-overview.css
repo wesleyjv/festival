@@ -1,0 +1,322 @@
+/* Font imports for a premium, historical feel */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,800;1,600&family=Inter:wght@400;500;600&display=swap');
+
+/* Typography Overrides */
+.history-title, .milestones-title, .serif-heading { 
+    font-family: 'Playfair Display', serif; 
+}
+.sans-text {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Hero Section */
+.history-hero {
+    background: linear-gradient(to right, rgba(20, 15, 10, 0.55) 0%, rgba(20, 15, 10, 0.3) 100%), 
+                url('/assets/history/images/hero.png');
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    padding: 140px 0 80px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+}
+.history-title { 
+    font-family: 'Inter', sans-serif;
+    font-size: 7rem; 
+    font-weight: 900; 
+    line-height: 0.9; 
+    letter-spacing: -2px; 
+    color: #ffffff;
+    text-transform: uppercase;
+}
+.history-sub { 
+    font-size: 1.4rem; 
+    font-weight: 800; 
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.hero-info-box {
+    display: inline-block;
+    background: rgba(30, 25, 20, 0.75);
+    backdrop-filter: blur(6px);
+    border-radius: 12px;
+    padding: 18px 24px;
+    margin-top: 20px;
+}
+.hero-info-box .tour-desc {
+    font-size: 1.05rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+.hero-info-box .badge-row {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    color: #fff;
+    font-size: 0.95rem;
+}
+.hero-info-box .badge-row i {
+    color: #e0a42a;
+    margin-right: 4px;
+}
+.hero-learn-more {
+    display: inline-block;
+    margin-top: 24px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #e0a42a;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-decoration: none;
+}
+.hero-learn-more:hover {
+    color: #f3b93a;
+}
+.accent-line {
+    width: 60px;
+    height: 4px;
+    background: #e0a42a;
+    margin: 24px 0;
+    border-radius: 2px;
+}
+
+/* =============================================
+   EDITORIAL ALTERNATING SECTIONS (screenshot)
+   ============================================= */
+.editorial-section {
+    padding: 60px 0 20px;
+}
+
+/* Image wrapper with decorative corner brackets */
+.editorial-img-wrap {
+    position: relative;
+    padding: 18px;
+}
+.editorial-img-wrap.editorial-img-left {
+    padding-right: 32px;
+}
+.editorial-img-wrap.editorial-img-right {
+    padding-left: 32px;
+}
+.editorial-img {
+    width: 100%;
+    height: 420px;
+    object-fit: cover;
+    display: block;
+    border: 2px solid #c9a84c;
+}
+
+/* Gold corner bracket decorations */
+.editorial-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: #c9a84c;
+    border-radius: 2px;
+    z-index: 2;
+}
+.editorial-corner-tl {
+    top: 6px;
+    left: 6px;
+}
+.editorial-corner-br {
+    bottom: 6px;
+    right: 6px;
+}
+
+/* Small expand icon top-left of image area */
+.editorial-img-wrap::before {
+    content: '⤢';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    font-size: 1.1rem;
+    color: #8a7a60;
+    z-index: 3;
+    line-height: 1;
+}
+
+/* Decorative line + lock icon top-right */
+.editorial-img-wrap::after {
+    content: '🔒';
+    position: absolute;
+    top: -6px;
+    right: 20px;
+    font-size: 0.85rem;
+    color: #8a7a60;
+    z-index: 3;
+}
+
+/* Text area */
+.editorial-text {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+.editorial-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #1a1209;
+    margin-bottom: 20px;
+    line-height: 1.15;
+}
+
+.editorial-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.97rem;
+    line-height: 1.75;
+    color: #4a3f32;
+    margin-bottom: 16px;
+}
+
+/* Diamond divider between sections */
+.editorial-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 8px;
+    padding: 0 0;
+}
+.editorial-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #c9a84c;
+    opacity: 0.5;
+}
+.editorial-divider-diamond {
+    color: #c9a84c;
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+/* =============================================
+   MILESTONES SECTION
+   ============================================= */
+.milestones-header { 
+    text-align: center; 
+    margin: 80px 0 48px; 
+}
+.milestones-title { 
+    font-size: 2.8rem; 
+    color: #a86f19; 
+}
+.btn-milestone { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    padding: 20px 24px; 
+    margin-bottom: 12px; 
+    border-radius: 12px; 
+    background: #2b2016; 
+    color: #f3d58a; 
+    border: 1px solid rgba(243, 213, 138, 0.1); 
+    transition: all 0.3s ease;
+}
+.btn-milestone:hover {
+    transform: translateX(8px);
+    background: #3d2e20;
+    border-color: rgba(243, 213, 138, 0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+.btn-milestone .label { 
+    display: flex; 
+    gap: 16px; 
+    align-items: center; 
+    font-size: 1.1rem;
+}
+.btn-milestone .badge {
+    background: #e0a42a !important;
+    color: #1b120b;
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Map Frame */
+.map-sticky-container {
+    position: sticky;
+    top: 24px;
+}
+.map-frame { 
+    border-radius: 16px; 
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1); 
+    overflow: hidden; 
+    border: 4px solid #f3e2c8; 
+    background: #f3e2c8;
+}
+
+/* Practical Info */
+.practical-dark { 
+    background: #15110d; 
+    color: #f3d58a; 
+    padding: 80px 0; 
+    margin-top: 40px;
+}
+.practical-card { 
+    background: rgba(255, 255, 255, 0.04); 
+    border: 1px solid rgba(243, 213, 138, 0.08); 
+    border-radius: 16px; 
+    padding: 32px 24px; 
+    height: 100%;
+    transition: transform 0.3s ease, background 0.3s ease;
+}
+.practical-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.07);
+}
+.practical-card h6 {
+    font-size: 1.1rem;
+    color: #e0a42a;
+    margin-bottom: 16px;
+}
+.practical-card ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+.practical-card ul li {
+    padding-left: 24px;
+    position: relative;
+    margin-bottom: 8px;
+}
+.practical-card ul li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #e0a42a;
+}
+
+/* Starting Point Box */
+.starting-point { 
+    background: linear-gradient(135deg, #e0a42a 0%, #b88319 100%); 
+    color: #1b120b; 
+    padding: 40px; 
+    border-radius: 16px; 
+    text-align: center; 
+    box-shadow: 0 10px 30px rgba(224, 164, 42, 0.2);
+}
+.starting-point h5 {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+.starting-point .btn-dark {
+    background: #1b120b;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+.starting-point .btn-dark:hover {
+    background: #2b1f14;
+}
+
+/* Page background */
+body {
+    background-color: #faf5ed;
+}

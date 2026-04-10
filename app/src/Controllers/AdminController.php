@@ -16,15 +16,21 @@ use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyRestaurantAdminRepository;
 use App\Services\AdminYummyService;
 
+use App\Services\OrderService;
+use App\Repositories\OrderRepository;
+
 class AdminController
 {
     use HandlesControllerErrors;
 
     private UserRepository $userRepo;
+    private OrderService $orderService;
 
-    public function __construct()
+    public function __construct(OrderService $orderService = null)
     {
         $this->userRepo = new UserRepository();
+        // Fallback for parts of the app that might not use the DI container yet
+        $this->orderService = $orderService ?? new OrderService(new OrderRepository());
     }
 
    
@@ -56,6 +62,10 @@ class AdminController
         $userDir    = $_GET['dir']    ?? 'ASC';
         $users      = $this->userRepo->getAllUsers($userSearch, $userRole, $userSort, $userDir);
         $totalUsers = $this->userRepo->countAll();
+        
+        $orders      = $this->orderService->getAllOrders();
+        $totalOrders = $this->orderService->getTotalOrdersCount();
+
         $userError  = $_GET['user_error'] ?? '';
         $userSaved  = $_GET['user_saved'] ?? '';
         $jazzArtistError   = isset($_GET['jazz_error']) ? (string) $_GET['jazz_error'] : '';

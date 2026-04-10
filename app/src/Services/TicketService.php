@@ -43,6 +43,17 @@ class TicketService
     }
 
     /**
+     * Get the first ticket ID for each given event ID.
+     *
+     * @param int[] $eventIds
+     * @return array<int,int> event_id => ticket_id
+     */
+    public function getFirstTicketIdByEventIds(array $eventIds): array
+    {
+        return $this->ticketRepository->getFirstTicketIdByEventIds($eventIds);
+    }
+
+    /**
      * Ensure every jazz event has at least one ticket row so cart / checkout work.
      *
      * @param JazzEvent[] $jazzEvents

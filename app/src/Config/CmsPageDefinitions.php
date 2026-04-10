@@ -61,8 +61,13 @@ final class CmsPageDefinitions
                 'label' => 'History',
                 'storage' => 'json',
                 'fields' => [
-                    ['name' => 'hero_title', 'label' => 'Hero title', 'type' => 'wysiwyg', 'rows' => 2],
-                    ['name' => 'hero_description', 'label' => 'Hero description', 'type' => 'wysiwyg', 'rows' => 3],
+                    ['name' => 'hero_title', 'label' => 'Hero title (supports HTML)', 'type' => 'wysiwyg', 'rows' => 2],
+                    ['name' => 'hero_subtitle', 'label' => 'Hero subtitle', 'type' => 'text'],
+                    ['name' => 'hero_description', 'label' => 'Tour description (hero box)', 'type' => 'wysiwyg', 'rows' => 2],
+                    ['name' => 'editorial_1_title', 'label' => 'Editorial section 1 — title', 'type' => 'text'],
+                    ['name' => 'editorial_1_text', 'label' => 'Editorial section 1 — text (HTML)', 'type' => 'wysiwyg', 'rows' => 4],
+                    ['name' => 'editorial_2_title', 'label' => 'Editorial section 2 — title', 'type' => 'text'],
+                    ['name' => 'editorial_2_text', 'label' => 'Editorial section 2 — text (HTML)', 'type' => 'wysiwyg', 'rows' => 4],
                 ],
             ],
             'jazz' => [
@@ -111,8 +116,13 @@ final class CmsPageDefinitions
                 'hero_image' => '/assets/yummy/image/yummy-hero.jpg',
             ],
             'history' => [
-                'hero_title' => 'Historic Haarlem',
-                'hero_description' => 'Walk through centuries of rich history with expert guides. Explore Haarlem\'s most iconic landmarks and hidden gems.',
+                'hero_title' => 'Haarlem<br>History',
+                'hero_subtitle' => 'Walking Tour & Highlights',
+                'hero_description' => 'Guided tours from Thursday till Sunday',
+                'editorial_1_title' => 'Haarlems History',
+                'editorial_1_text' => 'Haarlem is one of the oldest cities in the Netherlands, with a recorded history dating back over 800 years. It received city rights in 1245 and quickly developed into an important medieval trading and cultural center. During the Dutch Golden Age, Haarlem flourished as a hub for art, printing, and industry, attracting renowned painters such as Frans Hals and playing a key role in the development of Dutch culture.<br><br>The city\'s historic center still reflects this rich past. Medieval churches like the Grote Kerk dominate the skyline, while narrow streets and hidden hofjes recall daily life in earlier centuries. Haarlem was also one of the first Dutch cities to embrace innovation, from early industrial mills to the country\'s first museum, Teylers Museum, founded in 1778. Together, these layers of history make Haarlem a living record of Dutch heritage.',
+                'editorial_2_title' => 'Trade, Canals, and Daily Life',
+                'editorial_2_text' => 'Haarlem\'s growth was shaped not only by major historical events, but also by everyday life along its canals and streets. During the medieval period and the centuries that followed, the city developed into an important center of trade and craftsmanship. Industries such as brewing, textiles, and shipping played a central role in the local economy, attracting workers, merchants, and artisans from across the region.<br><br>The canals functioned as vital transport routes, allowing goods to move efficiently through the city while shaping its urban layout. Homes, warehouses, and workshops were built close to the water, forming compact neighborhoods where commerce and daily life were closely connected. Many of these historic structures still line Haarlem\'s waterways today, offering a visible reminder of how trade, community, and design together defined the city\'s character.',
             ],
         ];
 
