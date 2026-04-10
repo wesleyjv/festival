@@ -12,6 +12,7 @@ class CartController
 {
     use HandlesControllerErrors;
 
+    // Handles all cart read/write operations.
     private CartService $cartService;
 
     public function __construct(?CartService $cartService = null)
@@ -22,9 +23,12 @@ class CartController
     public function add(): void
     {
         try {
+            // Ensure session exists because cart state is stored in session.
             $this->ensureSession();
+            // Decide whether to return JSON (AJAX) or regular redirects.
             $wantsJson = $this->isAjaxRequest();
 
+            // Enforce POST + CSRF before changing cart state.
             $this->validateRequest($wantsJson);
 
             $ticketIdRaw = $_POST['ticket_id'] ?? null;
@@ -33,13 +37,17 @@ class CartController
 
             $added = false;
             if ($ticketIdRaw !== null && $ticketIdRaw !== '' && (int) $ticketIdRaw > 0) {
+                // Standard ticket flow (ticket_id based).
                 $added = $this->addStandardTicket((int) $ticketIdRaw, $quantity, $wantsJson);
             } elseif ($hasHistorySlot) {
+                // History ticket flow (date/time based).
                 $added = $this->addHistoryTicket($quantity, $wantsJson);
             } else {
+                // Fallback flow for ad-hoc priced tickets.
                 $added = $this->cartService->addAdHocPricedTicket($_POST, $quantity);
             }
 
+            // Return JSON or redirect based on request type.
             $this->finalizeResponse($added, $wantsJson);
         } catch (\Throwable $e) {
             $this->handleException($e);
@@ -48,6 +56,7 @@ class CartController
 
     private function ensureSession(): void
     {
+        // Start session once so we can read/write cart and flash messages.
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -60,6 +69,7 @@ class CartController
 
     private function validateRequest(bool $wantsJson): void
     {
+        // Add-to-cart must be POST.
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             if ($wantsJson) {
                 $this->jsonCartAddResponse(false, 'Invalid request.');
@@ -68,6 +78,7 @@ class CartController
             exit;
         }
 
+        // CSRF token must be valid for state-changing requests.
         if (!Csrf::validateRequest()) {
             if ($wantsJson) {
                 $this->jsonCartAddResponse(false, 'Invalid session. Please refresh the page and try again.');
@@ -79,6 +90,7 @@ class CartController
 
     private function addStandardTicket(int $ticketId, int $quantity, bool $wantsJson): bool
     {
+        // Add an existing ticket product by ID.
         $added = $this->cartService->addStandardTicket($ticketId, $quantity);
         if (!$added && $wantsJson) {
             $this->jsonCartAddResponse(false, 'That ticket could not be found.');
@@ -88,6 +100,7 @@ class CartController
 
     private function addHistoryTicket(int $quantity, bool $wantsJson): bool
     {
+        // Add a history ticket using posted date/time slot data.
         $added = $this->cartService->addHistoryTicket($_POST, $quantity);
         if (!$added) {
             if ($wantsJson) {
@@ -102,6 +115,7 @@ class CartController
 
     private function finalizeResponse(bool $added, bool $wantsJson): void
     {
+        // AJAX callers get a JSON response and end here.
         if ($wantsJson) {
             if ($added) {
                 $this->jsonCartAddResponse(true, 'Added to your cart.');
@@ -110,6 +124,7 @@ class CartController
         }
 
         $redirect = $_POST['redirect'] ?? null;
+        // Optional shortcut: go directly to checkout after successful add.
         if ($added && $redirect === 'checkout') {
             header('Location: /checkout');
             exit;
@@ -121,6 +136,7 @@ class CartController
 
     private function handleException(\Throwable $e): void
     {
+        // Log all unexpected errors and return appropriate response format.
         $this->logControllerThrowable($e);
         if ($this->isAjaxRequest()) {
             $this->respondWithServerError(true, ['ok' => false, 'message' => 'Something went wrong.']);
@@ -129,7 +145,7 @@ class CartController
     }
 
     /**
-     * JSON body for AJAX add-to-cart (see footer.js-cart-add-form handler).
+     * JSON body for AJAX add-to-cart.
      */
     private function jsonCartAddResponse(bool $ok, string $message): void
     {
@@ -141,6 +157,7 @@ class CartController
     public function remove(): void
     {
         try {
+            // Removing items changes state, so we need session + CSRF validation.
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
@@ -153,6 +170,7 @@ class CartController
 
                 $index = $_POST['item_index'] ?? null;
                 if ($index !== null) {
+                    // Remove item by its index in cart items array.
                     $this->cartService->removeItem((int) $index);
                 }
             }
@@ -168,6 +186,7 @@ class CartController
     public function index(): void
     {
         try {
+            // Read current cart and render cart page.
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
             }
