@@ -238,27 +238,4 @@ class TicketService
             'ticket' => $ticket,
         ];
     }
-
-    /**
-     * Get the first ticket ID for a list of event IDs.
-     *
-     * @param int[] $eventIds
-     * @return array<int,int> event_id => ticket_id
-     */
-    public function getFirstTicketIdByEventIds(array $eventIds): array
-    {
-        $map = [];
-        foreach ($eventIds as $eventId) {
-            $eventId = (int) $eventId;
-            if ($eventId <= 0) {
-                continue;
-            }
-            $tickets = $this->getTicketsByEventId($eventId);
-            if ($tickets !== []) {
-                $map[$eventId] = (int) $tickets[0]->id;
-            }
-        }
-
-        return $map;
-    }
 }
