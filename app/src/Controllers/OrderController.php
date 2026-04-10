@@ -35,6 +35,7 @@ class OrderController
         }
 
         $orders = $this->orderService->getOrdersByUserId((int) $_SESSION['user_id']);
+        // Build a view model so the template gets exactly what it needs.
         $viewModel = new OrderHistoryViewModel($orders);
         require __DIR__ . '/../views/tickets/orders.php';
         } catch (\Throwable $e) {
@@ -51,6 +52,7 @@ class OrderController
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
         if (empty($cart->items)) {
+            // No items to buy, send user back to cart page.
             header('Location: /cart');
             exit;
         }
@@ -61,6 +63,7 @@ class OrderController
             error: $_SESSION['checkout_error'] ?? null,
             isLoggedIn: !empty($_SESSION['user_id']),
         );
+        // Flash-style error: show once, then clear.
         unset($_SESSION['checkout_error']);
 
         require __DIR__ . '/../views/tickets/checkout.php';
@@ -77,11 +80,13 @@ class OrderController
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (!$this->validateRequest()) {
+            // validateRequest sets a user-facing error in session.
             header('Location: /checkout');
             exit;
         }
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
+        // Build absolute site URL used by Stripe return links.
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
         $baseUrl = $protocol . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
@@ -114,12 +119,15 @@ class OrderController
         }
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
+        // Stripe sends this back on success URL so we can verify payment.
         $sessionId = $_GET['session_id'] ?? null;
 
         try {
             $order = $this->orderService->finalizeStripeOrder($sessionId, $cart, (int) $_SESSION['user_id']);
+            // Payment is confirmed and order is stored, cart can be cleared.
             unset($_SESSION['cart']);
 
+            // Send ticket/invoice files to the logged-in user's email.
             $this->orderService->sendOrderDocuments($order->id, (string) $_SESSION['user_email']);
 
             $_SESSION['last_order_number'] = $order->orderNumber;
@@ -146,6 +154,7 @@ class OrderController
 
         $orderNumber = $_SESSION['last_order_number'] ?? null;
         if (!$orderNumber) {
+            // Protect route: confirmation page only after a successful order.
             header('Location: /');
             exit;
         }
@@ -155,6 +164,7 @@ class OrderController
             orderTotal: (float) ($_SESSION['last_order_total'] ?? 0),
             userEmail: $_SESSION['user_email'] ?? 'your email',
         );
+        // Prevent page refresh from reusing old confirmation data.
         unset($_SESSION['last_order_number'], $_SESSION['last_order_total']);
 
         require __DIR__ . '/../views/tickets/confirmation.php';
@@ -181,6 +191,7 @@ class OrderController
         $order = $this->orderService->getOrderByIdWithItems($orderId);
 
         if ($order && $order->userId === (int) $_SESSION['user_id']) {
+            // Security check: user can only request documents for own order.
             $this->orderService->sendOrderDocuments($order->id, (string) $_SESSION['user_email']);
             $_SESSION['email_success'] = 'Tickets and Invoice have been sent.';
         }
