@@ -7,9 +7,13 @@ use App\Services\ContentService;
 use App\Services\AudioUploadService;
 use App\Services\ImageUploadService;
 use App\Services\Validator;
+use App\Config\CmsPageDefinitions;
+use App\Config\FestivalEventConfig;
 use App\Repositories\UserRepository;
 use App\Repositories\EventRepository;
+use App\Repositories\HistoryTourRepository;
 use App\Repositories\StoryEventRepository;
+use App\Repositories\YummyRestaurantAdminRepository;
 
 class AdminController
 {
@@ -30,11 +34,12 @@ class AdminController
         $this->requireAdmin();
 
         $contentService = new ContentService();
-        $homepageContent = $contentService->getPageContent('homepage');
-        $storiesContent  = $contentService->getPageContent('stories');
-        $yummyContent    = $contentService->getPageContent('yummy');
-        $historyContent  = $contentService->getPageContent('history');
-        $jazzContent     = $contentService->getPageContent('jazz');
+        $cmsPages = CmsPageDefinitions::pages();
+        $contentByPage = [];
+        foreach (CmsPageDefinitions::jsonPageKeys() as $pageKey) {
+            $contentByPage[$pageKey] = $contentService->getPageContent($pageKey);
+        }
+        $jazzContent = $contentService->getPageContent('jazz');
 
         $jazzCmsArtists = (new EventRepository())->getJazzEvents(null);
         $jazzArtistContents = [];
@@ -55,11 +60,28 @@ class AdminController
         $jazzArtistError   = isset($_GET['jazz_error']) ? (string) $_GET['jazz_error'] : '';
         $jazzArtistNotice  = isset($_GET['jazz_notice']) ? (string) $_GET['jazz_notice'] : '';
 
-        // Story events for Events management page
+        // Events management (Story, Yummy, History, Jazz)
         $storyRepo    = new StoryEventRepository();
         $storyEvents  = $storyRepo->getAllForAdmin();
         $storyError   = $_GET['story_error'] ?? '';
         $storySaved   = $_GET['story_saved'] ?? '';
+
+        $yummyAdminRepo   = new YummyRestaurantAdminRepository();
+        $yummyRestaurants = $yummyAdminRepo->listForAdmin();
+        $yummyError       = isset($_GET['yummy_error']) ? (string) $_GET['yummy_error'] : '';
+        $yummySaved       = isset($_GET['yummy_saved']) ? (string) $_GET['yummy_saved'] : '';
+
+        $historyTourRepo = new HistoryTourRepository();
+        $historyTours    = $historyTourRepo->getAllForAdmin();
+        $historyError    = isset($_GET['history_error']) ? (string) $_GET['history_error'] : '';
+        $historySaved    = isset($_GET['history_saved']) ? (string) $_GET['history_saved'] : '';
+
+        $eventsTab = strtolower(trim((string) ($_GET['events_tab'] ?? '')));
+        if (!in_array($eventsTab, ['story', 'yummy', 'history', 'jazz'], true)) {
+            $eventsTab = 'story';
+        }
+
+        $festivalYummyEventId = FestivalEventConfig::yummyEventId();
 
         require __DIR__ . '/../views/admin/dashboard.php';
         } catch (\Throwable $e) {
@@ -233,7 +255,10 @@ class AdminController
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
-            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . '#content');
+            $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+            $tab = $to === 'events' ? '&events_tab=jazz' : '';
+            $hash = $to === 'events' ? '#events' : '#content';
+            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . $tab . $hash);
             exit;
         }
 
@@ -247,11 +272,19 @@ class AdminController
             $repo->createJazzArtist($_POST);
         } catch (\Throwable $e) {
             error_log('createJazzArtist: ' . $e->getMessage());
-            header('Location: /admin?jazz_error=' . rawurlencode($e->getMessage()) . '#content');
+            $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+            $hash = $to === 'events' ? '#events' : '#content';
+            $tab = $to === 'events' ? '&events_tab=jazz' : '';
+            header('Location: /admin?jazz_error=' . rawurlencode($e->getMessage()) . $tab . $hash);
             exit;
         }
 
-        header('Location: /admin?jazz_notice=created#content');
+        $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+        if ($to === 'events') {
+            header('Location: /admin?jazz_notice=created&events_tab=jazz#events');
+        } else {
+            header('Location: /admin?jazz_notice=created#content');
+        }
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -268,7 +301,10 @@ class AdminController
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
-            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . '#content');
+            $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+            $tab = $to === 'events' ? '&events_tab=jazz' : '';
+            $hash = $to === 'events' ? '#events' : '#content';
+            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session. Please try again.') . $tab . $hash);
             exit;
         }
 
@@ -283,11 +319,19 @@ class AdminController
             (new EventRepository())->deleteJazzArtist($id);
         } catch (\Throwable $e) {
             error_log('deleteJazzArtist: ' . $e->getMessage());
-            header('Location: /admin?jazz_error=' . rawurlencode($e->getMessage()) . '#content');
+            $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+            $tab = $to === 'events' ? '&events_tab=jazz' : '';
+            $hash = $to === 'events' ? '#events' : '#content';
+            header('Location: /admin?jazz_error=' . rawurlencode($e->getMessage()) . $tab . $hash);
             exit;
         }
 
-        header('Location: /admin?jazz_notice=deleted#content');
+        $to = ($_POST['admin_return'] ?? '') === 'events' ? 'events' : 'content';
+        if ($to === 'events') {
+            header('Location: /admin?jazz_notice=deleted&events_tab=jazz#events');
+        } else {
+            header('Location: /admin?jazz_notice=deleted#content');
+        }
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -432,12 +476,12 @@ class AdminController
         }
 
         if (!Csrf::validateRequest()) {
-            header('Location: /admin?story_error=csrf#events');
+            header('Location: /admin?story_error=csrf&events_tab=story#events');
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin#events');
+            header('Location: /admin?events_tab=story#events');
             exit;
         }
 
@@ -452,7 +496,7 @@ class AdminController
         $category   = trim($_POST['category']   ?? '');
 
         if ($title === '' || $day === '' || $timeSlot === '' || $location === '') {
-            header('Location: /admin?story_error=invalid_data#events');
+            header('Location: /admin?story_error=invalid_data&events_tab=story#events');
             exit;
         }
 
@@ -469,7 +513,7 @@ class AdminController
             'category'   => $category !== '' ? $category : null,
         ]);
 
-        header('Location: /admin?story_saved=1#events');
+        header('Location: /admin?story_saved=1&events_tab=story#events');
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -489,12 +533,12 @@ class AdminController
         }
 
         if (!Csrf::validateRequest()) {
-            header('Location: /admin?story_error=csrf#events');
+            header('Location: /admin?story_error=csrf&events_tab=story#events');
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin#events');
+            header('Location: /admin?events_tab=story#events');
             exit;
         }
 
@@ -510,7 +554,7 @@ class AdminController
         $category   = trim($_POST['category']   ?? '');
 
         if ($id <= 0 || $title === '' || $day === '' || $timeSlot === '' || $location === '') {
-            header('Location: /admin?story_error=invalid_data#events');
+            header('Location: /admin?story_error=invalid_data&events_tab=story#events');
             exit;
         }
 
@@ -527,7 +571,7 @@ class AdminController
             'category'   => $category !== '' ? $category : null,
         ]);
 
-        header('Location: /admin?story_saved=1#events');
+        header('Location: /admin?story_saved=1&events_tab=story#events');
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -547,25 +591,25 @@ class AdminController
         }
 
         if (!Csrf::validateRequest()) {
-            header('Location: /admin?story_error=csrf#events');
+            header('Location: /admin?story_error=csrf&events_tab=story#events');
             exit;
         }
 
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin#events');
+            header('Location: /admin?events_tab=story#events');
             exit;
         }
 
         $id = (int) ($vars['id'] ?? 0);
         if ($id <= 0) {
-            header('Location: /admin?story_error=invalid_id#events');
+            header('Location: /admin?story_error=invalid_id&events_tab=story#events');
             exit;
         }
 
         $repo = new StoryEventRepository();
         $repo->delete($id);
 
-        header('Location: /admin?story_saved=1#events');
+        header('Location: /admin?story_saved=1&events_tab=story#events');
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -574,6 +618,263 @@ class AdminController
     }
 
 
+    public function updateJazzArtist($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?jazz_error=' . rawurlencode('Invalid session.') . '&events_tab=jazz#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=jazz#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        try {
+            (new EventRepository())->updateJazzArtist($id, $_POST);
+        } catch (\Throwable $e) {
+            error_log('updateJazzArtist: ' . $e->getMessage());
+            header('Location: /admin?jazz_error=' . rawurlencode($e->getMessage()) . '&events_tab=jazz#events');
+            exit;
+        }
+
+        header('Location: /admin?jazz_notice=updated&events_tab=jazz#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function createHistoryTour($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?history_error=csrf&events_tab=history#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=history#events');
+            exit;
+        }
+
+        $guide = trim($_POST['guide_name'] ?? '');
+        $lang = trim($_POST['language'] ?? '');
+
+        try {
+            (new HistoryTourRepository())->create($guide, $lang);
+        } catch (\Throwable $e) {
+            header('Location: /admin?history_error=' . rawurlencode($e->getMessage()) . '&events_tab=history#events');
+            exit;
+        }
+
+        header('Location: /admin?history_saved=1&events_tab=history#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function updateHistoryTour($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?history_error=csrf&events_tab=history#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=history#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+        $guide = trim($_POST['guide_name'] ?? '');
+        $lang = trim($_POST['language'] ?? '');
+
+        try {
+            (new HistoryTourRepository())->update($id, $guide, $lang);
+        } catch (\Throwable $e) {
+            header('Location: /admin?history_error=' . rawurlencode($e->getMessage()) . '&events_tab=history#events');
+            exit;
+        }
+
+        header('Location: /admin?history_saved=1&events_tab=history#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function deleteHistoryTour($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?history_error=csrf&events_tab=history#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=history#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        try {
+            (new HistoryTourRepository())->delete($id);
+        } catch (\Throwable $e) {
+            header('Location: /admin?history_error=' . rawurlencode($e->getMessage()) . '&events_tab=history#events');
+            exit;
+        }
+
+        header('Location: /admin?history_saved=1&events_tab=history#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function createYummyRestaurant($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=yummy#events');
+            exit;
+        }
+
+        try {
+            (new YummyRestaurantAdminRepository())->create($_POST);
+        } catch (\Throwable $e) {
+            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
+            exit;
+        }
+
+        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function updateYummyRestaurant($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=yummy#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        try {
+            (new YummyRestaurantAdminRepository())->update($id, $_POST);
+        } catch (\Throwable $e) {
+            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
+            exit;
+        }
+
+        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function deactivateYummyRestaurant($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=yummy#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        try {
+            (new YummyRestaurantAdminRepository())->deactivate($id);
+        } catch (\Throwable $e) {
+            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
+            exit;
+        }
+
+        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    public function reactivateYummyRestaurant($vars = []): void
+    {
+        try {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header('Location: /admin?events_tab=yummy#events');
+            exit;
+        }
+
+        $id = (int) ($vars['id'] ?? 0);
+
+        try {
+            (new YummyRestaurantAdminRepository())->reactivate($id);
+        } catch (\Throwable $e) {
+            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
+            exit;
+        }
+
+        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
+        exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
 
     private function requireAdmin(): void
     {

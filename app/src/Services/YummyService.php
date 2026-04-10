@@ -23,6 +23,7 @@ class YummyService implements IYummyService
 	/** Reservation fee in cents charged per person regardless of age. */
 	private const RESERVATION_FEE_CENTS_PER_PERSON = 1000;
 
+
 	public function __construct(
 		private readonly IYummyRepository $yummyRepository,
 		private readonly ContentService $contentService
@@ -57,6 +58,7 @@ class YummyService implements IYummyService
 	 */
 	public function getRestaurantDetailViewModel(string $slug): ?YummyDetailViewModel
 	{
+<<<<<<< HEAD
 		$restaurant = $this->yummyRepository->findActiveRestaurantBySlug($slug);
 
 		if ($restaurant === null) {

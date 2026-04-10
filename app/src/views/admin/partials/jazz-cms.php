@@ -11,7 +11,7 @@ $jazzArtistError = $jazzArtistError ?? '';
 $jazzArtistNotice = $jazzArtistNotice ?? '';
 ?>
 
-<div class="tab-pane fade" id="content-jazz" role="tabpanel" aria-labelledby="tab-jazz">
+<div class="tab-pane fade" id="cms-pane-jazz" role="tabpanel" aria-labelledby="cms-tab-jazz">
 
     <p class="text-muted small mb-3">
 

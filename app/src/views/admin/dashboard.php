@@ -721,101 +721,314 @@ use App\Security\Csrf;
 
         <!-- Events Management Page -->
         <section id="page-events" class="page-section d-none">
+            <?php
+            $eventsTabKey = $eventsTab ?? 'story';
+            if (!in_array($eventsTabKey, ['story', 'yummy', 'history', 'jazz'], true)) {
+                $eventsTabKey = 'story';
+            }
+            ?>
             <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
                 <div>
                     <h1 class="h4 page-title mb-1">Events</h1>
                     <p class="text-muted small mb-0">
-                        Manage storytelling events for the Stories page.
+                        Manage Story, Yummy, History, and Jazz programme entries. Yummy uses festival event ID <span class="fw-semibold"><?= (int) $festivalYummyEventId ?></span> (set <code>YUMMY_EVENT_ID</code> or an <code>events.type = 'yummy'</code> row).
                     </p>
-                </div>
-                <div class="mt-3 mt-md-0">
-                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createStoryEventModal">
-                        <i class="bi bi-plus-lg me-1"></i> New Story Event
-                    </button>
                 </div>
             </div>
 
-            <?php if ($storySaved): ?>
-                <div class="alert alert-success alert-sm py-2 mb-3">
-                    <small>Story event saved successfully.</small>
-                </div>
-            <?php endif; ?>
-            <?php if ($storyError): ?>
-                <div class="alert alert-danger alert-sm py-2 mb-3">
-                    <small>
-                        <?php if ($storyError === 'invalid_id'): ?>Invalid event ID.
-                        <?php elseif ($storyError === 'csrf'): ?>Invalid session. Please reload the page and try again.
-                        <?php else: ?>Invalid data. Please check all required fields.
-                        <?php endif; ?>
-                    </small>
-                </div>
-            <?php endif; ?>
+            <ul class="nav nav-pills flex-wrap gap-2 mb-3" id="eventsSubTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link<?= $eventsTabKey === 'story' ? ' active' : '' ?>" id="events-tab-story" data-bs-toggle="tab" data-bs-target="#events-pane-story" type="button" role="tab" data-events-tab="story">Story</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link<?= $eventsTabKey === 'yummy' ? ' active' : '' ?>" id="events-tab-yummy" data-bs-toggle="tab" data-bs-target="#events-pane-yummy" type="button" role="tab" data-events-tab="yummy">Yummy</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link<?= $eventsTabKey === 'history' ? ' active' : '' ?>" id="events-tab-history" data-bs-toggle="tab" data-bs-target="#events-pane-history" type="button" role="tab" data-events-tab="history">History</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link<?= $eventsTabKey === 'jazz' ? ' active' : '' ?>" id="events-tab-jazz" data-bs-toggle="tab" data-bs-target="#events-pane-jazz" type="button" role="tab" data-events-tab="jazz">Jazz</button>
+                </li>
+            </ul>
 
-            <article class="card stat-card mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2 class="h6 mb-0">Story Event Library</h2>
-                        <span class="badge text-bg-light border"><?= count($storyEvents) ?> events</span>
+            <div class="tab-content">
+                <div class="tab-pane fade<?= $eventsTabKey === 'story' ? ' show active' : '' ?>" id="events-pane-story" role="tabpanel" aria-labelledby="events-tab-story">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0">Storytelling sessions</h2>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createStoryEventModal">
+                            <i class="bi bi-plus-lg me-1"></i> New story event
+                        </button>
                     </div>
-                    <?php if (empty($storyEvents)): ?>
-                        <div class="text-center text-muted py-4 border rounded bg-light-subtle">
-                            No story events found. Use "New Story Event" to add one.
-                        </div>
-                    <?php else: ?>
-                        <div class="story-admin-grid">
-                            <?php foreach ($storyEvents as $e): ?>
-                                <article class="story-admin-card">
-                                    <div class="story-admin-card-head">
-                                        <div>
-                                            <h3 class="story-admin-title"><?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?></h3>
-                                            <div class="story-admin-id">#<?= (int)($e['id'] ?? 0) ?></div>
-                                        </div>
-                                        <strong class="text-success">EUR <?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?></strong>
-                                    </div>
 
-                                    <div class="story-admin-meta">
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?></span>
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?></span>
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?></span>
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?></span>
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?></span>
-                                        <span class="story-admin-chip"><?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?></span>
-                                    </div>
-
-                                    <div class="story-admin-actions">
-                                        <button
-                                            class="btn btn-sm btn-outline-secondary"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editStoryEventModal"
-                                            data-id="<?= (int)($e['id'] ?? 0) ?>"
-                                            data-title="<?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?>"
-                                            data-day="<?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?>"
-                                            data-event_date="<?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?>"
-                                            data-time_slot="<?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?>"
-                                            data-location="<?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?>"
-                                            data-age_group="<?= htmlspecialchars($e['age_group'] ?? '', ENT_QUOTES) ?>"
-                                            data-language="<?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?>"
-                                            data-price="<?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?>"
-                                            data-category="<?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?>"
-                                        >
-                                            <i class="bi bi-pencil me-1"></i>Edit
-                                        </button>
-                                        <form method="post"
-                                              action="/admin/story-events/<?= (int)($e['id'] ?? 0) ?>/delete"
-                                              class="d-inline"
-                                              onsubmit="return confirm('Delete story event <?= htmlspecialchars(addslashes($e['title'] ?? ''), ENT_QUOTES) ?>?');">
-                                            <?= Csrf::field() ?>
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                <i class="bi bi-trash me-1"></i>Delete
-                                            </button>
-                                        </form>
-                                    </div>
-                                </article>
-                            <?php endforeach; ?>
+                    <?php if ($storySaved): ?>
+                        <div class="alert alert-success alert-sm py-2 mb-3"><small>Story event saved successfully.</small></div>
+                    <?php endif; ?>
+                    <?php if ($storyError): ?>
+                        <div class="alert alert-danger alert-sm py-2 mb-3">
+                            <small>
+                                <?php if ($storyError === 'invalid_id'): ?>Invalid event ID.
+                                <?php elseif ($storyError === 'csrf'): ?>Invalid session. Please reload the page and try again.
+                                <?php else: ?>Invalid data. Please check all required fields.
+                                <?php endif; ?>
+                            </small>
                         </div>
                     <?php endif; ?>
+
+                    <article class="card stat-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="small text-muted">Library</span>
+                                <span class="badge text-bg-light border"><?= count($storyEvents) ?> events</span>
+                            </div>
+                            <?php if (empty($storyEvents)): ?>
+                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No story events yet.</div>
+                            <?php else: ?>
+                                <div class="story-admin-grid">
+                                    <?php foreach ($storyEvents as $e): ?>
+                                        <article class="story-admin-card">
+                                            <div class="story-admin-card-head">
+                                                <div>
+                                                    <h3 class="story-admin-title"><?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?></h3>
+                                                    <div class="story-admin-id">#<?= (int)($e['id'] ?? 0) ?></div>
+                                                </div>
+                                                <strong class="text-success">EUR <?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?></strong>
+                                            </div>
+                                            <div class="story-admin-meta">
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?></span>
+                                            </div>
+                                            <div class="story-admin-actions">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editStoryEventModal"
+                                                        data-id="<?= (int)($e['id'] ?? 0) ?>"
+                                                        data-title="<?= htmlspecialchars($e['title'] ?? '', ENT_QUOTES) ?>"
+                                                        data-day="<?= htmlspecialchars($e['day'] ?? '', ENT_QUOTES) ?>"
+                                                        data-event_date="<?= htmlspecialchars($e['event_date'] ?? '', ENT_QUOTES) ?>"
+                                                        data-time_slot="<?= htmlspecialchars($e['time_slot'] ?? '', ENT_QUOTES) ?>"
+                                                        data-location="<?= htmlspecialchars($e['location'] ?? '', ENT_QUOTES) ?>"
+                                                        data-age_group="<?= htmlspecialchars($e['age_group'] ?? '', ENT_QUOTES) ?>"
+                                                        data-language="<?= htmlspecialchars($e['language'] ?? '', ENT_QUOTES) ?>"
+                                                        data-price="<?= htmlspecialchars((string)($e['price'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-category="<?= htmlspecialchars($e['category'] ?? '', ENT_QUOTES) ?>">
+                                                    <i class="bi bi-pencil me-1"></i>Edit
+                                                </button>
+                                                <form method="post" action="/admin/story-events/<?= (int)($e['id'] ?? 0) ?>/delete" class="d-inline"
+                                                      onsubmit="return confirm('Delete story event <?= htmlspecialchars(addslashes($e['title'] ?? ''), ENT_QUOTES) ?>?');">
+                                                    <?= Csrf::field() ?>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
                 </div>
-            </article>
+
+                <div class="tab-pane fade<?= $eventsTabKey === 'yummy' ? ' show active' : '' ?>" id="events-pane-yummy" role="tabpanel" aria-labelledby="events-tab-yummy">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0">Restaurants (Yummy)</h2>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createYummyRestaurantModal">
+                            <i class="bi bi-plus-lg me-1"></i> New restaurant
+                        </button>
+                    </div>
+                    <?php if ($yummySaved !== ''): ?>
+                        <div class="alert alert-success alert-sm py-2 mb-3"><small>Saved.</small></div>
+                    <?php endif; ?>
+                    <?php if ($yummyError !== ''): ?>
+                        <div class="alert alert-danger alert-sm py-2 mb-3"><small><?= $yummyError === 'csrf' ? 'Invalid session. Please reload.' : htmlspecialchars($yummyError, ENT_QUOTES) ?></small></div>
+                    <?php endif; ?>
+                    <article class="card stat-card mb-3">
+                        <div class="card-body">
+                            <?php if (empty($yummyRestaurants)): ?>
+                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No restaurants linked to this Yummy event.</div>
+                            <?php else: ?>
+                                <div class="story-admin-grid">
+                                    <?php foreach ($yummyRestaurants as $yr): ?>
+                                        <?php
+                                        $rid = (int) ($yr['restaurant_id'] ?? 0);
+                                        $active = (int) ($yr['active'] ?? 0) === 1;
+                                        ?>
+                                        <article class="story-admin-card">
+                                            <div class="story-admin-card-head">
+                                                <div>
+                                                    <h3 class="story-admin-title"><?= htmlspecialchars((string)($yr['name'] ?? ''), ENT_QUOTES) ?></h3>
+                                                    <div class="story-admin-id">#<?= $rid ?> · <?= htmlspecialchars((string)($yr['slug'] ?? ''), ENT_QUOTES) ?></div>
+                                                </div>
+                                                <?php if ($active): ?>
+                                                    <span class="badge bg-success-subtle text-success-emphasis">Active</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactive</span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="story-admin-meta">
+                                                <span class="story-admin-chip"><?= htmlspecialchars((string)($yr['price'] ?? ''), ENT_QUOTES) ?> €</span>
+                                                <span class="story-admin-chip">★ <?= htmlspecialchars((string)($yr['rating'] ?? ''), ENT_QUOTES) ?></span>
+                                            </div>
+                                            <p class="small text-muted mb-0"><?= htmlspecialchars((string)($yr['address'] ?? ''), ENT_QUOTES) ?></p>
+                                            <div class="story-admin-actions">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editYummyRestaurantModal"
+                                                        data-id="<?= $rid ?>"
+                                                        data-name="<?= htmlspecialchars((string)($yr['name'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-slug="<?= htmlspecialchars((string)($yr['slug'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-description="<?= htmlspecialchars((string)($yr['description'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-address="<?= htmlspecialchars((string)($yr['address'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-image_path="<?= htmlspecialchars((string)($yr['image_path'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-price="<?= htmlspecialchars((string)($yr['price'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-rating="<?= htmlspecialchars((string)($yr['rating'] ?? ''), ENT_QUOTES) ?>">
+                                                    <i class="bi bi-pencil me-1"></i>Edit
+                                                </button>
+                                                <?php if ($active): ?>
+                                                    <form method="post" action="/admin/yummy-restaurants/<?= $rid ?>/deactivate" class="d-inline" onsubmit="return confirm('Deactivate this restaurant for Yummy?');">
+                                                        <?= Csrf::field() ?>
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning">Deactivate</button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <form method="post" action="/admin/yummy-restaurants/<?= $rid ?>/reactivate" class="d-inline">
+                                                        <?= Csrf::field() ?>
+                                                        <button type="submit" class="btn btn-sm btn-outline-success">Reactivate</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="tab-pane fade<?= $eventsTabKey === 'history' ? ' show active' : '' ?>" id="events-pane-history" role="tabpanel" aria-labelledby="events-tab-history">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0">History walking tours</h2>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createHistoryTourModal">
+                            <i class="bi bi-plus-lg me-1"></i> New tour
+                        </button>
+                    </div>
+                    <?php if ($historySaved !== ''): ?>
+                        <div class="alert alert-success alert-sm py-2 mb-3"><small>Saved.</small></div>
+                    <?php endif; ?>
+                    <?php if ($historyError !== ''): ?>
+                        <div class="alert alert-danger alert-sm py-2 mb-3"><small><?= $historyError === 'csrf' ? 'Invalid session. Please reload.' : htmlspecialchars($historyError, ENT_QUOTES) ?></small></div>
+                    <?php endif; ?>
+                    <article class="card stat-card mb-3">
+                        <div class="card-body">
+                            <?php if (empty($historyTours)): ?>
+                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No history tours in <code>history_events</code>.</div>
+                            <?php else: ?>
+                                <div class="story-admin-grid">
+                                    <?php foreach ($historyTours as $ht): ?>
+                                        <?php $hid = (int) ($ht['event_id'] ?? 0); ?>
+                                        <article class="story-admin-card">
+                                            <div class="story-admin-card-head">
+                                                <div>
+                                                    <h3 class="story-admin-title"><?= htmlspecialchars((string)($ht['guide_name'] ?? ''), ENT_QUOTES) ?></h3>
+                                                    <div class="story-admin-id">Event #<?= $hid ?></div>
+                                                </div>
+                                            </div>
+                                            <div class="story-admin-meta">
+                                                <span class="story-admin-chip"><?= htmlspecialchars((string)($ht['language'] ?? ''), ENT_QUOTES) ?></span>
+                                            </div>
+                                            <div class="story-admin-actions">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editHistoryTourModal"
+                                                        data-id="<?= $hid ?>"
+                                                        data-guide_name="<?= htmlspecialchars((string)($ht['guide_name'] ?? ''), ENT_QUOTES) ?>"
+                                                        data-language="<?= htmlspecialchars((string)($ht['language'] ?? ''), ENT_QUOTES) ?>">
+                                                    <i class="bi bi-pencil me-1"></i>Edit
+                                                </button>
+                                                <form method="post" action="/admin/history-tours/<?= $hid ?>/delete" class="d-inline" onsubmit="return confirm('Delete this history tour?');">
+                                                    <?= Csrf::field() ?>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="tab-pane fade<?= $eventsTabKey === 'jazz' ? ' show active' : '' ?>" id="events-pane-jazz" role="tabpanel" aria-labelledby="events-tab-jazz">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <h2 class="h6 mb-0">Jazz artists / schedule rows</h2>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createJazzArtistEventsModal">
+                            <i class="bi bi-plus-lg me-1"></i> New jazz artist
+                        </button>
+                    </div>
+                    <?php if (($jazzArtistNotice ?? '') !== ''): ?>
+                        <div class="alert alert-success alert-sm py-2 mb-3">
+                            <small>
+                                <?php if ($jazzArtistNotice === 'created'): ?>Artist created.
+                                <?php elseif ($jazzArtistNotice === 'deleted'): ?>Artist removed.
+                                <?php elseif ($jazzArtistNotice === 'updated'): ?>Artist updated.
+                                <?php else: ?>Saved.
+                                <?php endif; ?>
+                            </small>
+                        </div>
+                    <?php endif; ?>
+                    <?php if (($jazzArtistError ?? '') !== ''): ?>
+                        <div class="alert alert-danger alert-sm py-2 mb-3"><small><?= htmlspecialchars($jazzArtistError, ENT_QUOTES) ?></small></div>
+                    <?php endif; ?>
+                    <p class="text-muted small">Rich artist pages and images are still edited under <strong>Content → Jazz</strong>. Here you can manage schedule data and create or remove artists.</p>
+                    <article class="card stat-card mb-3">
+                        <div class="card-body">
+                            <?php if (empty($jazzCmsArtists)): ?>
+                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No jazz events found.</div>
+                            <?php else: ?>
+                                <div class="story-admin-grid">
+                                    <?php foreach ($jazzCmsArtists as $jev): ?>
+                                        <?php
+                                        $jid = (int) $jev->eventId;
+                                        $st = $jev->startTime ? date('Y-m-d\TH:i', strtotime((string) $jev->startTime)) : '';
+                                        $en = $jev->endTime ? date('Y-m-d\TH:i', strtotime((string) $jev->endTime)) : '';
+                                        ?>
+                                        <article class="story-admin-card">
+                                            <div class="story-admin-card-head">
+                                                <div>
+                                                    <h3 class="story-admin-title"><?= htmlspecialchars($jev->artist, ENT_QUOTES) ?></h3>
+                                                    <div class="story-admin-id">#<?= $jid ?></div>
+                                                </div>
+                                                <?php if ($jev->price !== null): ?>
+                                                    <strong class="text-success">€ <?= htmlspecialchars((string) $jev->price, ENT_QUOTES) ?></strong>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="story-admin-meta">
+                                                <span class="story-admin-chip"><?= htmlspecialchars((string) $jev->style, ENT_QUOTES) ?></span>
+                                                <span class="story-admin-chip"><?= htmlspecialchars((string) $jev->location, ENT_QUOTES) ?></span>
+                                            </div>
+                                            <div class="story-admin-actions flex-wrap">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editJazzArtistModal"
+                                                        data-id="<?= $jid ?>"
+                                                        data-artist="<?= htmlspecialchars($jev->artist, ENT_QUOTES) ?>"
+                                                        data-description="<?= htmlspecialchars((string) $jev->description, ENT_QUOTES) ?>"
+                                                        data-style="<?= htmlspecialchars((string) $jev->style, ENT_QUOTES) ?>"
+                                                        data-location="<?= htmlspecialchars((string) ($jev->location ?? ''), ENT_QUOTES) ?>"
+                                                        data-start_time="<?= htmlspecialchars($st, ENT_QUOTES) ?>"
+                                                        data-end_time="<?= htmlspecialchars($en, ENT_QUOTES) ?>"
+                                                        data-price="<?= htmlspecialchars((string) ($jev->price ?? ''), ENT_QUOTES) ?>"
+                                                        data-seats="<?= htmlspecialchars((string) ($jev->seats ?? ''), ENT_QUOTES) ?>">
+                                                    <i class="bi bi-pencil me-1"></i>Edit
+                                                </button>
+                                                <a class="btn btn-sm btn-outline-primary" href="/admin#content">Content → Jazz</a>
+                                                <form method="post" action="/admin/jazz/artists/<?= $jid ?>/delete" class="d-inline" onsubmit="return confirm('Delete this artist? Tickets must be removed first.');">
+                                                    <?= Csrf::field() ?>
+                                                    <input type="hidden" name="admin_return" value="events">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash me-1"></i>Delete</button>
+                                                </form>
+                                            </div>
+                                        </article>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </article>
+                </div>
+            </div>
 
             <!-- Create Story Event Modal -->
             <div class="modal fade" id="createStoryEventModal" tabindex="-1" aria-labelledby="createStoryEventModalLabel" aria-hidden="true">
@@ -944,6 +1157,271 @@ use App\Security\Csrf;
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                 <button type="submit" class="btn btn-sm btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History tour modals -->
+            <div class="modal fade" id="createHistoryTourModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" action="/admin/history-tours/create">
+                            <?= Csrf::field() ?>
+                            <div class="modal-header">
+                                <h5 class="modal-title">New history tour</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="create-history-guide">Guide name</label>
+                                    <input type="text" class="form-control form-control-sm" id="create-history-guide" name="guide_name" required maxlength="255">
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small fw-semibold" for="create-history-lang">Language</label>
+                                    <input type="text" class="form-control form-control-sm" id="create-history-lang" name="language" required maxlength="64" placeholder="e.g. English">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editHistoryTourModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form method="post" id="editHistoryTourForm" action="/admin/history-tours/0/update">
+                            <?= Csrf::field() ?>
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit history tour</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold" for="edit-history-guide">Guide name</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit-history-guide" name="guide_name" required maxlength="255">
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small fw-semibold" for="edit-history-lang">Language</label>
+                                    <input type="text" class="form-control form-control-sm" id="edit-history-lang" name="language" required maxlength="64">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yummy restaurant modals -->
+            <div class="modal fade" id="createYummyRestaurantModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <form method="post" action="/admin/yummy-restaurants/create">
+                            <?= Csrf::field() ?>
+                            <div class="modal-header">
+                                <h5 class="modal-title">New restaurant</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold" for="create-yummy-name">Name *</label>
+                                        <input type="text" class="form-control form-control-sm" id="create-yummy-name" name="name" required maxlength="255">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold" for="create-yummy-slug">Slug (optional)</label>
+                                        <input type="text" class="form-control form-control-sm" id="create-yummy-slug" name="slug" maxlength="128" placeholder="auto from name">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold" for="create-yummy-desc">Description</label>
+                                        <textarea class="form-control form-control-sm" id="create-yummy-desc" name="description" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold" for="create-yummy-addr">Address</label>
+                                        <input type="text" class="form-control form-control-sm" id="create-yummy-addr" name="address" maxlength="500">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-semibold" for="create-yummy-img">Image path / URL</label>
+                                        <input type="text" class="form-control form-control-sm" id="create-yummy-img" name="image_path" maxlength="500" placeholder="/uploads/...">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold" for="create-yummy-price">Price</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="create-yummy-price" name="price">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold" for="create-yummy-rating">Rating</label>
+                                        <input type="number" step="0.1" min="0" max="5" class="form-control form-control-sm" id="create-yummy-rating" name="rating">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editYummyRestaurantModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <form method="post" id="editYummyRestaurantForm" action="/admin/yummy-restaurants/0/update">
+                            <?= Csrf::field() ?>
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit restaurant</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-name">Name *</label>
+                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-name" name="name" required maxlength="255">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-slug">Slug</label>
+                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-slug" name="slug" maxlength="128">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-desc">Description</label>
+                                        <textarea class="form-control form-control-sm" id="edit-yummy-desc" name="description" rows="2"></textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-addr">Address</label>
+                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-addr" name="address" maxlength="500">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-img">Image path / URL</label>
+                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-img" name="image_path" maxlength="500">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-price">Price</label>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="edit-yummy-price" name="price">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small fw-semibold" for="edit-yummy-rating">Rating</label>
+                                        <input type="number" step="0.1" min="0" max="5" class="form-control form-control-sm" id="edit-yummy-rating" name="rating">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jazz artist modals (Events tab) -->
+            <div class="modal fade" id="createJazzArtistEventsModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <form method="post" action="/admin/jazz/artists/create">
+                            <?= Csrf::field() ?>
+                            <input type="hidden" name="admin_return" value="events">
+                            <div class="modal-header">
+                                <h5 class="modal-title">New jazz artist</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Artist name *</label>
+                                        <input type="text" name="artist" class="form-control form-control-sm" required maxlength="255">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small mb-0">Description *</label>
+                                        <input type="text" name="description" class="form-control form-control-sm" required maxlength="2000">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Styles</label>
+                                        <input type="text" name="style" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Venue</label>
+                                        <input type="text" name="location" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Start</label>
+                                        <input type="datetime-local" name="start_time" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">End</label>
+                                        <input type="datetime-local" name="end_time" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Price (€)</label>
+                                        <input type="number" name="price" class="form-control form-control-sm" step="0.01" min="0">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Seats</label>
+                                        <input type="number" name="seats" class="form-control form-control-sm" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Create</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editJazzArtistModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <form method="post" id="editJazzArtistForm" action="/admin/jazz/artists/0/update">
+                            <?= Csrf::field() ?>
+                            <div class="modal-header">
+                                <h5 class="modal-title">Edit jazz artist</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Artist name *</label>
+                                        <input type="text" name="artist" id="edit-jazz-artist" class="form-control form-control-sm" required maxlength="255">
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label small mb-0">Description *</label>
+                                        <input type="text" name="description" id="edit-jazz-description" class="form-control form-control-sm" required maxlength="2000">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Styles</label>
+                                        <input type="text" name="style" id="edit-jazz-style" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small mb-0">Venue</label>
+                                        <input type="text" name="location" id="edit-jazz-location" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Start</label>
+                                        <input type="datetime-local" name="start_time" id="edit-jazz-start" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">End</label>
+                                        <input type="datetime-local" name="end_time" id="edit-jazz-end" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Price (€)</label>
+                                        <input type="number" name="price" id="edit-jazz-price" class="form-control form-control-sm" step="0.01" min="0">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small mb-0">Seats</label>
+                                        <input type="number" name="seats" id="edit-jazz-seats" class="form-control form-control-sm" min="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
                             </div>
                         </form>
                     </div>
@@ -1154,290 +1632,52 @@ use App\Security\Csrf;
                 </div>
             <?php endif; ?>
 
-            <ul class="nav nav-tabs mb-3" role="tablist">
+            <ul class="nav nav-tabs mb-3" id="cmsContentTabs" role="tablist">
+                <?php
+                $cmsTabFirst = true;
+                foreach ($cmsPages as $pageKey => $pageMeta):
+                    $safeKey = preg_replace('/[^a-z0-9\-]/i', '-', (string) $pageKey);
+                    $tabBtnId = 'cms-tab-' . $safeKey;
+                    $paneId = 'cms-pane-' . $safeKey;
+                    ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="tab-homepage" data-bs-toggle="tab" data-bs-target="#content-homepage" type="button" role="tab">
-                        Homepage
-                    </button>
+                    <button
+                        class="nav-link<?= $cmsTabFirst ? ' active' : '' ?>"
+                        id="<?= htmlspecialchars($tabBtnId, ENT_QUOTES) ?>"
+                        data-bs-toggle="tab"
+                        data-bs-target="#<?= htmlspecialchars($paneId, ENT_QUOTES) ?>"
+                        type="button"
+                        role="tab"
+                    ><?= htmlspecialchars((string) ($pageMeta['label'] ?? $pageKey), ENT_QUOTES) ?></button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-stories" data-bs-toggle="tab" data-bs-target="#content-stories" type="button" role="tab">
-                        Story
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-yummy" data-bs-toggle="tab" data-bs-target="#content-yummy" type="button" role="tab">
-                        Yummy
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-history" data-bs-toggle="tab" data-bs-target="#content-history" type="button" role="tab">
-                        History
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="tab-jazz" data-bs-toggle="tab" data-bs-target="#content-jazz" type="button" role="tab">
-                        Jazz
-                    </button>
-                </li>
+                <?php
+                    $cmsTabFirst = false;
+                endforeach;
+                ?>
             </ul>
 
-            <div class="tab-content">
-                <!-- Homepage -->
-                <div class="tab-pane fade show active" id="content-homepage" role="tabpanel" aria-labelledby="tab-homepage">
-                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
-                        <div class="card-body">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="page" value="homepage">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero title (supports HTML)</label>
-                                <textarea name="hero_title" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero subtitle</label>
-                                <textarea name="hero_subtitle" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['hero_subtitle'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">CTA heading</label>
-                                <textarea name="cta_heading" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($homepageContent['cta_heading'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">CTA text</label>
-                                <textarea name="cta_text" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($homepageContent['cta_text'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-1"></i>Save Homepage Content
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Stories -->
-                <div class="tab-pane fade" id="content-stories" role="tabpanel" aria-labelledby="tab-stories">
-                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
-                        <div class="card-body">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="page" value="stories">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero background image URL</label>
-                                <div class="input-group input-group-sm mb-2">
-                                    <input
-                                        type="text"
-                                        name="hero_image"
-                                        class="form-control cms-image-url"
-                                        value="<?= htmlspecialchars($storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg', ENT_QUOTES) ?>"
-                                        placeholder="/uploads/your-hero-image.jpg"
-                                    >
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary cms-upload-btn"
-                                        data-target-input="hero_image"
-                                    >
-                                        <i class="bi bi-upload me-1"></i>Upload
-                                    </button>
-                                </div>
-                                <div
-                                    class="cms-dropzone mb-2"
-                                    data-target-input="hero_image"
-                                >
-                                    <i class="bi bi-cloud-arrow-up"></i>
-                                    <span>
-                                        Drag &amp; drop an image here, or click to select a file.
-                                    </span>
-                                </div>
-                                <small class="text-muted d-block mb-1">
-                                    Paste an image URL, use <strong>Upload</strong>, or drag-and-drop into the box above to upload a new hero image.
-                                </small>
-                                <img
-                                    src="<?= htmlspecialchars($storiesContent['hero_image'] ?? '/img/storytelling-hero.jpg', ENT_QUOTES) ?>"
-                                    alt="Hero preview"
-                                    class="border rounded cms-image-preview"
-                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
-                                    data-preview-for="hero_image"
-                                >
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Featured storyteller image URL</label>
-                                <div class="input-group input-group-sm mb-2">
-                                    <input
-                                        type="text"
-                                        name="featured_image"
-                                        class="form-control cms-image-url"
-                                        value="<?= htmlspecialchars($storiesContent['featured_image'] ?? '/img/featured-storyteller.jpg', ENT_QUOTES) ?>"
-                                        placeholder="/uploads/your-featured-image.jpg"
-                                    >
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary cms-upload-btn"
-                                        data-target-input="featured_image"
-                                    >
-                                        <i class="bi bi-upload me-1"></i>Upload
-                                    </button>
-                                </div>
-                                <div
-                                    class="cms-dropzone mb-2"
-                                    data-target-input="featured_image"
-                                >
-                                    <i class="bi bi-cloud-arrow-up"></i>
-                                    <span>
-                                        Drag &amp; drop an image here, or click to select a file.
-                                    </span>
-                                </div>
-                                <small class="text-muted d-block mb-1">
-                                    Paste an image URL, use <strong>Upload</strong>, or drag-and-drop into the box above to upload a new featured storyteller image.
-                                </small>
-                                <img
-                                    src="<?= htmlspecialchars($storiesContent['featured_image'] ?? '/img/featured-storyteller.jpg', ENT_QUOTES) ?>"
-                                    alt="Featured storyteller preview"
-                                    class="border rounded cms-image-preview"
-                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
-                                    data-preview-for="featured_image"
-                                >
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero title</label>
-                                <textarea name="hero_title" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($storiesContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero description</label>
-                                <textarea name="hero_description" class="form-control wysiwyg" rows="5"><?= htmlspecialchars($storiesContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Additional information text</label>
-                                <textarea name="info_paragraph" class="form-control wysiwyg" rows="4"><?= htmlspecialchars($storiesContent['info_paragraph'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-1"></i>Save Story Content
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Yummy -->
-                <div class="tab-pane fade" id="content-yummy" role="tabpanel" aria-labelledby="tab-yummy">
-                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
-                        <div class="card-body">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="page" value="yummy">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero background image URL</label>
-                                <div class="input-group input-group-sm mb-2">
-                                    <input
-                                        type="text"
-                                        name="hero_image"
-                                        class="form-control cms-image-url"
-                                        value="<?= htmlspecialchars($yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg', ENT_QUOTES) ?>"
-                                        placeholder="/uploads/your-yummy-hero-image.jpg"
-                                    >
-                                    <button
-                                        type="button"
-                                        class="btn btn-outline-secondary cms-upload-btn"
-                                        data-target-input="hero_image"
-                                    >
-                                        <i class="bi bi-upload me-1"></i>Upload
-                                    </button>
-                                </div>
-                                <div
-                                    class="cms-dropzone mb-2"
-                                    data-target-input="hero_image"
-                                >
-                                    <i class="bi bi-cloud-arrow-up"></i>
-                                    <span>
-                                        Drag &amp; drop an image here, or click to select a file.
-                                    </span>
-                                </div>
-                                <small class="text-muted d-block mb-1">
-                                    Paste an image URL, use <strong>Upload</strong>, or drag-and-drop into the box above to upload a new Yummy hero image.
-                                </small>
-                                <img
-                                    src="<?= htmlspecialchars($yummyContent['hero_image'] ?? '/assets/yummy/image/yummy-hero.jpg', ENT_QUOTES) ?>"
-                                    alt="Yummy hero preview"
-                                    class="border rounded cms-image-preview"
-                                    style="max-height: 140px; max-width: 100%; object-fit: cover;"
-                                    data-preview-for="hero_image"
-                                >
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero date pill text</label>
-                                <input type="text" name="hero_date" class="form-control" value="<?= htmlspecialchars($yummyContent['hero_date'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero title</label>
-                                <textarea name="hero_title" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero subtitle</label>
-                                <textarea name="hero_subtitle" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['hero_subtitle'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Restaurants section heading</label>
-                                <input type="text" name="explore_heading" class="form-control" value="<?= htmlspecialchars($yummyContent['explore_heading'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Restaurants section subtext</label>
-                                <input type="text" name="explore_text" class="form-control" value="<?= htmlspecialchars($yummyContent['explore_text'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 1: title</label>
-                                <input type="text" name="feature_card_one_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_one_title'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 1: text</label>
-                                <textarea name="feature_card_one_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_one_text'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 2: title</label>
-                                <input type="text" name="feature_card_two_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_two_title'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 2: text</label>
-                                <textarea name="feature_card_two_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_two_text'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 3: title</label>
-                                <input type="text" name="feature_card_three_title" class="form-control" value="<?= htmlspecialchars($yummyContent['feature_card_three_title'] ?? '', ENT_QUOTES) ?>">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Feature card 3: text</label>
-                                <textarea name="feature_card_three_text" class="form-control" rows="2"><?= htmlspecialchars($yummyContent['feature_card_three_text'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-1"></i>Save Yummy Content
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- History -->
-                <div class="tab-pane fade" id="content-history" role="tabpanel" aria-labelledby="tab-history">
-                    <form method="post" action="/admin/content/save" class="card stat-card mb-3">
-                        <div class="card-body">
-                            <?= Csrf::field() ?>
-                            <input type="hidden" name="page" value="history">
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero title</label>
-                                <textarea name="hero_title" class="form-control wysiwyg" rows="2"><?= htmlspecialchars($historyContent['hero_title'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small fw-semibold">Hero description</label>
-                                <textarea name="hero_description" class="form-control wysiwyg" rows="3"><?= htmlspecialchars($historyContent['hero_description'] ?? '', ENT_QUOTES) ?></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary btn-sm">
-                                    <i class="bi bi-save me-1"></i>Save History Content
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <?php require __DIR__ . '/partials/jazz-cms.php'; ?>
+            <div class="tab-content" id="cmsContentTabPanes">
+                <?php
+                $cmsPaneFirst = true;
+                foreach ($cmsPages as $pageKey => $pageMeta):
+                    $storage = (string) ($pageMeta['storage'] ?? '');
+                    if ($storage === 'json'):
+                        $fields = $pageMeta['fields'] ?? [];
+                        $content = $contentByPage[$pageKey] ?? [];
+                        $pageLabel = (string) ($pageMeta['label'] ?? $pageKey);
+                        $isFirstTabPane = $cmsPaneFirst;
+                        $cmsPaneFirst = false;
+                        require __DIR__ . '/partials/cms-json-page-form.php';
+                    elseif ($storage === 'jazz_partial'):
+                        $isFirstTabPane = $cmsPaneFirst;
+                        $cmsPaneFirst = false;
+                        $partial = (string) ($pageMeta['partial'] ?? '');
+                        if ($partial !== '' && is_file($partial)) {
+                            require $partial;
+                        }
+                    endif;
+                endforeach;
+                ?>
             </div>
         </section>
     </main>
@@ -1500,15 +1740,34 @@ use App\Security\Csrf;
             || new URLSearchParams(window.location.search).get('sort') !== null
             || new URLSearchParams(window.location.search).get('user_saved') !== null
             || new URLSearchParams(window.location.search).get('user_error') !== null;
-        const hasStoryParams = new URLSearchParams(window.location.search).get('story_saved') !== null
-            || new URLSearchParams(window.location.search).get('story_error') !== null;
+        const qs = new URLSearchParams(window.location.search);
+        const hasStoryParams = qs.get('story_saved') !== null || qs.get('story_error') !== null;
+        const hasEventsParams = hasStoryParams
+            || qs.get('yummy_saved') !== null || qs.get('yummy_error') !== null
+            || qs.get('history_saved') !== null || qs.get('history_error') !== null
+            || qs.get('jazz_notice') !== null || qs.get('jazz_error') !== null
+            || qs.get('events_tab') !== null;
         let defaultPage = 'dashboard';
         if (hasUserParams) {
             defaultPage = 'users';
-        } else if (hasStoryParams) {
+        } else if (hasEventsParams) {
             defaultPage = 'events';
         }
         showPage(initialHash || defaultPage);
+
+        const eventsTabFromQuery = qs.get('events_tab');
+        if (eventsTabFromQuery && document.getElementById('eventsSubTabs')) {
+            const map = { story: 'events-tab-story', yummy: 'events-tab-yummy', history: 'events-tab-history', jazz: 'events-tab-jazz' };
+            const tid = map[eventsTabFromQuery];
+            if (tid && window.bootstrap) {
+                const el = document.getElementById(tid);
+                if (el) {
+                    try {
+                        window.bootstrap.Tab.getOrCreateInstance(el).show();
+                    } catch (e) { /* ignore */ }
+                }
+            }
+        }
 
         // Populate edit user modal
         document.getElementById('editUserModal').addEventListener('show.bs.modal', function (event) {
@@ -1537,6 +1796,53 @@ use App\Security\Csrf;
 
                 const form = document.getElementById('editStoryEventForm');
                 form.action = '/admin/story-events/' + (btn.getAttribute('data-id') || '0') + '/update';
+            });
+        }
+
+        const editHistoryModalEl = document.getElementById('editHistoryTourModal');
+        if (editHistoryModalEl) {
+            editHistoryModalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('edit-history-guide').value = btn.getAttribute('data-guide_name') || '';
+                document.getElementById('edit-history-lang').value = btn.getAttribute('data-language') || '';
+                document.getElementById('editHistoryTourForm').action =
+                    '/admin/history-tours/' + (btn.getAttribute('data-id') || '0') + '/update';
+            });
+        }
+
+        const editYummyModalEl = document.getElementById('editYummyRestaurantModal');
+        if (editYummyModalEl) {
+            editYummyModalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('edit-yummy-name').value = btn.getAttribute('data-name') || '';
+                document.getElementById('edit-yummy-slug').value = btn.getAttribute('data-slug') || '';
+                document.getElementById('edit-yummy-desc').value = btn.getAttribute('data-description') || '';
+                document.getElementById('edit-yummy-addr').value = btn.getAttribute('data-address') || '';
+                document.getElementById('edit-yummy-img').value = btn.getAttribute('data-image_path') || '';
+                document.getElementById('edit-yummy-price').value = btn.getAttribute('data-price') || '';
+                document.getElementById('edit-yummy-rating').value = btn.getAttribute('data-rating') || '';
+                document.getElementById('editYummyRestaurantForm').action =
+                    '/admin/yummy-restaurants/' + (btn.getAttribute('data-id') || '0') + '/update';
+            });
+        }
+
+        const editJazzModalEl = document.getElementById('editJazzArtistModal');
+        if (editJazzModalEl) {
+            editJazzModalEl.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('edit-jazz-artist').value = btn.getAttribute('data-artist') || '';
+                document.getElementById('edit-jazz-description').value = btn.getAttribute('data-description') || '';
+                document.getElementById('edit-jazz-style').value = btn.getAttribute('data-style') || '';
+                document.getElementById('edit-jazz-location').value = btn.getAttribute('data-location') || '';
+                document.getElementById('edit-jazz-start').value = btn.getAttribute('data-start_time') || '';
+                document.getElementById('edit-jazz-end').value = btn.getAttribute('data-end_time') || '';
+                document.getElementById('edit-jazz-price').value = btn.getAttribute('data-price') || '';
+                document.getElementById('edit-jazz-seats').value = btn.getAttribute('data-seats') || '';
+                document.getElementById('editJazzArtistForm').action =
+                    '/admin/jazz/artists/' + (btn.getAttribute('data-id') || '0') + '/update';
             });
         }
 
@@ -1624,6 +1930,7 @@ use App\Security\Csrf;
                     const preview = form.querySelector(`img.cms-image-preview[data-preview-for="${targetName}"]`);
                     if (preview) {
                         preview.src = json.location;
+                        preview.classList.remove('d-none');
                     }
                 })
                 .catch(err => {

@@ -142,6 +142,14 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET',  '/admin/yummy/menu-items/edit',                          ['App\\Controllers\\AdminYummyController', 'displayMenuItemEditForm']);
     $r->addRoute('POST', '/admin/yummy/menu-items/save',                          ['App\\Controllers\\AdminYummyController', 'saveMenuItem']);
     $r->addRoute('POST', '/admin/yummy/menu-items/delete',                        ['App\\Controllers\\AdminYummyController', 'deleteMenuItem']);
+    $r->addRoute('POST', '/admin/jazz/artists/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateJazzArtist']);
+    $r->addRoute('POST', '/admin/history-tours/create', ['App\\Controllers\\AdminController', 'createHistoryTour']);
+    $r->addRoute('POST', '/admin/history-tours/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateHistoryTour']);
+    $r->addRoute('POST', '/admin/history-tours/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteHistoryTour']);
+    $r->addRoute('POST', '/admin/yummy-restaurants/create', ['App\\Controllers\\AdminController', 'createYummyRestaurant']);
+    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateYummyRestaurant']);
+    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/deactivate', ['App\\Controllers\\AdminController', 'deactivateYummyRestaurant']);
+    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/reactivate', ['App\\Controllers\\AdminController', 'reactivateYummyRestaurant']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
