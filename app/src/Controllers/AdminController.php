@@ -17,6 +17,10 @@ use App\Repositories\YummyRestaurantAdminRepository;
 use App\Services\AdminYummyService;
 
 use App\Services\OrderService;
+use App\Services\StripeService;
+use App\Services\MailService;
+use App\Services\TicketPdfService;
+use App\Services\InvoicePdfService;
 use App\Repositories\OrderRepository;
 
 class AdminController
@@ -26,11 +30,16 @@ class AdminController
     private UserRepository $userRepo;
     private OrderService $orderService;
 
-    public function __construct(OrderService $orderService = null)
+    public function __construct(?OrderService $orderService = null)
     {
         $this->userRepo = new UserRepository();
-        // Fallback for parts of the app that might not use the DI container yet
-        $this->orderService = $orderService ?? new OrderService(new OrderRepository());
+        $this->orderService = $orderService ?? new OrderService(
+            new OrderRepository(),
+            new StripeService(),
+            new MailService(),
+            new TicketPdfService(),
+            new InvoicePdfService()
+        );
     }
 
    

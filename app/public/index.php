@@ -195,16 +195,33 @@ switch ($routeInfo[0]) {
         // Wire up dependency injection for controllers that require it
         if ($controllerClass === App\Controllers\OrderController::class) {
             $orderRepository = new App\Repositories\OrderRepository();
-            $orderService = new App\Services\OrderService($orderRepository);
-            $ticketPdfService = new App\Services\TicketPdfService();
-            $mailService = new App\Services\MailService();
             $stripeService = new App\Services\StripeService();
-            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
+            $mailService = new App\Services\MailService();
+            $ticketPdfService = new App\Services\TicketPdfService();
+            $invoicePdfService = new App\Services\InvoicePdfService();
+            $orderService = new App\Services\OrderService(
+                $orderRepository,
+                $stripeService,
+                $mailService,
+                $ticketPdfService,
+                $invoicePdfService
+            );
+            $controller = new $controllerClass($orderService);
         } elseif ($controllerClass === App\Controllers\AdminYummyController::class) {
             $controller = new $controllerClass(new App\Services\AdminYummyService());
         } elseif ($controllerClass === App\Controllers\AdminController::class) {
             $orderRepository = new App\Repositories\OrderRepository();
-            $orderService = new App\Services\OrderService($orderRepository);
+            $stripeService = new App\Services\StripeService();
+            $mailService = new App\Services\MailService();
+            $ticketPdfService = new App\Services\TicketPdfService();
+            $invoicePdfService = new App\Services\InvoicePdfService();
+            $orderService = new App\Services\OrderService(
+                $orderRepository,
+                $stripeService,
+                $mailService,
+                $ticketPdfService,
+                $invoicePdfService
+            );
             $controller = new $controllerClass($orderService);
         } else {
             $controller = new $controllerClass();
