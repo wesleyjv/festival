@@ -14,6 +14,7 @@ use App\Repositories\EventRepository;
 use App\Repositories\HistoryTourRepository;
 use App\Repositories\StoryEventRepository;
 use App\Repositories\YummyRestaurantAdminRepository;
+use App\Services\AdminYummyService;
 
 class AdminController
 {
@@ -66,8 +67,7 @@ class AdminController
         $storyError   = $_GET['story_error'] ?? '';
         $storySaved   = $_GET['story_saved'] ?? '';
 
-        $yummyAdminRepo   = new YummyRestaurantAdminRepository();
-        $yummyRestaurants = $yummyAdminRepo->listForAdmin();
+        $yummyRestaurants = (new AdminYummyService())->findAllRestaurantsForAdmin();
         $yummyError       = isset($_GET['yummy_error']) ? (string) $_GET['yummy_error'] : '';
         $yummySaved       = isset($_GET['yummy_saved']) ? (string) $_GET['yummy_saved'] : '';
 

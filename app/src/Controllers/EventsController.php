@@ -198,8 +198,8 @@ class EventsController
     }
 
     /**
-     * Validates CSRF, saves the reservation via the service, stores a summary in
-     * session, and redirects to the success page.
+     * Validates CSRF, saves the reservation, creates a template ticket,
+     * adds it to the session cart, and redirects to /cart.
      */
     public function confirmReservation(): void
     {
@@ -209,26 +209,13 @@ class EventsController
                 exit;
             }
 
-            // Build the view model first — this validates all params before touching the DB.
-            $viewModel             = $this->yummyService->buildReservationOverviewViewModel($_POST);
-            $params                = $_POST;
-            $params['user_id']     = $_SESSION['user_id'] ?? null;
-            $reservationId         = $this->yummyService->saveReservation($params);
+            $params            = $_POST;
+            $params['user_id'] = $_SESSION['user_id'] ?? null;
 
-            $_SESSION['yummy_reservation_success'] = [
-                'reservation_id'        => $reservationId,
-                'restaurant_name'       => $viewModel->restaurant->restaurantName,
-                'restaurant_slug'       => $viewModel->restaurant->slug,
-                'restaurant_image_path' => $viewModel->restaurant->restaurantImagePath,
-                'festival_date'         => $viewModel->festivalDate,
-                'session_start'         => $viewModel->sessionStartTime,
-                'session_end'           => $viewModel->sessionEndTime,
-                'adults'                => $viewModel->adults,
-                'children'              => $viewModel->children,
-                'reservation_fee_cents' => $viewModel->reservationFeeCents,
-            ];
+            // Validates all params, persists reservation + ticket, and pushes to cart.
+            $this->yummyService->createAndCartReservation($params);
 
-            header('Location: /events/yummy/reservation/success');
+            header('Location: /cart');
             exit;
         } catch (Throwable $e) {
             $this->logControllerThrowable($e);

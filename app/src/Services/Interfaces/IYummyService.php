@@ -37,4 +37,16 @@ interface IYummyService
      * @throws \InvalidArgumentException when any required parameter is invalid.
      */
     public function saveReservation(array $params): int;
+
+    /**
+     * Full reservation + cart integration in one call:
+     * validates params, saves the reservation, creates a template ticket row,
+     * links it to the reservation, and adds it to $_SESSION['cart'].
+     *
+     * Expected keys in $params: restaurant_id, session_number, festival_date,
+     * adults, children, special_request, user_id (nullable).
+     *
+     * @throws \InvalidArgumentException when any required parameter is invalid.
+     */
+    public function createAndCartReservation(array $params): void;
 }

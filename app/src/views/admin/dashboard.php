@@ -297,12 +297,6 @@ use App\Security\Csrf;
                 <span>Content</span>
             </button>
         </li>
-        <li class="nav-item">
-            <a class="nav-link w-100 text-start" href="/admin/yummy/restaurants">
-                <i class="bi bi-shop"></i>
-                <span>Yummy Restaurants</span>
-            </a>
-        </li>
     </ul>
 </nav>
 
@@ -383,12 +377,6 @@ use App\Security\Csrf;
                     <i class="bi bi-file-earmark-text"></i>
                     <span>Content</span>
                 </button>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link w-100 text-start" href="/admin/yummy/restaurants" data-bs-dismiss="offcanvas">
-                    <i class="bi bi-shop"></i>
-                    <span>Yummy Restaurants</span>
-                </a>
             </li>
         </ul>
     </div>
@@ -832,9 +820,9 @@ use App\Security\Csrf;
                 <div class="tab-pane fade<?= $eventsTabKey === 'yummy' ? ' show active' : '' ?>" id="events-pane-yummy" role="tabpanel" aria-labelledby="events-tab-yummy">
                     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
                         <h2 class="h6 mb-0">Restaurants (Yummy)</h2>
-                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createYummyRestaurantModal">
+                        <a href="/admin/yummy/restaurants/create" class="btn btn-primary btn-sm">
                             <i class="bi bi-plus-lg me-1"></i> New restaurant
-                        </button>
+                        </a>
                     </div>
                     <?php if ($yummySaved !== ''): ?>
                         <div class="alert alert-success alert-sm py-2 mb-3"><small>Saved.</small></div>
@@ -843,59 +831,71 @@ use App\Security\Csrf;
                         <div class="alert alert-danger alert-sm py-2 mb-3"><small><?= $yummyError === 'csrf' ? 'Invalid session. Please reload.' : htmlspecialchars($yummyError, ENT_QUOTES) ?></small></div>
                     <?php endif; ?>
                     <article class="card stat-card mb-3">
-                        <div class="card-body">
+                        <div class="card-body p-0">
                             <?php if (empty($yummyRestaurants)): ?>
-                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No restaurants linked to this Yummy event.</div>
+                                <div class="text-center text-muted py-4 border rounded bg-light-subtle">No restaurants found.</div>
                             <?php else: ?>
-                                <div class="story-admin-grid">
-                                    <?php foreach ($yummyRestaurants as $yr): ?>
-                                        <?php
-                                        $rid = (int) ($yr['restaurant_id'] ?? 0);
-                                        $active = (int) ($yr['active'] ?? 0) === 1;
-                                        ?>
-                                        <article class="story-admin-card">
-                                            <div class="story-admin-card-head">
-                                                <div>
-                                                    <h3 class="story-admin-title"><?= htmlspecialchars((string)($yr['name'] ?? ''), ENT_QUOTES) ?></h3>
-                                                    <div class="story-admin-id">#<?= $rid ?> · <?= htmlspecialchars((string)($yr['slug'] ?? ''), ENT_QUOTES) ?></div>
-                                                </div>
-                                                <?php if ($active): ?>
-                                                    <span class="badge bg-success-subtle text-success-emphasis">Active</span>
-                                                <?php else: ?>
-                                                    <span class="badge bg-secondary-subtle text-secondary-emphasis">Inactive</span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="story-admin-meta">
-                                                <span class="story-admin-chip"><?= htmlspecialchars((string)($yr['price'] ?? ''), ENT_QUOTES) ?> €</span>
-                                                <span class="story-admin-chip">★ <?= htmlspecialchars((string)($yr['rating'] ?? ''), ENT_QUOTES) ?></span>
-                                            </div>
-                                            <p class="small text-muted mb-0"><?= htmlspecialchars((string)($yr['address'] ?? ''), ENT_QUOTES) ?></p>
-                                            <div class="story-admin-actions">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editYummyRestaurantModal"
-                                                        data-id="<?= $rid ?>"
-                                                        data-name="<?= htmlspecialchars((string)($yr['name'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-slug="<?= htmlspecialchars((string)($yr['slug'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-description="<?= htmlspecialchars((string)($yr['description'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-address="<?= htmlspecialchars((string)($yr['address'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-image_path="<?= htmlspecialchars((string)($yr['image_path'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-price="<?= htmlspecialchars((string)($yr['price'] ?? ''), ENT_QUOTES) ?>"
-                                                        data-rating="<?= htmlspecialchars((string)($yr['rating'] ?? ''), ENT_QUOTES) ?>">
-                                                    <i class="bi bi-pencil me-1"></i>Edit
-                                                </button>
-                                                <?php if ($active): ?>
-                                                    <form method="post" action="/admin/yummy-restaurants/<?= $rid ?>/deactivate" class="d-inline" onsubmit="return confirm('Deactivate this restaurant for Yummy?');">
-                                                        <?= Csrf::field() ?>
-                                                        <button type="submit" class="btn btn-sm btn-outline-warning">Deactivate</button>
-                                                    </form>
-                                                <?php else: ?>
-                                                    <form method="post" action="/admin/yummy-restaurants/<?= $rid ?>/reactivate" class="d-inline">
-                                                        <?= Csrf::field() ?>
-                                                        <button type="submit" class="btn btn-sm btn-outline-success">Reactivate</button>
-                                                    </form>
-                                                <?php endif; ?>
-                                            </div>
-                                        </article>
-                                    <?php endforeach; ?>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Address</th>
+                                                <th>Adult price</th>
+                                                <th>Rating</th>
+                                                <th>Active</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($yummyRestaurants as $yr): ?>
+                                                <?php $rid = (int) ($yr['id'] ?? 0); ?>
+                                                <tr>
+                                                    <td><?= htmlspecialchars((string) ($yr['restaurant_name'] ?? ''), ENT_QUOTES) ?></td>
+                                                    <td class="text-muted small"><?= htmlspecialchars((string) ($yr['address'] ?? '—'), ENT_QUOTES) ?></td>
+                                                    <td>
+                                                        <?php if (!empty($yr['adult_price_cents'])): ?>
+                                                            €<?= number_format((int) $yr['adult_price_cents'] / 100, 2) ?>
+                                                        <?php else: ?>
+                                                            —
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td><?= $yr['rating'] !== null ? htmlspecialchars((string) $yr['rating'], ENT_QUOTES) : '—' ?></td>
+                                                    <td>
+                                                        <?php if ((int) ($yr['active'] ?? 0) === 1): ?>
+                                                            <span class="badge bg-success">Yes</span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-danger">No</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td class="text-end">
+                                                        <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
+                                                            <a href="/admin/yummy/restaurants/edit?id=<?= $rid ?>" class="btn btn-outline-secondary btn-sm">
+                                                                <i class="bi bi-pencil me-1"></i>Edit
+                                                            </a>
+                                                            <a href="/admin/yummy/restaurants/edit?id=<?= $rid ?>#menu-items" class="btn btn-outline-info btn-sm">
+                                                                <i class="bi bi-list-ul me-1"></i>Menu Items
+                                                            </a>
+                                                            <form method="POST" action="/admin/yummy/restaurants/<?= $rid ?>/toggle-active" class="d-inline">
+                                                                <?= Csrf::field() ?>
+                                                                <input type="hidden" name="restaurant_id" value="<?= $rid ?>">
+                                                                <button type="submit" class="btn btn-outline-warning btn-sm">
+                                                                    <?= (int) ($yr['active'] ?? 0) === 1 ? 'Deactivate' : 'Activate' ?>
+                                                                </button>
+                                                            </form>
+                                                            <form method="POST" action="/admin/yummy/restaurants/<?= $rid ?>/delete" class="d-inline" onsubmit="return confirm('Delete this restaurant? This cannot be undone.')">
+                                                                <?= Csrf::field() ?>
+                                                                <input type="hidden" name="restaurant_id" value="<?= $rid ?>">
+                                                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                    <i class="bi bi-trash me-1"></i>Delete
+                                                                </button>
+                                                            </form>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -1208,106 +1208,6 @@ use App\Security\Csrf;
                                 <div class="mb-0">
                                     <label class="form-label small fw-semibold" for="edit-history-lang">Language</label>
                                     <input type="text" class="form-control form-control-sm" id="edit-history-lang" name="language" required maxlength="64">
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Yummy restaurant modals -->
-            <div class="modal fade" id="createYummyRestaurantModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <form method="post" action="/admin/yummy-restaurants/create">
-                            <?= Csrf::field() ?>
-                            <div class="modal-header">
-                                <h5 class="modal-title">New restaurant</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold" for="create-yummy-name">Name *</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-yummy-name" name="name" required maxlength="255">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold" for="create-yummy-slug">Slug (optional)</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-yummy-slug" name="slug" maxlength="128" placeholder="auto from name">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-semibold" for="create-yummy-desc">Description</label>
-                                        <textarea class="form-control form-control-sm" id="create-yummy-desc" name="description" rows="2"></textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-semibold" for="create-yummy-addr">Address</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-yummy-addr" name="address" maxlength="500">
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label small fw-semibold" for="create-yummy-img">Image path / URL</label>
-                                        <input type="text" class="form-control form-control-sm" id="create-yummy-img" name="image_path" maxlength="500" placeholder="/uploads/...">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-semibold" for="create-yummy-price">Price</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="create-yummy-price" name="price">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-semibold" for="create-yummy-rating">Rating</label>
-                                        <input type="number" step="0.1" min="0" max="5" class="form-control form-control-sm" id="create-yummy-rating" name="rating">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="submit" class="btn btn-sm btn-primary">Create</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="modal fade" id="editYummyRestaurantModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <form method="post" id="editYummyRestaurantForm" action="/admin/yummy-restaurants/0/update">
-                            <?= Csrf::field() ?>
-                            <div class="modal-header">
-                                <h5 class="modal-title">Edit restaurant</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="row g-2">
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-name">Name *</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-name" name="name" required maxlength="255">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-slug">Slug</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-slug" name="slug" maxlength="128">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-desc">Description</label>
-                                        <textarea class="form-control form-control-sm" id="edit-yummy-desc" name="description" rows="2"></textarea>
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-addr">Address</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-addr" name="address" maxlength="500">
-                                    </div>
-                                    <div class="col-md-8">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-img">Image path / URL</label>
-                                        <input type="text" class="form-control form-control-sm" id="edit-yummy-img" name="image_path" maxlength="500">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-price">Price</label>
-                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="edit-yummy-price" name="price">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small fw-semibold" for="edit-yummy-rating">Rating</label>
-                                        <input type="number" step="0.1" min="0" max="5" class="form-control form-control-sm" id="edit-yummy-rating" name="rating">
-                                    </div>
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -1808,23 +1708,6 @@ use App\Security\Csrf;
                 document.getElementById('edit-history-lang').value = btn.getAttribute('data-language') || '';
                 document.getElementById('editHistoryTourForm').action =
                     '/admin/history-tours/' + (btn.getAttribute('data-id') || '0') + '/update';
-            });
-        }
-
-        const editYummyModalEl = document.getElementById('editYummyRestaurantModal');
-        if (editYummyModalEl) {
-            editYummyModalEl.addEventListener('show.bs.modal', function (event) {
-                const btn = event.relatedTarget;
-                if (!btn) return;
-                document.getElementById('edit-yummy-name').value = btn.getAttribute('data-name') || '';
-                document.getElementById('edit-yummy-slug').value = btn.getAttribute('data-slug') || '';
-                document.getElementById('edit-yummy-desc').value = btn.getAttribute('data-description') || '';
-                document.getElementById('edit-yummy-addr').value = btn.getAttribute('data-address') || '';
-                document.getElementById('edit-yummy-img').value = btn.getAttribute('data-image_path') || '';
-                document.getElementById('edit-yummy-price').value = btn.getAttribute('data-price') || '';
-                document.getElementById('edit-yummy-rating').value = btn.getAttribute('data-rating') || '';
-                document.getElementById('editYummyRestaurantForm').action =
-                    '/admin/yummy-restaurants/' + (btn.getAttribute('data-id') || '0') + '/update';
             });
         }
 

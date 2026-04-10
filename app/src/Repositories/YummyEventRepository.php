@@ -199,6 +199,38 @@ class YummyEventRepository implements IYummyRepository
 		return (int) $this->connection->lastInsertId();
 	}
 
+	/**
+	 * Inserts a template ticket row into the tickets table for a Yummy reservation.
+	 * event_id = 0 (no real event), order_id / user_id = NULL, ticket_code = '' (template).
+	 */
+	public function createReservationTicket(array $ticketData): int
+	{
+		$stmt = $this->connection->prepare("
+			INSERT INTO tickets (event_id, name, price, order_id, user_id, ticket_code, is_scanned)
+			VALUES (0, :name, :price, NULL, NULL, '', 0)
+		");
+
+		$stmt->bindValue(':name',  $ticketData['name'],  PDO::PARAM_STR);
+		$stmt->bindValue(':price', $ticketData['price']); // PDO casts float correctly
+		$stmt->execute();
+
+		return (int) $this->connection->lastInsertId();
+	}
+
+	/**
+	 * Links a yummy_reservations row to its template ticket.
+	 */
+	public function updateReservationTicketId(int $reservationId, int $ticketId): void
+	{
+		$stmt = $this->connection->prepare("
+			UPDATE yummy_reservations SET ticket_id = :ticketId WHERE id = :reservationId
+		");
+
+		$stmt->bindValue(':ticketId',      $ticketId,      PDO::PARAM_INT);
+		$stmt->bindValue(':reservationId', $reservationId, PDO::PARAM_INT);
+		$stmt->execute();
+	}
+
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	/**

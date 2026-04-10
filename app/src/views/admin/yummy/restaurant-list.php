@@ -21,8 +21,8 @@ use App\Security\Csrf;
 
 <div class="page-header d-flex align-items-center justify-content-between">
     <div>
-        <a href="/admin" class="text-decoration-none text-muted small">
-            <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+        <a href="/admin?events_tab=yummy#events" class="text-decoration-none text-muted small">
+            <i class="bi bi-arrow-left me-1"></i>Back to restaurants
         </a>
         <h1 class="h4 mb-0 mt-1">Yummy Restaurants</h1>
     </div>

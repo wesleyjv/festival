@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CuisineType;
+use App\Models\ShoppingCart;
 use App\Repositories\Interfaces\IYummyRepository;
 use App\Services\Interfaces\IYummyService;
 use App\ViewModels\ReservationOverviewViewModel;
@@ -58,7 +59,6 @@ class YummyService implements IYummyService
 	 */
 	public function getRestaurantDetailViewModel(string $slug): ?YummyDetailViewModel
 	{
-<<<<<<< HEAD
 		$restaurant = $this->yummyRepository->findActiveRestaurantBySlug($slug);
 
 		if ($restaurant === null) {
@@ -212,5 +212,53 @@ class YummyService implements IYummyService
 		}
 
 		return [$startDt->format('H:i'), $endDt->format('H:i')];
+	}
+
+	/**
+	 * Validates params, saves the reservation, creates a template ticket row,
+	 * links the ticket to the reservation, and pushes it into the session cart.
+	 *
+	 * Calling buildReservationOverviewViewModel() first ensures all validation
+	 * runs before any writes happen — same guard used by the controller.
+	 */
+	public function createAndCartReservation(array $params): void
+	{
+		// Validate params and compute formatted name parts.
+		$vm = $this->buildReservationOverviewViewModel($params);
+
+		// Persist the reservation row.
+		$reservationId = $this->saveReservation($params);
+
+		// Build a human-readable ticket name.
+		$ticketName = sprintf(
+			'Yummy – %s | %s | Session %d %s–%s',
+			$vm->restaurant->restaurantName,
+			$vm->festivalDate,
+			$vm->sessionNumber,
+			$vm->sessionStartTime,
+			$vm->sessionEndTime
+		);
+
+		// Insert template ticket (event_id = 0, no order/user, empty code).
+		$ticketId = $this->yummyRepository->createReservationTicket([
+			'name'  => $ticketName,
+			'price' => $vm->reservationFeeCents / 100,
+		]);
+
+		// Link the ticket back to the reservation row.
+		$this->yummyRepository->updateReservationTicketId($reservationId, $ticketId);
+
+		// Load the full Ticket model so ShoppingCart has all properties populated.
+		$ticketService = new TicketService();
+		$ticket        = $ticketService->getTicketById($ticketId);
+
+		if ($ticket === null) {
+			throw new \RuntimeException('Could not load the reservation ticket after insertion.');
+		}
+
+		// Add to session cart — quantity 1 (fee covers all guests).
+		$cart = $_SESSION['cart'] ?? new ShoppingCart();
+		$cart->addItem($ticket, 1);
+		$_SESSION['cart'] = $cart;
 	}
 }

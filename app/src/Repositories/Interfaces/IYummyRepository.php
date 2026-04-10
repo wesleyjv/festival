@@ -43,4 +43,17 @@ interface IYummyRepository
      *   special_request (nullable string), reservation_fee_cents, user_id (nullable int)
      */
     public function saveReservation(array $data): int;
+
+    /**
+     * Inserts a template ticket row into the tickets table and returns the new primary key.
+     *
+     * Expected keys in $ticketData: name (string), price (float)
+     * Inserts with event_id = 0, order_id = NULL, user_id = NULL, ticket_code = ''
+     */
+    public function createReservationTicket(array $ticketData): int;
+
+    /**
+     * Sets yummy_reservations.ticket_id for the given reservation row.
+     */
+    public function updateReservationTicketId(int $reservationId, int $ticketId): void;
 }

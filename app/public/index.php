@@ -132,7 +132,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateStoryEvent']);
     $r->addRoute('POST', '/admin/story-events/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteStoryEvent']);
 
-    $r->addRoute('GET',  '/admin/yummy/restaurants',                              ['App\\Controllers\\AdminYummyController', 'displayRestaurantList']);
+    $r->addRoute('GET',  '/admin/yummy/restaurants',                              ['App\\Controllers\\AdminYummyController', 'redirectToEventsTab']);
     $r->addRoute('GET',  '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
     $r->addRoute('GET',  '/admin/yummy/restaurants/edit',                         ['App\\Controllers\\AdminYummyController', 'displayRestaurantEditForm']);
     $r->addRoute('POST', '/admin/yummy/restaurants/create',                       ['App\\Controllers\\AdminYummyController', 'createRestaurant']);

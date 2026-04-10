@@ -12,6 +12,13 @@ class AdminYummyController
     {
     }
 
+    /** Redirects old /admin/yummy/restaurants bookmarks to the Events > Yummy tab. */
+    public function redirectToEventsTab(array $vars = []): void
+    {
+        header('Location: /admin?events_tab=yummy#events');
+        exit;
+    }
+
     /** Fetches all restaurants (including inactive) and renders the list view. */
     public function displayRestaurantList(array $vars = []): void
     {
