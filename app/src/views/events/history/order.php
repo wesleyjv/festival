@@ -19,7 +19,8 @@ require __DIR__ . '/../../partials/header.php';
             <?php endif; ?>
         </header>
 
-        <form action="/cart/add" method="POST" class="booking-container">
+        <form action="/cart/add" method="POST" class="booking-container js-cart-add-form">
+            <?= \App\Security\Csrf::field() ?>
             <!-- Left Column: Selections -->
             <div class="selection-col">
 
