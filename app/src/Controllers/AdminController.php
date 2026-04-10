@@ -13,6 +13,8 @@ use App\Repositories\StoryEventRepository;
 
 class AdminController
 {
+    use HandlesControllerErrors;
+
     private UserRepository $userRepo;
 
     public function __construct()
@@ -20,12 +22,11 @@ class AdminController
         $this->userRepo = new UserRepository();
     }
 
-    // -------------------------------------------------------------------------
-    // Pages
-    // -------------------------------------------------------------------------
+   
 
     public function dashboard($vars = [])
     {
+        try {
         $this->requireAdmin();
 
         $contentService = new ContentService();
@@ -61,14 +62,17 @@ class AdminController
         $storySaved   = $_GET['story_saved'] ?? '';
 
         require __DIR__ . '/../views/admin/dashboard.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // Content
-    // -------------------------------------------------------------------------
+    
 
     public function saveContent($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -102,6 +106,10 @@ class AdminController
 
         header('Location: /admin?saved=1#content');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     /**
@@ -110,6 +118,7 @@ class AdminController
      */
     public function uploadImage($vars = []): void
     {
+        try {
         // Catch PHP notices/deprecations so the body stays valid JSON for fetch().
         ob_start();
         $status = 200;
@@ -147,13 +156,25 @@ class AdminController
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload);
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            if (!headers_sent()) {
+                http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
+            }
+            echo json_encode(['error' => 'Something went wrong.']);
+        }
     }
 
-    /**
-     * Audio upload for jazz track previews. Returns JSON: { "location": "/uploads/audio/..." }
-     */
+    
+     // Audio upload for jazz track previews. Returns JSON: { "location": "/uploads/audio/..." }
+     
     public function uploadAudio($vars = []): void
     {
+        try {
         ob_start();
         $status  = 200;
         $payload = ['error' => 'Unexpected error'];
@@ -190,13 +211,25 @@ class AdminController
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload);
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            if (!headers_sent()) {
+                http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
+            }
+            echo json_encode(['error' => 'Something went wrong.']);
+        }
     }
 
-    /**
-     * POST /admin/jazz/artists/create — add a jazz artist (events + jazz_events rows).
-     */
+   
+     // POST /admin/jazz/artists/create — add a jazz artist (events + jazz_events rows).
+     
     public function createJazzArtist($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -220,13 +253,18 @@ class AdminController
 
         header('Location: /admin?jazz_notice=created#content');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
-    /**
-     * POST /admin/jazz/artists/{id}/delete — remove artist and jazz CMS rows.
-     */
+    
+     //POST /admin/jazz/artists/{id}/delete — remove artist and jazz CMS rows.
+     
     public function deleteJazzArtist($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -251,14 +289,16 @@ class AdminController
 
         header('Location: /admin?jazz_notice=deleted#content');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // User management
-    // -------------------------------------------------------------------------
-
+ 
     public function createUser($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -297,10 +337,15 @@ class AdminController
         $this->userRepo->adminCreateUser($name, $email, $password, $role);
         header('Location: /admin?user_saved=1#users');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function updateUser($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -338,10 +383,15 @@ class AdminController
         $this->userRepo->adminUpdateUser($id, $name, $email, $role);
         header('Location: /admin?user_saved=1#users');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     public function deleteUser($vars = []): void
     {
+        try {
         $this->requireAdmin();
 
         if (!Csrf::validateRequest()) {
@@ -364,13 +414,18 @@ class AdminController
         $this->userRepo->deleteById($id);
         header('Location: /admin?user_saved=1#users');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
-    /**
-     * Create a new storytelling event (admin CMS).
-     */
+    
+     // Create a new storytelling event (admin CMS).
+     
     public function createStoryEvent($vars = []): void
     {
+        try {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
             header('Location: /login');
             exit;
@@ -416,6 +471,10 @@ class AdminController
 
         header('Location: /admin?story_saved=1#events');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     /**
@@ -423,6 +482,7 @@ class AdminController
      */
     public function updateStoryEvent($vars = []): void
     {
+        try {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
             header('Location: /login');
             exit;
@@ -469,6 +529,10 @@ class AdminController
 
         header('Location: /admin?story_saved=1#events');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
     /**
@@ -476,6 +540,7 @@ class AdminController
      */
     public function deleteStoryEvent($vars = []): void
     {
+        try {
         if (empty($_SESSION['user_id']) || ($_SESSION['user_role'] ?? '') !== 'admin') {
             header('Location: /login');
             exit;
@@ -502,11 +567,13 @@ class AdminController
 
         header('Location: /admin?story_saved=1#events');
         exit;
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
+
 
     private function requireAdmin(): void
     {
