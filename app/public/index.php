@@ -78,6 +78,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET', '/events/stories', ['App\\Controllers\\EventsController', 'stories']);
     $r->addRoute('GET', '/events/yummy', ['App\\Controllers\\EventsController', 'displayYummyOverviewPage']);
     $r->addRoute('GET', '/events/yummy/restaurant/{slug:[a-z0-9\-]+}', ['App\\Controllers\\EventsController', 'displayRestaurantDetailPage']);
+    $r->addRoute('GET',  '/events/yummy/reservation/overview', ['App\\Controllers\\EventsController', 'displayReservationOverviewPage']);
+    $r->addRoute('POST', '/events/yummy/reservation/confirm',  ['App\\Controllers\\EventsController', 'confirmReservation']);
+    $r->addRoute('GET',  '/events/yummy/reservation/success',  ['App\\Controllers\\EventsController', 'displayReservationSuccessPage']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
 
@@ -120,6 +123,9 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/yummy/restaurants/update',                       ['App\\Controllers\\AdminYummyController', 'updateRestaurant']);
     $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/delete',              ['App\\Controllers\\AdminYummyController', 'deleteRestaurant']);
     $r->addRoute('POST', '/admin/yummy/restaurants/{id:\d+}/toggle-active',       ['App\\Controllers\\AdminYummyController', 'toggleRestaurantActiveStatus']);
+    $r->addRoute('GET',  '/admin/yummy/menu-items/edit',                          ['App\\Controllers\\AdminYummyController', 'displayMenuItemEditForm']);
+    $r->addRoute('POST', '/admin/yummy/menu-items/save',                          ['App\\Controllers\\AdminYummyController', 'saveMenuItem']);
+    $r->addRoute('POST', '/admin/yummy/menu-items/delete',                        ['App\\Controllers\\AdminYummyController', 'deleteMenuItem']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];

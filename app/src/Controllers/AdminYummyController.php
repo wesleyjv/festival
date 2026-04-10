@@ -5,22 +5,20 @@ namespace App\Controllers;
 use App\Security\Csrf;
 use App\Services\Interfaces\IAdminYummyService;
 
-/** Handles admin pages and POST actions for managing Yummy event restaurants. */
+/** Handles admin pages and POST actions for managing Yummy restaurants and their menu items. */
 class AdminYummyController
 {
     public function __construct(private readonly IAdminYummyService $adminYummyService)
     {
     }
 
-    /** Fetches all restaurants for the configured event and passes them to the list view. */
+    /** Fetches all restaurants (including inactive) and renders the list view. */
     public function displayRestaurantList(array $vars = []): void
     {
         $this->requireAdmin();
 
         try {
-            $config      = require __DIR__ . '/../Config/yummy.php';
-            $eventId     = $config['event_id'];
-            $restaurants = $this->adminYummyService->getAllRestaurantsForEvent($eventId);
+            $restaurants = $this->adminYummyService->findAllRestaurantsForAdmin();
 
             require __DIR__ . '/../views/admin/yummy/restaurant-list.php';
         } catch (\Throwable $e) {
@@ -31,8 +29,8 @@ class AdminYummyController
     }
 
     /**
-     * Serves both the create form (no query param) and the edit form (GET ?id=N).
-     * Returns 404 when an edit is requested for an ID that does not exist.
+     * Serves the create form (no ?id param) or the edit form (?id=N).
+     * Also fetches existing menu items when editing so the view can render the menu section.
      */
     public function displayRestaurantEditForm(array $vars = []): void
     {
@@ -41,15 +39,18 @@ class AdminYummyController
         try {
             $restaurantId = isset($_GET['id']) ? (int) $_GET['id'] : null;
             $restaurant   = null;
+            $menuItems    = [];
 
             if ($restaurantId !== null) {
-                $restaurant = $this->adminYummyService->getRestaurantById($restaurantId);
+                $restaurant = $this->adminYummyService->findRestaurantById($restaurantId);
 
                 if ($restaurant === null) {
                     http_response_code(404);
                     echo '404 – Restaurant not found.';
                     return;
                 }
+
+                $menuItems = $this->adminYummyService->findMenuItemsByRestaurantId($restaurantId);
             }
 
             require __DIR__ . '/../views/admin/yummy/restaurant-edit.php';
@@ -60,7 +61,7 @@ class AdminYummyController
         }
     }
 
-    /** Inserts a new restaurant and links it to the configured Yummy event. */
+    /** Inserts a new restaurant using form data from $_POST. */
     public function createRestaurant(array $vars = []): void
     {
         $this->requireAdmin();
@@ -70,11 +71,8 @@ class AdminYummyController
             exit;
         }
 
-        $config  = require __DIR__ . '/../Config/yummy.php';
-        $eventId = $config['event_id'];
-
         try {
-            $this->adminYummyService->createRestaurant($eventId, $_POST);
+            $this->adminYummyService->createRestaurant($_POST);
         } catch (\Throwable $e) {
             error_log('AdminYummyController::createRestaurant — ' . $e->getMessage());
             header('Location: /admin/yummy/restaurants/create?yummy_error=' . rawurlencode($e->getMessage()));
@@ -85,7 +83,7 @@ class AdminYummyController
         exit;
     }
 
-    /** Saves updated fields for an existing restaurant and its event-link row. */
+    /** Saves updated fields for an existing restaurant. */
     public function updateRestaurant(array $vars = []): void
     {
         $this->requireAdmin();
@@ -114,7 +112,7 @@ class AdminYummyController
         exit;
     }
 
-    /** Permanently removes a restaurant and its event link — this action cannot be undone. */
+    /** Permanently removes a restaurant and all its related rows — this cannot be undone. */
     public function deleteRestaurant(array $vars = []): void
     {
         $this->requireAdmin();
@@ -169,6 +167,106 @@ class AdminYummyController
         }
 
         header('Location: /admin/yummy/restaurants');
+        exit;
+    }
+
+    /**
+     * Serves the menu item create form (?restaurant_id=N) or edit form (?restaurant_id=N&item_id=M).
+     * Requires restaurant_id so the form can post back and the back link works.
+     */
+    public function displayMenuItemEditForm(array $vars = []): void
+    {
+        $this->requireAdmin();
+
+        try {
+            $restaurantId = (int) ($_GET['restaurant_id'] ?? 0);
+
+            if ($restaurantId <= 0) {
+                http_response_code(400);
+                echo 'Missing restaurant_id.';
+                return;
+            }
+
+            $itemId   = isset($_GET['item_id']) && (int) $_GET['item_id'] > 0
+                        ? (int) $_GET['item_id']
+                        : null;
+            $menuItem = null;
+
+            if ($itemId !== null) {
+                $items    = $this->adminYummyService->findMenuItemsByRestaurantId($restaurantId);
+                $menuItem = null;
+                foreach ($items as $item) {
+                    if ((int) $item['id'] === $itemId) {
+                        $menuItem = $item;
+                        break;
+                    }
+                }
+            }
+
+            require __DIR__ . '/../views/admin/yummy/menu-item-edit.php';
+        } catch (\Throwable $e) {
+            error_log('AdminYummyController::displayMenuItemEditForm — ' . $e->getMessage());
+            http_response_code(500);
+            echo 'Unable to load the menu item form.';
+        }
+    }
+
+    /** Inserts or updates a menu item depending on whether item_id is present in the POST body. */
+    public function saveMenuItem(array $vars = []): void
+    {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin/yummy/restaurants?yummy_error=' . rawurlencode('Invalid session. Please try again.'));
+            exit;
+        }
+
+        $restaurantId = (int) ($_POST['restaurant_id'] ?? 0);
+
+        if ($restaurantId <= 0) {
+            header('Location: /admin/yummy/restaurants?yummy_error=' . rawurlencode('Invalid restaurant ID.'));
+            exit;
+        }
+
+        try {
+            $this->adminYummyService->saveMenuItem($restaurantId, $_POST);
+        } catch (\Throwable $e) {
+            error_log('AdminYummyController::saveMenuItem — ' . $e->getMessage());
+            header('Location: /admin/yummy/menu-items/edit?restaurant_id=' . $restaurantId . '&yummy_error=' . rawurlencode($e->getMessage()));
+            exit;
+        }
+
+        header('Location: /admin/yummy/restaurants/edit?id=' . $restaurantId . '#menu-items');
+        exit;
+    }
+
+    /** Permanently removes a menu item and redirects back to the restaurant edit page. */
+    public function deleteMenuItem(array $vars = []): void
+    {
+        $this->requireAdmin();
+
+        if (!Csrf::validateRequest()) {
+            header('Location: /admin/yummy/restaurants?yummy_error=' . rawurlencode('Invalid session. Please try again.'));
+            exit;
+        }
+
+        $menuItemId   = (int) ($_POST['menu_item_id']  ?? 0);
+        $restaurantId = (int) ($_POST['restaurant_id'] ?? 0);
+
+        if ($menuItemId <= 0) {
+            header('Location: /admin/yummy/restaurants?yummy_error=' . rawurlencode('Invalid menu item ID.'));
+            exit;
+        }
+
+        try {
+            $this->adminYummyService->deleteMenuItem($menuItemId);
+        } catch (\Throwable $e) {
+            error_log('AdminYummyController::deleteMenuItem — ' . $e->getMessage());
+            header('Location: /admin/yummy/restaurants/edit?id=' . $restaurantId . '&yummy_error=' . rawurlencode($e->getMessage()) . '#menu-items');
+            exit;
+        }
+
+        header('Location: /admin/yummy/restaurants/edit?id=' . $restaurantId . '#menu-items');
         exit;
     }
 

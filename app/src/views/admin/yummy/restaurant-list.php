@@ -59,7 +59,7 @@ use App\Security\Csrf;
     <div class="card">
         <div class="card-body p-0">
             <?php if (empty($restaurants)): ?>
-                <p class="text-muted p-4 mb-0">No restaurants found for this event.</p>
+                <p class="text-muted p-4 mb-0">No restaurants found.</p>
             <?php else: ?>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
@@ -67,7 +67,7 @@ use App\Security\Csrf;
                             <tr>
                                 <th>Name</th>
                                 <th>Address</th>
-                                <th>Price</th>
+                                <th>Adult price</th>
                                 <th>Rating</th>
                                 <th>Active</th>
                                 <th class="text-end">Actions</th>
@@ -79,9 +79,11 @@ use App\Security\Csrf;
                                     <td><?= htmlspecialchars($row['restaurant_name'], ENT_QUOTES) ?></td>
                                     <td class="text-muted small"><?= htmlspecialchars($row['address'] ?? '—', ENT_QUOTES) ?></td>
                                     <td>
-                                        <?= $row['price'] !== null
-                                            ? '€' . htmlspecialchars(number_format((float) $row['price'], 2), ENT_QUOTES)
-                                            : '—' ?>
+                                        <?php if ($row['adult_price_cents'] !== null): ?>
+                                            €<?= htmlspecialchars(number_format((int) $row['adult_price_cents'] / 100, 2), ENT_QUOTES) ?>
+                                        <?php else: ?>
+                                            —
+                                        <?php endif; ?>
                                     </td>
                                     <td><?= $row['rating'] !== null ? htmlspecialchars((string) $row['rating'], ENT_QUOTES) : '—' ?></td>
                                     <td>
@@ -99,6 +101,13 @@ use App\Security\Csrf;
                                                 class="btn btn-outline-secondary btn-sm"
                                             >
                                                 <i class="bi bi-pencil me-1"></i>Edit
+                                            </a>
+
+                                            <a
+                                                href="/admin/yummy/restaurants/edit?id=<?= (int) $row['id'] ?>#menu-items"
+                                                class="btn btn-outline-info btn-sm"
+                                            >
+                                                <i class="bi bi-list-ul me-1"></i>Menu Items
                                             </a>
 
                                             <form method="POST" action="/admin/yummy/restaurants/<?= (int) $row['id'] ?>/toggle-active">

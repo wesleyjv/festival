@@ -2,24 +2,37 @@
 
 namespace App\Services\Interfaces;
 
-/** Contract for admin operations on Yummy restaurants and their event links. */
+/** Contract for admin CRUD operations on Yummy restaurants and their menu items. */
 interface IAdminYummyService
 {
     /** Includes inactive restaurants so the admin can see and reactivate them. */
-    public function getAllRestaurantsForEvent(int $eventId): array;
+    public function findAllRestaurantsForAdmin(): array;
 
-    /** Returns a single restaurant row joined with its event-link data, or null if not found. */
-    public function getRestaurantById(int $restaurantId): ?array;
+    /** Returns a single restaurant row, or null if the ID does not exist. */
+    public function findRestaurantById(int $restaurantId): ?array;
 
-    /** Inserts into `restaurants` then links the new row to the event in `yummy_event_restaurants`. */
-    public function createRestaurant(int $eventId, array $formData): void;
+    /** Inserts a new restaurant; slug is generated automatically from the name. */
+    public function createRestaurant(array $formData): void;
 
-    /** Updates both the `restaurants` row and the price/rating columns in `yummy_event_restaurants`. */
+    /** Updates all editable columns on the restaurants row. */
     public function updateRestaurant(int $restaurantId, array $formData): void;
 
-    /** Deletes the event link before the restaurant row to satisfy the foreign key constraint. */
+    /** Deletes menu items and cuisine tags first to satisfy FK constraints, then deletes the restaurant. */
     public function deleteRestaurant(int $restaurantId): void;
 
-    /** Flips the `active` flag between 0 and 1 in `yummy_event_restaurants`. */
+    /** Flips the `active` flag between 0 and 1. */
     public function toggleRestaurantActiveStatus(int $restaurantId): void;
+
+    /**
+     * Returns all menu items for the given restaurant ordered by display_order.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findMenuItemsByRestaurantId(int $restaurantId): array;
+
+    /** Inserts a new menu item when formData has no item_id, otherwise updates the existing one. */
+    public function saveMenuItem(int $restaurantId, array $formData): void;
+
+    /** Permanently removes a single menu item row. */
+    public function deleteMenuItem(int $menuItemId): void;
 }
