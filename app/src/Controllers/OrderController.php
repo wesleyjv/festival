@@ -128,7 +128,8 @@ class OrderController
             unset($_SESSION['cart']);
 
             // Send ticket/invoice files to the logged-in user's email.
-            $this->orderService->sendOrderDocuments($order->id, (string) $_SESSION['user_email']);
+            $emailSent = $this->orderService->sendOrderDocuments($order->id, (string) ($_SESSION['user_email'] ?? ''));
+            $_SESSION['last_order_email_sent'] = $emailSent;
 
             $_SESSION['last_order_number'] = $order->orderNumber;
             $_SESSION['last_order_total'] = $order->totalAmount;
@@ -163,9 +164,10 @@ class OrderController
             orderNumber: $orderNumber,
             orderTotal: (float) ($_SESSION['last_order_total'] ?? 0),
             userEmail: $_SESSION['user_email'] ?? 'your email',
+            emailSent: (bool) ($_SESSION['last_order_email_sent'] ?? false),
         );
         // Prevent page refresh from reusing old confirmation data.
-        unset($_SESSION['last_order_number'], $_SESSION['last_order_total']);
+        unset($_SESSION['last_order_number'], $_SESSION['last_order_total'], $_SESSION['last_order_email_sent']);
 
         require __DIR__ . '/../views/tickets/confirmation.php';
         } catch (\Throwable $e) {
@@ -192,8 +194,10 @@ class OrderController
 
         if ($order && $order->userId === (int) $_SESSION['user_id']) {
             // Security check: user can only request documents for own order.
-            $this->orderService->sendOrderDocuments($order->id, (string) $_SESSION['user_email']);
-            $_SESSION['email_success'] = 'Tickets and Invoice have been sent.';
+            $sent = $this->orderService->sendOrderDocuments($order->id, (string) ($_SESSION['user_email'] ?? ''));
+            $_SESSION['email_success'] = $sent
+                ? 'Tickets and Invoice have been sent.'
+                : 'Could not send email right now. Please try again later.';
         }
 
         header('Location: /orders');

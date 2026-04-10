@@ -167,7 +167,13 @@ class OrderRepository
      */
     public function findByIdWithItems(int $id): ?Order
     {
-        $stmt = $this->db->prepare('SELECT * FROM orders WHERE id = :id LIMIT 1');
+        $stmt = $this->db->prepare(
+            'SELECT o.*, u.email AS user_email
+             FROM orders o
+             LEFT JOIN users u ON o.user_id = u.id
+             WHERE o.id = :id
+             LIMIT 1'
+        );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
@@ -269,6 +275,7 @@ class OrderRepository
         $order->totalAmount = (float) $row['total_amount'];
         $order->status = $row['status'];
         $order->date = new \DateTime($row['order_date']);
+        $order->userEmail = $row['user_email'] ?? null;
         return $order;
     }
 }

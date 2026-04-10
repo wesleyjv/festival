@@ -82,18 +82,27 @@ class OrderService
         return $order;
     }
 
-    public function sendOrderDocuments(int $orderId, string $email): void
+    public function sendOrderDocuments(int $orderId, string $email): bool
     {
         $order = $this->orderRepository->findByIdWithItems($orderId);
         if (!$order) {
-            return;
+            return false;
+        }
+
+        $recipient = filter_var(trim($email), FILTER_VALIDATE_EMAIL)
+            ? trim($email)
+            : (filter_var((string) ($order->userEmail ?? ''), FILTER_VALIDATE_EMAIL) ?: null);
+
+        if ($recipient === null) {
+            error_log('OrderService mail error: no valid recipient email for order #' . $orderId);
+            return false;
         }
 
         $pdfBytes = $this->ticketPdfService->generatePdf($order);
         $invoiceBytes = $this->invoicePdfService->generatePdf($order);
 
-        $this->mailService->sendWithAttachment(
-            to: $email,
+        return $this->mailService->sendWithAttachment(
+            to: $recipient,
             subject: 'Your Festival Tickets & Invoice - ' . $order->orderNumber,
             body: "Hi,\r\n\r\nThank you for your order!\r\n\r\n"
                 . "Order number: " . $order->orderNumber . "\r\n"

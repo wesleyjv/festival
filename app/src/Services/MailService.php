@@ -15,6 +15,7 @@ class MailService
     private string $password;
     private string $fromAddress;
     private string $fromName;
+    private string $encryption;
 
     public function __construct()
     {
@@ -24,6 +25,7 @@ class MailService
         $this->password = getenv('MAIL_PASSWORD') ?: '';
         $this->fromAddress = getenv('MAIL_FROM_ADDRESS') ?: $this->username;
         $this->fromName = getenv('MAIL_FROM_NAME') ?: 'Festival App';
+        $this->encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: ($this->port === 465 ? 'ssl' : 'tls')));
     }
 
     public function sendWithAttachment(
@@ -36,13 +38,22 @@ class MailService
         $mail = new PHPMailer(true);
 
         try {
+            if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                error_log('MailService error: invalid recipient email: ' . $to);
+                return false;
+            }
+
             $mail->isSMTP();
             $mail->Host = $this->host;
             $mail->SMTPAuth = true;
             $mail->Username = $this->username;
             $mail->Password = $this->password;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = $this->encryption === 'ssl'
+                ? PHPMailer::ENCRYPTION_SMTPS
+                : PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = $this->port;
+            $mail->CharSet = 'UTF-8';
+            $mail->Timeout = 20;
 
             $mail->setFrom($this->fromAddress, $this->fromName);
             $mail->addReplyTo($this->fromAddress, $this->fromName);
@@ -65,7 +76,7 @@ class MailService
             $mail->send();
             return true;
         } catch (Exception $e) {
-            error_log('MailService error: ' . $mail->ErrorInfo);
+            error_log('MailService error: ' . $mail->ErrorInfo . ' | host=' . $this->host . ' port=' . $this->port . ' encryption=' . $this->encryption);
             return false;
         }
     }
