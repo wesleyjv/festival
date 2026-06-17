@@ -23,6 +23,8 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+            mailpit:
+                condition: service_started
 
     mysql:
         image: mysql:8.0
@@ -53,6 +55,13 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
+
+    mailpit:
+        image: axllent/mailpit:latest
+        restart: unless-stopped
+        ports:
+            - "8025:8025"   # web UI
+            - "1025:1025"   # SMTP
 
 volumes:
     mysql_data:

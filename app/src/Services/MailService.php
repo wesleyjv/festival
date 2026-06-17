@@ -25,7 +25,8 @@ class MailService
         $this->password = getenv('MAIL_PASSWORD') ?: '';
         $this->fromAddress = getenv('MAIL_FROM_ADDRESS') ?: $this->username;
         $this->fromName = getenv('MAIL_FROM_NAME') ?: 'Festival App';
-        $this->encryption = strtolower((string) (getenv('MAIL_ENCRYPTION') ?: ($this->port === 465 ? 'ssl' : 'tls')));
+        $rawEncryption = getenv('MAIL_ENCRYPTION');
+        $this->encryption = strtolower($rawEncryption !== false ? $rawEncryption : ($this->port === 465 ? 'ssl' : 'tls'));
     }
 
     public function sendWithAttachment(
@@ -45,13 +46,21 @@ class MailService
 
             $mail->isSMTP();
             $mail->Host = $this->host;
-            $mail->SMTPAuth = true;
-            $mail->Username = $this->username;
-            $mail->Password = $this->password;
-            $mail->SMTPSecure = $this->encryption === 'ssl'
-                ? PHPMailer::ENCRYPTION_SMTPS
-                : PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = $this->port;
+
+            if ($this->username !== '' && $this->password !== '') {
+                $mail->SMTPAuth = true;
+                $mail->Username = $this->username;
+                $mail->Password = $this->password;
+            } else {
+                $mail->SMTPAuth = false;
+            }
+
+            if ($this->encryption !== '') {
+                $mail->SMTPSecure = $this->encryption === 'ssl'
+                    ? PHPMailer::ENCRYPTION_SMTPS
+                    : PHPMailer::ENCRYPTION_STARTTLS;
+            }
             $mail->CharSet = 'UTF-8';
             $mail->Timeout = 20;
 
