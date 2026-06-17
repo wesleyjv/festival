@@ -6,7 +6,6 @@ use App\Database;
 use App\Repositories\Interfaces\IAdminYummyRepository;
 use App\Services\Interfaces\IAdminYummyService;
 use PDO;
-use PDOStatement;
 
 /** Handles admin business logic for Yummy restaurants and their menu items. */
 class AdminYummyService implements IAdminYummyService
@@ -16,7 +15,7 @@ class AdminYummyService implements IAdminYummyService
     public function __construct(
         private readonly IAdminYummyRepository $adminYummyRepository
     ) {
-        // Connection kept for saveMenuItem/deleteMenuItem and cuisine-tag methods (Groups C–D).
+        // Connection kept for cuisine-tag methods until Group D moves them to the repository.
         $this->connection = Database::getConnection();
     }
 
@@ -93,64 +92,23 @@ class AdminYummyService implements IAdminYummyService
             throw new \InvalidArgumentException('Menu item name is required.');
         }
 
-        $itemId       = isset($formData['item_id']) && (int) $formData['item_id'] > 0
-                        ? (int) $formData['item_id']
-                        : null;
-        $name         = trim($formData['name'] ?? '');
-        $description  = $this->sanitizeRichText($formData['description'] ?? null);
-        $imagePath    = $formData['image_path']   !== '' ? ($formData['image_path']   ?? null) : null;
-        $displayOrder = isset($formData['display_order']) && $formData['display_order'] !== ''
-                        ? (int) $formData['display_order']
-                        : 0;
+        $data = $formData;
+        $data['name']        = trim($formData['name'] ?? '');
+        $data['description'] = $this->sanitizeRichText($formData['description'] ?? null);
 
-        if ($itemId !== null) {
-            $stmt = $this->connection->prepare("
-                UPDATE restaurant_menu_items
-                SET name = :name, description = :description,
-                    image_path = :image_path, display_order = :display_order
-                WHERE id = :id AND restaurant_id = :restaurant_id
-            ");
-            $stmt->bindValue(':id', $itemId, PDO::PARAM_INT);
-        } else {
-            $stmt = $this->connection->prepare("
-                INSERT INTO restaurant_menu_items
-                    (restaurant_id, name, description, image_path, display_order)
-                VALUES
-                    (:restaurant_id, :name, :description, :image_path, :display_order)
-            ");
-        }
-
-        $stmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
-        $stmt->bindValue(':name',          $name,         PDO::PARAM_STR);
-        $stmt->bindValue(':display_order', $displayOrder, PDO::PARAM_INT);
-        $this->bindNullableString($stmt, ':description', $description);
-        $this->bindNullableString($stmt, ':image_path',  $imagePath);
-        $stmt->execute();
+        $this->adminYummyRepository->saveMenuItem($restaurantId, $data);
     }
 
     /** Permanently removes a single menu item row. */
     public function deleteMenuItem(int $menuItemId): void
     {
-        $stmt = $this->connection->prepare(
-            'DELETE FROM restaurant_menu_items WHERE id = :id'
-        );
-        $stmt->bindValue(':id', $menuItemId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->adminYummyRepository->deleteMenuItem($menuItemId);
     }
 
     /** Converts a restaurant name to a URL-safe slug. Used by createRestaurant and updateRestaurant. */
     private function generateSlug(string $name): string
     {
         return trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
-    }
-
-    private function bindNullableString(PDOStatement $stmt, string $param, ?string $value): void
-    {
-        if ($value === null || $value === '') {
-            $stmt->bindValue($param, null, PDO::PARAM_NULL);
-        } else {
-            $stmt->bindValue($param, $value, PDO::PARAM_STR);
-        }
     }
 
     private function validateRestaurantFormData(array $formData): void

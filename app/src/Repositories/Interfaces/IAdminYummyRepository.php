@@ -61,4 +61,14 @@ interface IAdminYummyRepository
 
     /** Flips the `active` flag between 0 and 1 for the given restaurant. */
     public function toggleRestaurantActiveStatus(int $restaurantId): void;
+
+    /**
+     * Inserts a new menu item row when $data has no item_id, otherwise updates the
+     * existing row. $data keys: item_id (optional), name, description (nullable,
+     * pre-sanitized), image_path (nullable), display_order.
+     */
+    public function saveMenuItem(int $restaurantId, array $data): void;
+
+    /** Permanently removes a single menu item row. */
+    public function deleteMenuItem(int $menuItemId): void;
 }

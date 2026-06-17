@@ -238,6 +238,57 @@ class AdminYummyRepository implements IAdminYummyRepository
 		$stmt->execute();
 	}
 
+	/**
+	 * Inserts a new menu item when $data has no item_id, otherwise updates the
+	 * existing row. Description and image_path must be pre-sanitized by the caller.
+	 */
+	public function saveMenuItem(int $restaurantId, array $data): void
+	{
+		$itemId       = isset($data['item_id']) && (int) $data['item_id'] > 0
+		                ? (int) $data['item_id']
+		                : null;
+		$name         = (string) ($data['name'] ?? '');
+		$description  = isset($data['description']) && $data['description'] !== '' ? $data['description'] : null;
+		$imagePath    = isset($data['image_path'])   && $data['image_path']   !== '' ? $data['image_path']   : null;
+		$displayOrder = isset($data['display_order']) && $data['display_order'] !== ''
+		                ? (int) $data['display_order']
+		                : 0;
+
+		if ($itemId !== null) {
+			$stmt = $this->connection->prepare("
+				UPDATE restaurant_menu_items
+				SET name = :name, description = :description,
+				    image_path = :image_path, display_order = :display_order
+				WHERE id = :id AND restaurant_id = :restaurant_id
+			");
+			$stmt->bindValue(':id', $itemId, PDO::PARAM_INT);
+		} else {
+			$stmt = $this->connection->prepare("
+				INSERT INTO restaurant_menu_items
+				    (restaurant_id, name, description, image_path, display_order)
+				VALUES
+				    (:restaurant_id, :name, :description, :image_path, :display_order)
+			");
+		}
+
+		$stmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+		$stmt->bindValue(':name',          $name,         PDO::PARAM_STR);
+		$stmt->bindValue(':display_order', $displayOrder, PDO::PARAM_INT);
+		$this->bindNullableString($stmt, ':description', $description);
+		$this->bindNullableString($stmt, ':image_path',  $imagePath);
+		$stmt->execute();
+	}
+
+	/** Permanently removes a single menu item row. */
+	public function deleteMenuItem(int $menuItemId): void
+	{
+		$stmt = $this->connection->prepare(
+			'DELETE FROM restaurant_menu_items WHERE id = :id'
+		);
+		$stmt->bindValue(':id', $menuItemId, PDO::PARAM_INT);
+		$stmt->execute();
+	}
+
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	/**
