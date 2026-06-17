@@ -54,7 +54,7 @@ class TicketPdfService
             // Ticket name
             $pdf->SetTextColor(0, 0, 0);
             $pdf->SetFont('helvetica', 'B', 24);
-            $pdf->Cell(0, 14, $item->ticket->name, 0, 1, 'L');
+            $pdf->MultiCell(0, 14, $item->ticket->name, 0, 'L');
             $pdf->Ln(4);
 
             // Divider line
