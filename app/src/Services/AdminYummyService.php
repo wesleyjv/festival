@@ -2,21 +2,15 @@
 
 namespace App\Services;
 
-use App\Database;
 use App\Repositories\Interfaces\IAdminYummyRepository;
 use App\Services\Interfaces\IAdminYummyService;
-use PDO;
 
 /** Handles admin business logic for Yummy restaurants and their menu items. */
 class AdminYummyService implements IAdminYummyService
 {
-    private PDO $connection;
-
     public function __construct(
         private readonly IAdminYummyRepository $adminYummyRepository
     ) {
-        // Connection kept for cuisine-tag methods until Group D moves them to the repository.
-        $this->connection = Database::getConnection();
     }
 
     /** Includes inactive restaurants so the admin can see and reactivate them. */
@@ -150,41 +144,18 @@ class AdminYummyService implements IAdminYummyService
     /** Returns all cuisine tags for the CMS picker. */
     public function findAllCuisineTags(): array
     {
-        $stmt = $this->connection->prepare('SELECT id, name FROM cuisine_tags ORDER BY name ASC');
-        $stmt->execute();
-
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $this->adminYummyRepository->findAllCuisineTags();
     }
 
     /** Returns the cuisine tag IDs currently assigned to the given restaurant. */
     public function findCuisineTagIdsForRestaurant(int $restaurantId): array
     {
-        $stmt = $this->connection->prepare(
-            'SELECT tag_id FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
-        );
-        $stmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        return $this->adminYummyRepository->findCuisineTagIdsForRestaurant($restaurantId);
     }
 
     /** Replaces the restaurant's cuisine tag assignments with the given tag IDs. */
     public function setCuisineTagsForRestaurant(int $restaurantId, array $tagIds): void
     {
-        $deleteStmt = $this->connection->prepare(
-            'DELETE FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
-        );
-        $deleteStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
-        $deleteStmt->execute();
-
-        $insertStmt = $this->connection->prepare(
-            'INSERT INTO restaurant_cuisine_tags (restaurant_id, tag_id) VALUES (:restaurant_id, :tag_id)'
-        );
-
-        foreach ($tagIds as $tagId) {
-            $insertStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
-            $insertStmt->bindValue(':tag_id', (int) $tagId, PDO::PARAM_INT);
-            $insertStmt->execute();
-        }
+        $this->adminYummyRepository->setCuisineTagsForRestaurant($restaurantId, $tagIds);
     }
 }

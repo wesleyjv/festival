@@ -289,6 +289,55 @@ class AdminYummyRepository implements IAdminYummyRepository
 		$stmt->execute();
 	}
 
+	/**
+	 * Returns all cuisine tags for the CMS picker, ordered by name.
+	 *
+	 * @return array<int, array{id: int, name: string}>
+	 */
+	public function findAllCuisineTags(): array
+	{
+		$stmt = $this->connection->prepare('SELECT id, name FROM cuisine_tags ORDER BY name ASC');
+		$stmt->execute();
+
+		return $stmt->fetchAll(PDO::FETCH_ASSOC);
+	}
+
+	/**
+	 * Returns the cuisine tag IDs currently assigned to the given restaurant.
+	 *
+	 * @return int[]
+	 */
+	public function findCuisineTagIdsForRestaurant(int $restaurantId): array
+	{
+		$stmt = $this->connection->prepare(
+			'SELECT tag_id FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
+		);
+		$stmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+		$stmt->execute();
+
+		return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+	}
+
+	/** Replaces the restaurant's cuisine tag assignments with the given tag IDs. */
+	public function setCuisineTagsForRestaurant(int $restaurantId, array $tagIds): void
+	{
+		$deleteStmt = $this->connection->prepare(
+			'DELETE FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
+		);
+		$deleteStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+		$deleteStmt->execute();
+
+		$insertStmt = $this->connection->prepare(
+			'INSERT INTO restaurant_cuisine_tags (restaurant_id, tag_id) VALUES (:restaurant_id, :tag_id)'
+		);
+
+		foreach ($tagIds as $tagId) {
+			$insertStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+			$insertStmt->bindValue(':tag_id', (int) $tagId, PDO::PARAM_INT);
+			$insertStmt->execute();
+		}
+	}
+
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	/**

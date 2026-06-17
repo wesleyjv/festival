@@ -71,4 +71,26 @@ interface IAdminYummyRepository
 
     /** Permanently removes a single menu item row. */
     public function deleteMenuItem(int $menuItemId): void;
+
+    /**
+     * Returns all cuisine tags for the CMS picker, ordered by name.
+     *
+     * @return array<int, array{id: int, name: string}>
+     */
+    public function findAllCuisineTags(): array;
+
+    /**
+     * Returns the cuisine tag IDs currently assigned to the given restaurant.
+     *
+     * @return int[]
+     */
+    public function findCuisineTagIdsForRestaurant(int $restaurantId): array;
+
+    /**
+     * Replaces the restaurant's cuisine tag assignments with the given tag IDs.
+     * Deletes existing rows then inserts new ones.
+     *
+     * @param int[] $tagIds
+     */
+    public function setCuisineTagsForRestaurant(int $restaurantId, array $tagIds): void;
 }
