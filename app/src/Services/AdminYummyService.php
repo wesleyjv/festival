@@ -16,7 +16,7 @@ class AdminYummyService implements IAdminYummyService
     public function __construct(
         private readonly IAdminYummyRepository $adminYummyRepository
     ) {
-        // Connection kept for write methods until they move to the repository (Groups B–D).
+        // Connection kept for saveMenuItem/deleteMenuItem and cuisine-tag methods (Groups C–D).
         $this->connection = Database::getConnection();
     }
 
@@ -38,34 +38,13 @@ class AdminYummyService implements IAdminYummyService
         $this->validateRestaurantFormData($formData);
 
         $name = trim($formData['restaurant_name'] ?? '');
-        $slug = trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
+        $data = $formData;
+        $data['name']     = $name;
+        $data['slug']     = $this->generateSlug($name);
+        $data['about']    = $this->sanitizeRichText($formData['about']    ?? null);
+        $data['chef_bio'] = $this->sanitizeRichText($formData['chef_bio'] ?? null);
 
-        $stmt = $this->connection->prepare("
-            INSERT INTO restaurants (
-                name, slug, address, short_description, about,
-                adult_price_cents, child_price_cents, child_max_age,
-                seats, session_count, session_duration_minutes,
-                session_one_start_time, session_two_start_time, session_three_start_time,
-                rating, review_count,
-                restaurant_image_path, chef_image_path, chef_name, chef_title, chef_bio,
-                about_image_path, reservation_image_path, active
-            ) VALUES (
-                :name, :slug, :address, :short_description, :about,
-                :adult_price_cents, :child_price_cents, :child_max_age,
-                :seats, :session_count, :session_duration_minutes,
-                :session_one_start_time, :session_two_start_time, :session_three_start_time,
-                :rating, :review_count,
-                :restaurant_image_path, :chef_image_path, :chef_name, :chef_title, :chef_bio,
-                :about_image_path, :reservation_image_path, 1
-            )
-        ");
-
-        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
-        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
-        $this->bindAllEditableFields($stmt, $formData);
-        $stmt->execute();
-
-        return (int) $this->connection->lastInsertId();
+        return $this->adminYummyRepository->createRestaurant($data);
     }
 
     /** Updates all editable columns on the restaurants row. */
@@ -74,87 +53,25 @@ class AdminYummyService implements IAdminYummyService
         $this->validateRestaurantFormData($formData);
 
         $name = trim($formData['restaurant_name'] ?? '');
-        $slug = trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
+        $data = $formData;
+        $data['name']     = $name;
+        $data['slug']     = $this->generateSlug($name);
+        $data['about']    = $this->sanitizeRichText($formData['about']    ?? null);
+        $data['chef_bio'] = $this->sanitizeRichText($formData['chef_bio'] ?? null);
 
-        $stmt = $this->connection->prepare("
-            UPDATE restaurants SET
-                name = :name,
-                slug = :slug,
-                address = :address,
-                short_description = :short_description,
-                about = :about,
-                adult_price_cents = :adult_price_cents,
-                child_price_cents = :child_price_cents,
-                child_max_age = :child_max_age,
-                seats = :seats,
-                session_count = :session_count,
-                session_duration_minutes = :session_duration_minutes,
-                session_one_start_time = :session_one_start_time,
-                session_two_start_time = :session_two_start_time,
-                session_three_start_time = :session_three_start_time,
-                rating = :rating,
-                review_count = :review_count,
-                restaurant_image_path = :restaurant_image_path,
-                chef_image_path = :chef_image_path,
-                chef_name = :chef_name,
-                chef_title = :chef_title,
-                chef_bio = :chef_bio,
-                about_image_path = :about_image_path,
-                reservation_image_path = :reservation_image_path
-            WHERE id = :id
-        ");
-
-        $stmt->bindValue(':name', $name, PDO::PARAM_STR);
-        $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $this->bindAllEditableFields($stmt, $formData);
-        $stmt->execute();
+        $this->adminYummyRepository->updateRestaurant($restaurantId, $data);
     }
 
     /** Deletes menu items and cuisine tags first to satisfy FK constraints, then deletes the restaurant. */
     public function deleteRestaurant(int $restaurantId): void
     {
-        $stmt = $this->connection->prepare(
-            'DELETE FROM restaurant_menu_items WHERE restaurant_id = :id'
-        );
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $stmt = $this->connection->prepare(
-            'DELETE FROM restaurant_cuisine_tags WHERE restaurant_id = :id'
-        );
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $stmt = $this->connection->prepare(
-            'DELETE FROM restaurants WHERE id = :id'
-        );
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->adminYummyRepository->deleteRestaurant($restaurantId);
     }
 
     /** Flips the `active` flag between 0 and 1. */
     public function toggleRestaurantActiveStatus(int $restaurantId): void
     {
-        $stmt = $this->connection->prepare(
-            'SELECT active FROM restaurants WHERE id = :id LIMIT 1'
-        );
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
-
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($row === false) {
-            return;
-        }
-
-        $newActiveValue = 1 - (int) $row['active'];
-
-        $stmt = $this->connection->prepare(
-            'UPDATE restaurants SET active = :active WHERE id = :id'
-        );
-        $stmt->bindValue(':active', $newActiveValue, PDO::PARAM_INT);
-        $stmt->bindValue(':id', $restaurantId, PDO::PARAM_INT);
-        $stmt->execute();
+        $this->adminYummyRepository->toggleRestaurantActiveStatus($restaurantId);
     }
 
     /** Returns all menu items for the given restaurant ordered by display_order. */
@@ -221,40 +138,10 @@ class AdminYummyService implements IAdminYummyService
         $stmt->execute();
     }
 
-    /**
-     * Binds all nullable editable fields shared between createRestaurant and updateRestaurant.
-     * Extracted to avoid duplicating 20 identical bindValue calls in both methods.
-     */
-    private function bindAllEditableFields(PDOStatement $stmt, array $formData): void
+    /** Converts a restaurant name to a URL-safe slug. Used by createRestaurant and updateRestaurant. */
+    private function generateSlug(string $name): string
     {
-        $this->bindNullableString($stmt, ':address',              $formData['address']              ?? null);
-        $this->bindNullableString($stmt, ':short_description',    $formData['short_description']    ?? null);
-        $this->bindNullableString($stmt, ':about',                $this->sanitizeRichText($formData['about'] ?? null));
-        $this->bindNullableString($stmt, ':session_one_start_time',   $formData['session_one_start_time']   ?? null);
-        $this->bindNullableString($stmt, ':session_two_start_time',   $formData['session_two_start_time']   ?? null);
-        $this->bindNullableString($stmt, ':session_three_start_time', $formData['session_three_start_time'] ?? null);
-        $this->bindNullableString($stmt, ':restaurant_image_path',    $formData['restaurant_image_path']    ?? null);
-        $this->bindNullableString($stmt, ':chef_image_path',      $formData['chef_image_path']      ?? null);
-        $this->bindNullableString($stmt, ':chef_name',            $formData['chef_name']            ?? null);
-        $this->bindNullableString($stmt, ':chef_title',           $formData['chef_title']           ?? null);
-        $this->bindNullableString($stmt, ':chef_bio',             $this->sanitizeRichText($formData['chef_bio'] ?? null));
-        $this->bindNullableString($stmt, ':about_image_path',     $formData['about_image_path']     ?? null);
-        $this->bindNullableString($stmt, ':reservation_image_path', $formData['reservation_image_path'] ?? null);
-
-        $this->bindNullableInt($stmt, ':adult_price_cents',      $formData['adult_price_cents']      ?? null);
-        $this->bindNullableInt($stmt, ':child_price_cents',      $formData['child_price_cents']      ?? null);
-        $this->bindNullableInt($stmt, ':child_max_age',          $formData['child_max_age']          ?? null);
-        $this->bindNullableInt($stmt, ':seats',                  $formData['seats']                  ?? null);
-        $this->bindNullableInt($stmt, ':session_count',          $formData['session_count']          ?? null);
-        $this->bindNullableInt($stmt, ':session_duration_minutes', $formData['session_duration_minutes'] ?? null);
-        $this->bindNullableInt($stmt, ':review_count',           $formData['review_count']           ?? null);
-
-        $ratingRaw = $formData['rating'] ?? null;
-        if ($ratingRaw === null || $ratingRaw === '') {
-            $stmt->bindValue(':rating', null, PDO::PARAM_NULL);
-        } else {
-            $stmt->bindValue(':rating', (float) $ratingRaw, PDO::PARAM_STR);
-        }
+        return trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
     }
 
     private function bindNullableString(PDOStatement $stmt, string $param, ?string $value): void
@@ -263,15 +150,6 @@ class AdminYummyService implements IAdminYummyService
             $stmt->bindValue($param, null, PDO::PARAM_NULL);
         } else {
             $stmt->bindValue($param, $value, PDO::PARAM_STR);
-        }
-    }
-
-    private function bindNullableInt(PDOStatement $stmt, string $param, mixed $value): void
-    {
-        if ($value === null || $value === '') {
-            $stmt->bindValue($param, null, PDO::PARAM_NULL);
-        } else {
-            $stmt->bindValue($param, (int) $value, PDO::PARAM_INT);
         }
     }
 

@@ -33,4 +33,32 @@ interface IAdminYummyRepository
      * @return array<string, mixed>|null
      */
     public function findMenuItemById(int $itemId): ?array;
+
+    /**
+     * Inserts a new restaurant row and returns the new primary key.
+     *
+     * Expected keys in $data: name, slug, address, short_description, about,
+     * adult_price_cents, child_price_cents, child_max_age, seats, session_count,
+     * session_duration_minutes, session_one_start_time, session_two_start_time,
+     * session_three_start_time, rating, review_count, restaurant_image_path,
+     * chef_image_path, chef_name, chef_title, chef_bio, about_image_path,
+     * reservation_image_path. Rich-text fields (about, chef_bio) must already be
+     * sanitized by the caller.
+     */
+    public function createRestaurant(array $data): int;
+
+    /**
+     * Updates all editable columns for the given restaurant.
+     * $data has the same keys as createRestaurant, with rich-text pre-sanitized.
+     */
+    public function updateRestaurant(int $restaurantId, array $data): void;
+
+    /**
+     * Removes the restaurant and all its menu-item and cuisine-tag rows to satisfy
+     * FK constraints.
+     */
+    public function deleteRestaurant(int $restaurantId): void;
+
+    /** Flips the `active` flag between 0 and 1 for the given restaurant. */
+    public function toggleRestaurantActiveStatus(int $restaurantId): void;
 }
