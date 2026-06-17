@@ -19,6 +19,21 @@ interface IYummyService
     public function getRestaurantDetailViewModel(string $slug): ?YummyDetailViewModel;
 
     /**
+     * Looks up an active restaurant's URL slug by its primary key.
+     * Returns null when not found or inactive — used to redirect back to the
+     * restaurant detail page after a reservation error.
+     */
+    public function getRestaurantSlugById(int $restaurantId): ?string;
+
+    /**
+     * Returns the number of seats still available for individual reservations in the
+     * given session, applying the same 90% capacity rule as the reservation flow.
+     *
+     * @throws \InvalidArgumentException for any invalid parameter.
+     */
+    public function getRemainingSeats(int $restaurantId, string $festivalDate, int $sessionNumber): int;
+
+    /**
      * Validates the reservation parameters, fetches the restaurant, calculates session
      * times and totals, and returns an assembled ReservationOverviewViewModel.
      *

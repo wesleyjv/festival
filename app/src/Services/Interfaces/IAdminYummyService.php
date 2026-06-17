@@ -11,8 +11,8 @@ interface IAdminYummyService
     /** Returns a single restaurant row, or null if the ID does not exist. */
     public function findRestaurantById(int $restaurantId): ?array;
 
-    /** Inserts a new restaurant; slug is generated automatically from the name. */
-    public function createRestaurant(array $formData): void;
+    /** Inserts a new restaurant; slug is generated automatically from the name. Returns the new restaurant's ID. */
+    public function createRestaurant(array $formData): int;
 
     /** Updates all editable columns on the restaurants row. */
     public function updateRestaurant(int $restaurantId, array $formData): void;
@@ -35,4 +35,21 @@ interface IAdminYummyService
 
     /** Permanently removes a single menu item row. */
     public function deleteMenuItem(int $menuItemId): void;
+
+    /**
+     * Returns all cuisine tags for the CMS picker.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function findAllCuisineTags(): array;
+
+    /**
+     * Returns the cuisine tag IDs currently assigned to the given restaurant.
+     *
+     * @return int[]
+     */
+    public function findCuisineTagIdsForRestaurant(int $restaurantId): array;
+
+    /** Replaces the restaurant's cuisine tag assignments with the given tag IDs. */
+    public function setCuisineTagsForRestaurant(int $restaurantId, array $tagIds): void;
 }

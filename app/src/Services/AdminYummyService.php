@@ -81,9 +81,11 @@ class AdminYummyService implements IAdminYummyService
         return $row ?: null;
     }
 
-    /** Inserts a new restaurant; slug is generated automatically from the name. */
-    public function createRestaurant(array $formData): void
+    /** Inserts a new restaurant; slug is generated automatically from the name. Returns the new restaurant's ID. */
+    public function createRestaurant(array $formData): int
     {
+        $this->validateRestaurantFormData($formData);
+
         $name = trim($formData['restaurant_name'] ?? '');
         $slug = trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
 
@@ -111,11 +113,15 @@ class AdminYummyService implements IAdminYummyService
         $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
         $this->bindAllEditableFields($stmt, $formData);
         $stmt->execute();
+
+        return (int) $this->connection->lastInsertId();
     }
 
     /** Updates all editable columns on the restaurants row. */
     public function updateRestaurant(int $restaurantId, array $formData): void
     {
+        $this->validateRestaurantFormData($formData);
+
         $name = trim($formData['restaurant_name'] ?? '');
         $slug = trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
 
@@ -218,11 +224,15 @@ class AdminYummyService implements IAdminYummyService
     /** Inserts a new menu item when formData has no item_id, otherwise updates the existing one. */
     public function saveMenuItem(int $restaurantId, array $formData): void
     {
+        if (trim($formData['name'] ?? '') === '') {
+            throw new \InvalidArgumentException('Menu item name is required.');
+        }
+
         $itemId       = isset($formData['item_id']) && (int) $formData['item_id'] > 0
                         ? (int) $formData['item_id']
                         : null;
         $name         = trim($formData['name'] ?? '');
-        $description  = $formData['description'] !== '' ? ($formData['description'] ?? null) : null;
+        $description  = $this->sanitizeRichText($formData['description'] ?? null);
         $imagePath    = $formData['image_path']   !== '' ? ($formData['image_path']   ?? null) : null;
         $displayOrder = isset($formData['display_order']) && $formData['display_order'] !== ''
                         ? (int) $formData['display_order']
@@ -271,7 +281,7 @@ class AdminYummyService implements IAdminYummyService
     {
         $this->bindNullableString($stmt, ':address',              $formData['address']              ?? null);
         $this->bindNullableString($stmt, ':short_description',    $formData['short_description']    ?? null);
-        $this->bindNullableString($stmt, ':about',                $formData['about']                ?? null);
+        $this->bindNullableString($stmt, ':about',                $this->sanitizeRichText($formData['about'] ?? null));
         $this->bindNullableString($stmt, ':session_one_start_time',   $formData['session_one_start_time']   ?? null);
         $this->bindNullableString($stmt, ':session_two_start_time',   $formData['session_two_start_time']   ?? null);
         $this->bindNullableString($stmt, ':session_three_start_time', $formData['session_three_start_time'] ?? null);
@@ -279,7 +289,7 @@ class AdminYummyService implements IAdminYummyService
         $this->bindNullableString($stmt, ':chef_image_path',      $formData['chef_image_path']      ?? null);
         $this->bindNullableString($stmt, ':chef_name',            $formData['chef_name']            ?? null);
         $this->bindNullableString($stmt, ':chef_title',           $formData['chef_title']           ?? null);
-        $this->bindNullableString($stmt, ':chef_bio',             $formData['chef_bio']             ?? null);
+        $this->bindNullableString($stmt, ':chef_bio',             $this->sanitizeRichText($formData['chef_bio'] ?? null));
         $this->bindNullableString($stmt, ':about_image_path',     $formData['about_image_path']     ?? null);
         $this->bindNullableString($stmt, ':reservation_image_path', $formData['reservation_image_path'] ?? null);
 
@@ -314,6 +324,83 @@ class AdminYummyService implements IAdminYummyService
             $stmt->bindValue($param, null, PDO::PARAM_NULL);
         } else {
             $stmt->bindValue($param, (int) $value, PDO::PARAM_INT);
+        }
+    }
+
+    private function validateRestaurantFormData(array $formData): void
+    {
+        if (trim($formData['restaurant_name'] ?? '') === '') {
+            throw new \InvalidArgumentException('Restaurant name is required.');
+        }
+
+        foreach (['adult_price_cents', 'child_price_cents'] as $field) {
+            $val = $formData[$field] ?? '';
+            if ($val !== '' && (!is_numeric($val) || (float) $val < 0)) {
+                throw new \InvalidArgumentException('Prices must be a number of 0 or more.');
+            }
+        }
+
+        foreach (['seats', 'session_count', 'session_duration_minutes'] as $field) {
+            $val = $formData[$field] ?? '';
+            if ($val !== '' && filter_var($val, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]) === false) {
+                throw new \InvalidArgumentException('Seats and session values must be 0 or more.');
+            }
+        }
+    }
+
+    /** Strips disallowed tags from TinyMCE output before storage; returns null for empty input. */
+    private function sanitizeRichText(?string $html): ?string
+    {
+        if ($html === null || $html === '') {
+            return null;
+        }
+
+        $clean = strip_tags(
+            $html,
+            '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><blockquote><a>'
+        );
+
+        return $clean !== '' ? $clean : null;
+    }
+
+    /** Returns all cuisine tags for the CMS picker. */
+    public function findAllCuisineTags(): array
+    {
+        $stmt = $this->connection->prepare('SELECT id, name FROM cuisine_tags ORDER BY name ASC');
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /** Returns the cuisine tag IDs currently assigned to the given restaurant. */
+    public function findCuisineTagIdsForRestaurant(int $restaurantId): array
+    {
+        $stmt = $this->connection->prepare(
+            'SELECT tag_id FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
+        );
+        $stmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    /** Replaces the restaurant's cuisine tag assignments with the given tag IDs. */
+    public function setCuisineTagsForRestaurant(int $restaurantId, array $tagIds): void
+    {
+        $deleteStmt = $this->connection->prepare(
+            'DELETE FROM restaurant_cuisine_tags WHERE restaurant_id = :restaurant_id'
+        );
+        $deleteStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+        $deleteStmt->execute();
+
+        $insertStmt = $this->connection->prepare(
+            'INSERT INTO restaurant_cuisine_tags (restaurant_id, tag_id) VALUES (:restaurant_id, :tag_id)'
+        );
+
+        foreach ($tagIds as $tagId) {
+            $insertStmt->bindValue(':restaurant_id', $restaurantId, PDO::PARAM_INT);
+            $insertStmt->bindValue(':tag_id', (int) $tagId, PDO::PARAM_INT);
+            $insertStmt->execute();
         }
     }
 }

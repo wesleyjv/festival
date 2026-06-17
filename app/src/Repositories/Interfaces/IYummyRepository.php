@@ -56,4 +56,10 @@ interface IYummyRepository
      * Sets yummy_reservations.ticket_id for the given reservation row.
      */
     public function updateReservationTicketId(int $reservationId, int $ticketId): void;
+
+    /**
+     * Returns SUM(adults + children) across non-cancelled reservations for the given
+     * restaurant/date/session. Returns 0 when there are none.
+     */
+    public function countReservedSeatsForSession(int $restaurantId, string $festivalDate, int $sessionNumber): int;
 }

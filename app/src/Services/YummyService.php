@@ -24,6 +24,9 @@ class YummyService implements IYummyService
 	/** Reservation fee in cents charged per person regardless of age. */
 	private const RESERVATION_FEE_CENTS_PER_PERSON = 1000;
 
+	/** Only this fraction of a restaurant's seats may be sold to individual reservations. */
+	private const SELLABLE_SEATS_RATIO = 0.9;
+
 
 	public function __construct(
 		private readonly IYummyRepository $yummyRepository,
@@ -75,6 +78,35 @@ class YummyService implements IYummyService
 		);
 	}
 
+	/** Looks up an active restaurant's URL slug by its primary key; returns null when not found or inactive. */
+	public function getRestaurantSlugById(int $restaurantId): ?string
+	{
+		return $this->yummyRepository->findRestaurantById($restaurantId)?->slug;
+	}
+
+	/**
+	 * Returns the number of seats still available for individual reservations in the
+	 * given session, applying the same 90% capacity rule as the reservation flow.
+	 *
+	 * @throws \InvalidArgumentException for any invalid parameter.
+	 */
+	public function getRemainingSeats(int $restaurantId, string $festivalDate, int $sessionNumber): int
+	{
+		if (!in_array($sessionNumber, [1, 2, 3], true)) {
+			throw new \InvalidArgumentException('Invalid session number. Choose 1, 2, or 3.');
+		}
+		if (!array_key_exists($festivalDate, self::FESTIVAL_DATES)) {
+			throw new \InvalidArgumentException('Invalid festival date.');
+		}
+
+		$restaurant = $this->yummyRepository->findRestaurantById($restaurantId);
+		if ($restaurant === null) {
+			throw new \InvalidArgumentException('Restaurant not found.');
+		}
+
+		return $this->computeRemainingSeats($restaurant, $sessionNumber, $festivalDate);
+	}
+
 	/**
 	 * Validates reservation parameters, fetches the restaurant, calculates session
 	 * times and price totals, and returns an assembled ReservationOverviewViewModel.
@@ -109,6 +141,8 @@ class YummyService implements IYummyService
 		}
 
 		[$startTime, $endTime] = $this->resolveSessionTimes($restaurant, $sessionNumber);
+
+		$this->ensureCapacityAvailable($restaurant, $sessionNumber, $festivalDateRaw, $adults, $children);
 
 		$adultPriceCents = $restaurant->adultPriceCents ?? 0;
 		$childPriceCents = $restaurant->childPriceCents ?? 0;
@@ -180,6 +214,36 @@ class YummyService implements IYummyService
 	// ── Private helpers ───────────────────────────────────────────────────────
 
 	/**
+	 * Returns the number of seats still available for individual reservations in the
+	 * given session. Only SELLABLE_SEATS_RATIO of the restaurant's seats are sellable
+	 * to individual reservations; the rest is reserved for walk-ins/groups.
+	 */
+	private function computeRemainingSeats($restaurant, int $sessionNumber, string $festivalDateRaw): int
+	{
+		$usableSeats = (int) floor(($restaurant->seats ?? 0) * self::SELLABLE_SEATS_RATIO);
+		$reserved    = $this->yummyRepository->countReservedSeatsForSession($restaurant->id, $festivalDateRaw, $sessionNumber);
+
+		return $usableSeats - $reserved;
+	}
+
+	/**
+	 * Throws when the requested guest count would exceed the session's remaining capacity.
+	 *
+	 * @throws \InvalidArgumentException when there is not enough remaining capacity.
+	 */
+	private function ensureCapacityAvailable($restaurant, int $sessionNumber, string $festivalDateRaw, int $adults, int $children): void
+	{
+		$remaining = $this->computeRemainingSeats($restaurant, $sessionNumber, $festivalDateRaw);
+
+		if ($adults + $children > $remaining) {
+			if ($remaining <= 0) {
+				throw new \InvalidArgumentException('This session is fully booked.');
+			}
+			throw new \InvalidArgumentException("Only {$remaining} seat(s) left for this session.");
+		}
+	}
+
+	/**
 	 * Picks the correct start time for the given session number and calculates the
 	 * end time by adding session_duration_minutes.
 	 *
@@ -225,6 +289,10 @@ class YummyService implements IYummyService
 	{
 		// Validate params and compute formatted name parts.
 		$vm = $this->buildReservationOverviewViewModel($params);
+
+		// Re-check capacity right before persisting to close the gap between
+		// building the overview and confirming the reservation.
+		$this->ensureCapacityAvailable($vm->restaurant, $vm->sessionNumber, $vm->festivalDateRaw, $vm->adults, $vm->children);
 
 		// Persist the reservation row.
 		$reservationId = $this->saveReservation($params);

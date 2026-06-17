@@ -9,6 +9,11 @@ RUN apt-get update \
     && rm composer-setup.php \
     && rm -rf /var/lib/apt/lists/*
 
+RUN { \
+    echo 'upload_max_filesize = 20M'; \
+    echo 'post_max_size = 25M'; \
+    } > /usr/local/etc/php/conf.d/uploads.ini
+
 WORKDIR /app
 
 # Allow running Composer as root within the container

@@ -10,6 +10,41 @@ $v = static function (string $key) use ($restaurant): string {
     return htmlspecialchars((string) ($restaurant[$key] ?? ''), ENT_QUOTES);
 };
 
+/** Renders an upload-enabled image field: text input + upload button + dropzone + preview. */
+$imageField = static function (string $name, string $label, string $placeholder) use ($v): void {
+    $val = $v($name);
+    $preview = $val !== '' ? $val : 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+    ?>
+    <div class="mb-3">
+        <label class="form-label small fw-semibold" for="<?= $name ?>"><?= htmlspecialchars($label, ENT_QUOTES) ?></label>
+        <div class="input-group input-group-sm mb-2">
+            <input
+                type="text"
+                id="<?= $name ?>"
+                name="<?= $name ?>"
+                class="form-control cms-image-url"
+                placeholder="<?= htmlspecialchars($placeholder, ENT_QUOTES) ?>"
+                value="<?= $val ?>"
+            >
+            <button type="button" class="btn btn-outline-secondary cms-upload-btn" data-target-input="<?= $name ?>">
+                <i class="bi bi-upload me-1"></i>Upload
+            </button>
+        </div>
+        <div class="cms-dropzone mb-2" data-target-input="<?= $name ?>">
+            <i class="bi bi-cloud-arrow-up"></i>
+            <span>Drag &amp; drop an image here, or click to select a file.</span>
+        </div>
+        <img
+            src="<?= $preview ?>"
+            alt=""
+            class="border rounded cms-image-preview<?= $val === '' ? ' d-none' : '' ?>"
+            style="max-height: 140px; max-width: 100%; object-fit: cover;"
+            data-preview-for="<?= $name ?>"
+        >
+    </div>
+    <?php
+};
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -24,6 +59,35 @@ $v = static function (string $key) use ($restaurant): string {
         body { background-color: #f8f9fa; }
         .page-header { background: #fff; border-bottom: 1px solid #e5e7eb; padding: 16px 24px; margin-bottom: 24px; }
         .section-title { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; margin-bottom: 1rem; }
+
+        .cms-dropzone {
+            border: 1px dashed #9ca3af;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            background-color: #f9fafb;
+            cursor: pointer;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+
+        .cms-dropzone:hover {
+            background-color: #eef2ff;
+            border-color: #6366f1;
+        }
+
+        .cms-dropzone.dragover {
+            background-color: #e0f2fe;
+            border-color: #0ea5e9;
+            color: #0369a1;
+        }
+
+        .cms-dropzone i {
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -97,10 +161,40 @@ $v = static function (string $key) use ($restaurant): string {
                     <textarea
                         id="about"
                         name="about"
-                        class="form-control"
+                        class="form-control wysiwyg"
                         rows="5"
                     ><?= $v('about') ?></textarea>
                 </div>
+            </div>
+        </div>
+
+        <!-- Cuisine tags -->
+        <div class="card mb-4" style="max-width: 860px;">
+            <div class="card-body">
+                <p class="section-title">Cuisine tags</p>
+
+                <?php if (empty($cuisineTags)): ?>
+                    <p class="text-muted small mb-0">No cuisine tags are available yet.</p>
+                <?php else: ?>
+                    <div class="d-flex flex-wrap gap-3">
+                        <?php foreach ($cuisineTags as $tag): ?>
+                            <?php $tagId = (int) $tag['id']; ?>
+                            <div class="form-check">
+                                <input
+                                    type="checkbox"
+                                    class="form-check-input"
+                                    id="cuisine_tag_<?= $tagId ?>"
+                                    name="cuisine_tags[]"
+                                    value="<?= $tagId ?>"
+                                    <?= in_array($tagId, $selectedCuisineTagIds, true) ? 'checked' : '' ?>
+                                >
+                                <label class="form-check-label small" for="cuisine_tag_<?= $tagId ?>">
+                                    <?= htmlspecialchars((string) $tag['name'], ENT_QUOTES) ?>
+                                </label>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -262,53 +356,13 @@ $v = static function (string $key) use ($restaurant): string {
             <div class="card-body">
                 <p class="section-title">Images</p>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold" for="restaurant_image_path">Restaurant image path</label>
-                    <input
-                        type="text"
-                        id="restaurant_image_path"
-                        name="restaurant_image_path"
-                        class="form-control"
-                        placeholder="/uploads/restaurant.jpg"
-                        value="<?= $v('restaurant_image_path') ?>"
-                    >
-                </div>
+                <?php $imageField('restaurant_image_path', 'Restaurant image', '/uploads/restaurant.jpg'); ?>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold" for="about_image_path">About image path</label>
-                    <input
-                        type="text"
-                        id="about_image_path"
-                        name="about_image_path"
-                        class="form-control"
-                        placeholder="/uploads/about.jpg"
-                        value="<?= $v('about_image_path') ?>"
-                    >
-                </div>
+                <?php $imageField('about_image_path', 'About image', '/uploads/about.jpg'); ?>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-semibold" for="reservation_image_path">Reservation image path</label>
-                    <input
-                        type="text"
-                        id="reservation_image_path"
-                        name="reservation_image_path"
-                        class="form-control"
-                        placeholder="/uploads/reservation.jpg"
-                        value="<?= $v('reservation_image_path') ?>"
-                    >
-                </div>
+                <?php $imageField('reservation_image_path', 'Reservation image', '/uploads/reservation.jpg'); ?>
 
-                <div class="mb-0">
-                    <label class="form-label small fw-semibold" for="chef_image_path">Chef image path</label>
-                    <input
-                        type="text"
-                        id="chef_image_path"
-                        name="chef_image_path"
-                        class="form-control"
-                        placeholder="/uploads/chef.jpg"
-                        value="<?= $v('chef_image_path') ?>"
-                    >
-                </div>
+                <?php $imageField('chef_image_path', 'Chef image', '/uploads/chef.jpg'); ?>
             </div>
         </div>
 
@@ -344,7 +398,7 @@ $v = static function (string $key) use ($restaurant): string {
                     <textarea
                         id="chef_bio"
                         name="chef_bio"
-                        class="form-control"
+                        class="form-control wysiwyg"
                         rows="4"
                     ><?= $v('chef_bio') ?></textarea>
                 </div>
@@ -428,5 +482,209 @@ $v = static function (string $key) use ($restaurant): string {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- TinyMCE WYSIWYG editor -->
+<script src="https://cdn.tiny.cloud/1/rmqh6zpkull0b6qquqsqfol8clwt2hcni7cikkt0vy5f96ij/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+
+<script>
+    (function () {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        tinymce.init({
+            selector: 'textarea.wysiwyg',
+            plugins: 'link lists code image media table',
+            toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image media | code',
+            menubar: false,
+            height: 260,
+            images_upload_url: '/admin/upload-image',
+            automatic_uploads: true,
+            images_upload_credentials: true,
+            images_upload_handler: function (blobInfo, success, failure, progress) {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', '/admin/upload-image');
+                xhr.withCredentials = true;
+
+                xhr.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        progress(e.loaded / e.total * 100);
+                    }
+                };
+
+                xhr.onload = function () {
+                    if (xhr.status < 200 || xhr.status >= 300) {
+                        failure('HTTP Error: ' + xhr.status);
+                        return;
+                    }
+                    let json;
+                    try {
+                        json = JSON.parse(xhr.responseText);
+                    } catch (e) {
+                        failure('Invalid JSON: ' + xhr.responseText);
+                        return;
+                    }
+                    if (!json || typeof json.location !== 'string') {
+                        failure('Invalid response: ' + xhr.responseText);
+                        return;
+                    }
+                    success(json.location);
+                };
+
+                xhr.onerror = function () {
+                    failure('Image upload failed due to a XHR transport error.');
+                };
+
+                const formData = new FormData();
+                formData.append('file', blobInfo.blob(), blobInfo.filename());
+                formData.append('csrf_token', csrfToken);
+                xhr.send(formData);
+            }
+        });
+
+        // Simple image uploader for the restaurant/about/reservation/chef image fields (button + drag & drop)
+        function cmsUploadImage(file, form, targetName, onStart, onDone) {
+            if (!file || !form || !targetName) return;
+
+            const data = new FormData();
+            data.append('file', file, file.name);
+            data.append('csrf_token', csrfToken);
+
+            if (typeof onStart === 'function') {
+                onStart();
+            }
+
+            fetch('/admin/upload-image', {
+                method: 'POST',
+                body: data,
+                credentials: 'include'
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Upload failed with status ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(json => {
+                    if (!json || typeof json.location !== 'string') {
+                        throw new Error('Invalid response from server');
+                    }
+                    const input = form.querySelector(`input[name="${targetName}"]`);
+                    if (input) {
+                        input.value = json.location;
+                    }
+                    const preview = form.querySelector(`img.cms-image-preview[data-preview-for="${targetName}"]`);
+                    if (preview) {
+                        preview.src = json.location;
+                        preview.classList.remove('d-none');
+                    }
+                })
+                .catch(err => {
+                    alert('Image upload failed: ' + err.message);
+                })
+                .finally(() => {
+                    if (typeof onDone === 'function') {
+                        onDone();
+                    }
+                });
+        }
+
+        document.querySelectorAll('.cms-upload-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetName = button.getAttribute('data-target-input');
+                if (!targetName) return;
+
+                const form = button.closest('form');
+                if (!form) return;
+
+                let fileInput = form.querySelector(`input[type="file"][data-file-for="${targetName}"]`);
+                if (!fileInput) {
+                    fileInput = document.createElement('input');
+                    fileInput.type = 'file';
+                    fileInput.accept = 'image/*';
+                    fileInput.classList.add('d-none');
+                    fileInput.setAttribute('data-file-for', targetName);
+                    form.appendChild(fileInput);
+                }
+
+                fileInput.onchange = () => {
+                    if (!fileInput.files || !fileInput.files[0]) {
+                        return;
+                    }
+
+                    const file = fileInput.files[0];
+
+                    cmsUploadImage(
+                        file,
+                        form,
+                        targetName,
+                        () => {
+                            button.disabled = true;
+                            button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Uploading...';
+                        },
+                        () => {
+                            button.disabled = false;
+                            button.innerHTML = '<i class="bi bi-upload me-1"></i>Upload';
+                            fileInput.value = '';
+                        }
+                    );
+                };
+
+                fileInput.click();
+            });
+        });
+
+        document.querySelectorAll('.cms-dropzone[data-target-input]').forEach(zone => {
+            const targetName = zone.getAttribute('data-target-input');
+            if (!targetName) return;
+
+            zone.addEventListener('click', () => {
+                const form = zone.closest('form');
+                if (!form) return;
+                const relatedButton = form.querySelector(`.cms-upload-btn[data-target-input="${targetName}"]`);
+                if (relatedButton) {
+                    relatedButton.click();
+                }
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.add('dragover');
+                });
+            });
+
+            ['dragleave', 'dragend', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    zone.classList.remove('dragover');
+                });
+            });
+
+            zone.addEventListener('drop', e => {
+                const files = e.dataTransfer && e.dataTransfer.files;
+                if (!files || !files[0]) return;
+
+                const file = files[0];
+                const form = zone.closest('form');
+                if (!form) return;
+
+                const originalHtml = zone.innerHTML;
+
+                cmsUploadImage(
+                    file,
+                    form,
+                    targetName,
+                    () => {
+                        zone.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Uploading image...';
+                    },
+                    () => {
+                        zone.innerHTML = originalHtml;
+                    }
+                );
+            });
+        });
+    })();
+</script>
 </body>
 </html>
