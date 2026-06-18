@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CuisineType;
+use App\Enums\FestivalDate;
 use App\Models\Ticket;
 use App\Repositories\Interfaces\IYummyRepository;
 use App\Services\Interfaces\IYummyService;
@@ -13,14 +14,6 @@ use App\ViewModels\YummyOverviewViewModel;
 /** Assembles the view models needed by the public Yummy event pages. */
 class YummyService implements IYummyService
 {
-	/** ISO date values accepted for festival_date, mapped to their display labels. */
-	private const FESTIVAL_DATES = [
-		'2026-07-23' => 'Wed 23 July',
-		'2026-07-24' => 'Thu 24 July',
-		'2026-07-25' => 'Fri 25 July',
-		'2026-07-26' => 'Sat 26 July',
-	];
-
 	/** Reservation fee in cents charged per person regardless of age. */
 	private const RESERVATION_FEE_CENTS_PER_PERSON = 1000;
 
@@ -94,7 +87,7 @@ class YummyService implements IYummyService
 		if (!in_array($sessionNumber, [1, 2, 3], true)) {
 			throw new \InvalidArgumentException('Invalid session number. Choose 1, 2, or 3.');
 		}
-		if (!array_key_exists($festivalDate, self::FESTIVAL_DATES)) {
+		if (FestivalDate::tryFrom($festivalDate) === null) {
 			throw new \InvalidArgumentException('Invalid festival date.');
 		}
 
@@ -141,7 +134,7 @@ class YummyService implements IYummyService
 		return new ReservationOverviewViewModel(
 			restaurant:           $restaurant,
 			sessionNumber:        $sessionNumber,
-			festivalDate:         self::FESTIVAL_DATES[$festivalDateRaw],
+			festivalDate:         FestivalDate::from($festivalDateRaw)->label(),
 			festivalDateRaw:      $festivalDateRaw,
 			adults:               $adults,
 			children:             $children,
@@ -235,7 +228,7 @@ class YummyService implements IYummyService
 		if ($adults + $children <= 0) {
 			throw new \InvalidArgumentException('At least one guest is required.');
 		}
-		if (!array_key_exists($festivalDateRaw, self::FESTIVAL_DATES)) {
+		if (FestivalDate::tryFrom($festivalDateRaw) === null) {
 			throw new \InvalidArgumentException('Invalid festival date.');
 		}
 
