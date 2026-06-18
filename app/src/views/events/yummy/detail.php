@@ -2,7 +2,6 @@
 /** @var \App\ViewModels\YummyDetailViewModel $viewModel */
 $restaurant = $viewModel->restaurant;
 $menuItems  = $viewModel->menuItems;
-$content    = $viewModel->pageContent;
 
 /* --- Session time helpers --- */
 $sessions   = [];
