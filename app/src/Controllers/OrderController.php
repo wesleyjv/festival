@@ -6,38 +6,27 @@ namespace App\Controllers;
 
 use App\Security\Csrf;
 use App\Models\ShoppingCart;
-use App\Services\MailService;
 use App\Services\OrderService;
-use App\Services\StripeService;
-use App\Services\TicketPdfService;
 use App\ViewModels\CheckoutViewModel;
 use App\ViewModels\OrderConfirmationViewModel;
 use App\ViewModels\OrderHistoryViewModel;
+use Exception;
 
 class OrderController
 {
     use HandlesControllerErrors;
 
+    // Service responsible for order, payment, and document operations.
     private OrderService $orderService;
-    private TicketPdfService $ticketPdfService;
-    private MailService $mailService;
-    private StripeService $stripeService;
 
-    public function __construct(
-        OrderService $orderService,
-        TicketPdfService $ticketPdfService,
-        MailService $mailService,
-        StripeService $stripeService,
-    ) {
+    public function __construct(OrderService $orderService) {
         $this->orderService = $orderService;
-        $this->ticketPdfService = $ticketPdfService;
-        $this->mailService = $mailService;
-        $this->stripeService = $stripeService;
     }
 
     public function orders(): void
     {
         try {
+        // Ensure session exists and require login to view order history.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -46,6 +35,7 @@ class OrderController
         }
 
         $orders = $this->orderService->getOrdersByUserId((int) $_SESSION['user_id']);
+        // Build a view model so the template gets exactly what it needs.
         $viewModel = new OrderHistoryViewModel($orders);
         require __DIR__ . '/../views/tickets/orders.php';
         } catch (\Throwable $e) {
@@ -57,25 +47,24 @@ class OrderController
     public function checkout(): void
     {
         try {
+        // Load current cart and render checkout page.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
-
         if (empty($cart->items)) {
+            // No items to buy, send user back to cart page.
             header('Location: /cart');
             exit;
         }
 
-        $total = $cart->getTotal();
-        $error = $_SESSION['checkout_error'] ?? null;
-        unset($_SESSION['checkout_error']);
-
         $viewModel = new CheckoutViewModel(
             items: $cart->items,
-            total: $total,
-            error: $error,
+            total: $cart->getTotal(),
+            error: $_SESSION['checkout_error'] ?? null,
             isLoggedIn: !empty($_SESSION['user_id']),
         );
+        // Flash-style error: show once, then clear.
+        unset($_SESSION['checkout_error']);
 
         require __DIR__ . '/../views/tickets/checkout.php';
         } catch (\Throwable $e) {
@@ -87,52 +76,27 @@ class OrderController
     public function placeOrder(): void
     {
         try {
+        // Validate request and start Stripe checkout flow.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
-        if (!Csrf::validateRequest()) {
-            $_SESSION['checkout_error'] = 'Invalid session. Please try again.';
-            header('Location: /checkout');
-            exit;
-        }
-
-        if (empty($_SESSION['user_id'])) {
-            $_SESSION['checkout_error'] = 'You must be logged in to complete your purchase.';
+        if (!$this->validateRequest()) {
+            // validateRequest sets a user-facing error in session.
             header('Location: /checkout');
             exit;
         }
 
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
-
-        if (empty($cart->items)) {
-            header('Location: /cart');
-            exit;
-        }
-
-        // Check if Stripe is configured
-        if (!$this->stripeService->isConfigured()) {
-            $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
-            header('Location: /checkout');
-            exit;
-        }
-
+        // Build absolute site URL used by Stripe return links.
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-        $baseUrl = $protocol . '://' . $host;
+        $baseUrl = $protocol . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 
         try {
-            // Use StripeService to create a Checkout Session
-            $session = $this->stripeService->createCheckoutSession(
-                cart: $cart,
-                baseUrl: $baseUrl,
-                userId: (int) $_SESSION['user_id']
-            );
-
-            // Redirect the user to Stripe's payment page
-            header('Location: ' . $session->url);
+            // Create Stripe session and redirect customer to hosted payment page.
+            $url = $this->orderService->initiateStripeSession($cart, $baseUrl, (int) $_SESSION['user_id']);
+            header('Location: ' . $url);
             exit;
-        } catch (\Throwable $e) {
-            error_log('Stripe Session Creation Error: ' . $e->getMessage());
-            $_SESSION['checkout_error'] = 'Unable to start payment session. Please try again.';
+        } catch (Exception $e) {
+            $_SESSION['checkout_error'] = $e->getMessage();
             header('Location: /checkout');
             exit;
         }
@@ -142,10 +106,10 @@ class OrderController
         }
     }
 
-
     public function completeCheckout(): void
     {
         try {
+        // Verify Stripe result, create order, clear cart, and send documents.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         if (empty($_SESSION['user_id'])) {
@@ -154,78 +118,26 @@ class OrderController
             exit;
         }
 
-        // Get the session ID from Stripe to verify payment
-        $sessionId = $_GET['session_id'] ?? null;
-        if (!$sessionId) {
-            $_SESSION['checkout_error'] = 'Missing payment session information.';
-            header('Location: /checkout');
-            exit;
-        }
-
-        // Check if Stripe is configured
-        if (!$this->stripeService->isConfigured()) {
-            $_SESSION['checkout_error'] = 'Payment provider not configured. Please contact support.';
-            header('Location: /checkout');
-            exit;
-        }
-
-        try {
-            // Use StripeService to retrieve the payment session
-            $session = $this->stripeService->retrieveSession($sessionId);
-        } catch (\Throwable $e) {
-            error_log('Stripe Session Retrieval Error: ' . $e->getMessage());
-            $_SESSION['checkout_error'] = 'Unable to verify payment. Please contact support.';
-            header('Location: /checkout');
-            exit;
-        }
-
-        // Check if the payment was actually successful
-        if (!isset($session->payment_status) || $session->payment_status !== 'paid') {
-            $_SESSION['checkout_error'] = 'Payment not completed. Please try again.';
-            header('Location: /checkout');
-            exit;
-        }
-
-        // Payment succeeded: create the order in our database from the cart
         $cart = $_SESSION['cart'] ?? new ShoppingCart();
-        if (empty($cart->items)) {
-            $_SESSION['checkout_error'] = 'Your cart is empty. Nothing to complete.';
-            header('Location: /cart');
-            exit;
-        }
+        // Stripe sends this back on success URL so we can verify payment.
+        $sessionId = $_GET['session_id'] ?? null;
 
         try {
-            $order = $this->orderService->createOrderFromCart($cart, (int) $_SESSION['user_id']);
+            $order = $this->orderService->finalizeStripeOrder($sessionId, $cart, (int) $_SESSION['user_id']);
+            // Payment is confirmed and order is stored, cart can be cleared.
             unset($_SESSION['cart']);
 
-            $userEmail = $_SESSION['user_email'] ?? null;
-            if ($userEmail !== null) {
-                $orderWithItems = $this->orderService->getOrderByIdWithItems($order->id);
-                if ($orderWithItems !== null) {
-                    $pdfBytes = $this->ticketPdfService->generatePdf($orderWithItems);
-                    $this->mailService->sendWithAttachment(
-                        to: $userEmail,
-                        subject: 'Your Festival Tickets - ' . $order->orderNumber,
-                        body: "Hi,\r\n\r\nThank you for your order!\r\n\r\n"
-                            . "Order number: " . $order->orderNumber . "\r\n"
-                            . "Total: EUR " . number_format($order->totalAmount, 2) . "\r\n\r\n"
-                            . "Your tickets are attached as a PDF.\r\n\r\n"
-                            . "See you at the festival!",
-                        attachmentData: $pdfBytes,
-                        attachmentName: 'tickets-' . $order->orderNumber . '.pdf',
-                    );
-                }
-            }
+            // Send ticket/invoice files to the logged-in user's email.
+            $emailSent = $this->orderService->sendOrderDocuments($order->id, (string) ($_SESSION['user_email'] ?? ''));
+            $_SESSION['last_order_email_sent'] = $emailSent;
 
             $_SESSION['last_order_number'] = $order->orderNumber;
             $_SESSION['last_order_total'] = $order->totalAmount;
 
             header('Location: /checkout/confirmation');
             exit;
-        } catch (\Exception $e) {
-            error_log('Checkout finalization error: ' . $e->getMessage());
-            error_log($e->getTraceAsString());
-            $_SESSION['checkout_error'] = 'Something went wrong finalizing your order. Please contact support.';
+        } catch (Exception $e) {
+            $_SESSION['checkout_error'] = $e->getMessage();
             header('Location: /checkout');
             exit;
         }
@@ -238,23 +150,24 @@ class OrderController
     public function confirmation(): void
     {
         try {
+        // Render confirmation page using last completed order details.
         if (session_status() === PHP_SESSION_NONE) session_start();
 
         $orderNumber = $_SESSION['last_order_number'] ?? null;
-        $orderTotal = $_SESSION['last_order_total'] ?? null;
-
         if (!$orderNumber) {
+            // Protect route: confirmation page only after a successful order.
             header('Location: /');
             exit;
         }
 
-        unset($_SESSION['last_order_number'], $_SESSION['last_order_total']);
-
         $viewModel = new OrderConfirmationViewModel(
             orderNumber: $orderNumber,
-            orderTotal: $orderTotal !== null ? (float) $orderTotal : null,
+            orderTotal: (float) ($_SESSION['last_order_total'] ?? 0),
             userEmail: $_SESSION['user_email'] ?? 'your email',
+            emailSent: (bool) ($_SESSION['last_order_email_sent'] ?? false),
         );
+        // Prevent page refresh from reusing old confirmation data.
+        unset($_SESSION['last_order_number'], $_SESSION['last_order_total'], $_SESSION['last_order_email_sent']);
 
         require __DIR__ . '/../views/tickets/confirmation.php';
         } catch (\Throwable $e) {
@@ -266,56 +179,46 @@ class OrderController
     public function emailTickets(array $vars): void
     {
         try {
+        // Re-send ticket and invoice for a user-owned order.
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        if (!Csrf::validateRequest()) {
-            $_SESSION['email_error'] = 'Invalid session. Please try again.';
+        if (!Csrf::validateRequest() || empty($_SESSION['user_id']) || empty($_SESSION['user_email'])) {
             header('Location: /orders');
-            exit;
-        }
-
-        if (empty($_SESSION['user_id'])) {
-            header('Location: /login');
             exit;
         }
 
         $orderId = (int) ($vars['id'] ?? 0);
         $order = $this->orderService->getOrderByIdWithItems($orderId);
 
-        if (!$order || $order->userId !== (int) $_SESSION['user_id']) {
-            http_response_code(404);
-            echo '404 - Order Not Found';
-            exit;
+        if ($order && $order->userId === (int) $_SESSION['user_id']) {
+            // Security check: user can only request documents for own order.
+            $sent = $this->orderService->sendOrderDocuments($order->id, (string) ($_SESSION['user_email'] ?? ''));
+            $_SESSION['email_success'] = $sent
+                ? 'Tickets and Invoice have been sent.'
+                : 'Could not send email right now. Please try again later.';
         }
 
-        $userEmail = $_SESSION['user_email'] ?? null;
-        if ($userEmail === null) {
-            header('Location: /orders');
-            exit;
-        }
-
-        $pdf = $this->ticketPdfService->generatePdf($order);
-
-        $this->mailService->sendWithAttachment(
-            to: $userEmail,
-            subject: 'Your Festival Tickets - ' . $order->orderNumber,
-            body: "Hi ,\r\n\r\nThank you for your order!\r\n\r\n"
-                . "Order number: " . $order->orderNumber . "\r\n"
-                . "Total: EUR " . number_format($order->totalAmount, 2) . "\r\n\r\n"
-                . "Your tickets are attached as a PDF.\r\n\r\n"
-                . "See you at the festival!",
-            attachmentData: $pdf,
-            attachmentName: 'tickets-' . $order->orderNumber . '.pdf',
-        );
-
-        $_SESSION['email_success'] = 'Tickets have been sent to ' . $userEmail;
         header('Location: /orders');
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
         }
+    }
+
+    private function validateRequest(): bool
+    {
+        // Shared request guards for checkout actions.
+        if (!Csrf::validateRequest()) {
+            $_SESSION['checkout_error'] = 'Invalid session.';
+            return false;
+        }
+        if (empty($_SESSION['user_id'])) {
+            $_SESSION['checkout_error'] = 'You must be logged in.';
+            return false;
+        }
+        return true;
     }
 }

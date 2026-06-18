@@ -13,18 +13,32 @@ use App\Repositories\UserRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\HistoryTourRepository;
 use App\Repositories\StoryEventRepository;
-use App\Repositories\YummyRestaurantAdminRepository;
 use App\Services\AdminYummyService;
+
+use App\Services\OrderService;
+use App\Services\StripeService;
+use App\Services\MailService;
+use App\Services\TicketPdfService;
+use App\Services\InvoicePdfService;
+use App\Repositories\OrderRepository;
 
 class AdminController
 {
     use HandlesControllerErrors;
 
     private UserRepository $userRepo;
+    private OrderService $orderService;
 
-    public function __construct()
+    public function __construct(?OrderService $orderService = null)
     {
         $this->userRepo = new UserRepository();
+        $this->orderService = $orderService ?? new OrderService(
+            new OrderRepository(),
+            new StripeService(),
+            new MailService(),
+            new TicketPdfService(),
+            new InvoicePdfService()
+        );
     }
 
    
@@ -56,6 +70,10 @@ class AdminController
         $userDir    = $_GET['dir']    ?? 'ASC';
         $users      = $this->userRepo->getAllUsers($userSearch, $userRole, $userSort, $userDir);
         $totalUsers = $this->userRepo->countAll();
+        
+        $orders      = $this->orderService->getAllOrders();
+        $totalOrders = $this->orderService->getTotalOrdersCount();
+
         $userError  = $_GET['user_error'] ?? '';
         $userSaved  = $_GET['user_saved'] ?? '';
         $jazzArtistError   = isset($_GET['jazz_error']) ? (string) $_GET['jazz_error'] : '';
@@ -743,132 +761,6 @@ class AdminController
         }
 
         header('Location: /admin?history_saved=1&events_tab=history#events');
-        exit;
-        } catch (\Throwable $e) {
-            $this->logControllerThrowable($e);
-            $this->respondWithServerError();
-        }
-    }
-
-    public function createYummyRestaurant($vars = []): void
-    {
-        try {
-        $this->requireAdmin();
-
-        if (!Csrf::validateRequest()) {
-            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
-            exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin?events_tab=yummy#events');
-            exit;
-        }
-
-        try {
-            (new YummyRestaurantAdminRepository())->create($_POST);
-        } catch (\Throwable $e) {
-            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
-            exit;
-        }
-
-        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
-        exit;
-        } catch (\Throwable $e) {
-            $this->logControllerThrowable($e);
-            $this->respondWithServerError();
-        }
-    }
-
-    public function updateYummyRestaurant($vars = []): void
-    {
-        try {
-        $this->requireAdmin();
-
-        if (!Csrf::validateRequest()) {
-            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
-            exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin?events_tab=yummy#events');
-            exit;
-        }
-
-        $id = (int) ($vars['id'] ?? 0);
-
-        try {
-            (new YummyRestaurantAdminRepository())->update($id, $_POST);
-        } catch (\Throwable $e) {
-            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
-            exit;
-        }
-
-        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
-        exit;
-        } catch (\Throwable $e) {
-            $this->logControllerThrowable($e);
-            $this->respondWithServerError();
-        }
-    }
-
-    public function deactivateYummyRestaurant($vars = []): void
-    {
-        try {
-        $this->requireAdmin();
-
-        if (!Csrf::validateRequest()) {
-            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
-            exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin?events_tab=yummy#events');
-            exit;
-        }
-
-        $id = (int) ($vars['id'] ?? 0);
-
-        try {
-            (new YummyRestaurantAdminRepository())->deactivate($id);
-        } catch (\Throwable $e) {
-            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
-            exit;
-        }
-
-        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
-        exit;
-        } catch (\Throwable $e) {
-            $this->logControllerThrowable($e);
-            $this->respondWithServerError();
-        }
-    }
-
-    public function reactivateYummyRestaurant($vars = []): void
-    {
-        try {
-        $this->requireAdmin();
-
-        if (!Csrf::validateRequest()) {
-            header('Location: /admin?yummy_error=csrf&events_tab=yummy#events');
-            exit;
-        }
-
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /admin?events_tab=yummy#events');
-            exit;
-        }
-
-        $id = (int) ($vars['id'] ?? 0);
-
-        try {
-            (new YummyRestaurantAdminRepository())->reactivate($id);
-        } catch (\Throwable $e) {
-            header('Location: /admin?yummy_error=' . rawurlencode($e->getMessage()) . '&events_tab=yummy#events');
-            exit;
-        }
-
-        header('Location: /admin?yummy_saved=1&events_tab=yummy#events');
         exit;
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);

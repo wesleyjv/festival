@@ -4,21 +4,40 @@ require __DIR__ . '/../vendor/autoload.php';
 
 
 /**
- * Load environment variables from the .env file at the project root.
- * This makes getenv() work regardless of how the app is started.
+ * Load environment variables from the .env file.
+ * We check common locations relative to this file.
  */
-$envPath = __DIR__ . '/../../.env';
-if (file_exists($envPath)) {
+$possibleEnvPaths = [
+    __DIR__ . '/../../.env',    // Local dev: root/.env (from app/public/index.php)
+    __DIR__ . '/../.env',       // Alternative: app/.env
+    '/app/.env',                // Docker absolute path
+];
+
+$envPath = null;
+foreach ($possibleEnvPaths as $p) {
+    if (file_exists($p)) {
+        $envPath = $p;
+        break;
+    }
+}
+
+if ($envPath) {
     $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
-        if (str_starts_with(trim($line), '#')) {
+        $line = trim($line);
+        if (empty($line) || str_starts_with($line, '#')) {
             continue;
         }
         if (strpos($line, '=') !== false) {
-            putenv(trim($line));
+            putenv($line);
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
         }
     }
-    // Debug: log which Stripe env var (if any) is visible to the PHP process
+    // Debug: log detection
     $stripeNames = ['STRIPE_SECRET', 'STRIPE_SECRET_KEY', 'STRIPE_API_SECRET', 'STRIPE_KEY', 'STRIPE_PRIVATE'];
     $found = null;
     foreach ($stripeNames as $n) {
@@ -26,10 +45,12 @@ if (file_exists($envPath)) {
         if ($v !== false && strlen($v) > 0) { $found = $n; break; }
     }
     if ($found === null) {
-        error_log('ENV DEBUG: No Stripe secret env var found (checked: ' . implode(', ', $stripeNames) . ')');
+        error_log('ENV DEBUG: .env found at ' . $envPath . ' but no Stripe key detected.');
     } else {
-        error_log('ENV DEBUG: Stripe secret visible in env var: ' . $found);
+        error_log('ENV DEBUG: .env found at ' . $envPath . '. Stripe key detected in: ' . $found);
     }
+} else {
+    error_log('ENV DEBUG: No .env file found in checked paths: ' . implode(', ', $possibleEnvPaths));
 }
 
 /**
@@ -95,6 +116,7 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('GET',  '/events/yummy/reservation/overview', ['App\\Controllers\\EventsController', 'displayReservationOverviewPage']);
     $r->addRoute('POST', '/events/yummy/reservation/confirm',  ['App\\Controllers\\EventsController', 'confirmReservation']);
     $r->addRoute('GET',  '/events/yummy/reservation/success',  ['App\\Controllers\\EventsController', 'displayReservationSuccessPage']);
+    $r->addRoute('GET',  '/api/yummy/availability', ['App\\Controllers\\EventsController', 'apiAvailability']);
 
     $r->addRoute('GET', '/tickets', ['App\\Controllers\\TicketController', 'index']);
     $r->addRoute('GET', '/events/history/order', ['App\\Controllers\\TicketController', 'historyTickets']);
@@ -147,10 +169,6 @@ $dispatcher = simpleDispatcher(function (RouteCollector $r) {
     $r->addRoute('POST', '/admin/history-tours/create', ['App\\Controllers\\AdminController', 'createHistoryTour']);
     $r->addRoute('POST', '/admin/history-tours/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateHistoryTour']);
     $r->addRoute('POST', '/admin/history-tours/{id:\d+}/delete', ['App\\Controllers\\AdminController', 'deleteHistoryTour']);
-    $r->addRoute('POST', '/admin/yummy-restaurants/create', ['App\\Controllers\\AdminController', 'createYummyRestaurant']);
-    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/update', ['App\\Controllers\\AdminController', 'updateYummyRestaurant']);
-    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/deactivate', ['App\\Controllers\\AdminController', 'deactivateYummyRestaurant']);
-    $r->addRoute('POST', '/admin/yummy-restaurants/{id:\d+}/reactivate', ['App\\Controllers\\AdminController', 'reactivateYummyRestaurant']);
 });
 
 $httpMethod = $_SERVER['REQUEST_METHOD'];
@@ -175,13 +193,34 @@ switch ($routeInfo[0]) {
         // Wire up dependency injection for controllers that require it
         if ($controllerClass === App\Controllers\OrderController::class) {
             $orderRepository = new App\Repositories\OrderRepository();
-            $orderService = new App\Services\OrderService($orderRepository);
-            $ticketPdfService = new App\Services\TicketPdfService();
-            $mailService = new App\Services\MailService();
             $stripeService = new App\Services\StripeService();
-            $controller = new $controllerClass($orderService, $ticketPdfService, $mailService, $stripeService);
+            $mailService = new App\Services\MailService();
+            $ticketPdfService = new App\Services\TicketPdfService();
+            $invoicePdfService = new App\Services\InvoicePdfService();
+            $orderService = new App\Services\OrderService(
+                $orderRepository,
+                $stripeService,
+                $mailService,
+                $ticketPdfService,
+                $invoicePdfService
+            );
+            $controller = new $controllerClass($orderService);
         } elseif ($controllerClass === App\Controllers\AdminYummyController::class) {
             $controller = new $controllerClass(new App\Services\AdminYummyService());
+        } elseif ($controllerClass === App\Controllers\AdminController::class) {
+            $orderRepository = new App\Repositories\OrderRepository();
+            $stripeService = new App\Services\StripeService();
+            $mailService = new App\Services\MailService();
+            $ticketPdfService = new App\Services\TicketPdfService();
+            $invoicePdfService = new App\Services\InvoicePdfService();
+            $orderService = new App\Services\OrderService(
+                $orderRepository,
+                $stripeService,
+                $mailService,
+                $ticketPdfService,
+                $invoicePdfService
+            );
+            $controller = new $controllerClass($orderService);
         } else {
             $controller = new $controllerClass();
         }

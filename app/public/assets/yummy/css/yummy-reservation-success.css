@@ -1,0 +1,213 @@
+/* ============================================================
+   Yummy reservation success page
+   ============================================================ */
+
+/* ── Shared tokens ───────────────────────────────────── */
+:root {
+  --dk:    #1a2a3a;
+  --acc:   #b46b29;
+  --green: #16a34a;
+  --bg:    #faf3e8;
+  --card:  #fff8f0;
+  --border:#e8d9c4;
+  --muted: #6b7280;
+}
+
+/* ── Hero ────────────────────────────────────────────── */
+.rs-hero {
+  position: relative;
+  width: 100%;
+  min-height: 320px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background-color: #1a2a3a;
+}
+
+.rs-hero__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.rs-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+}
+
+.rs-hero__content {
+  position: relative;
+  padding: 40px 48px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.rs-hero__check {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.rs-hero__title {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ── Page ────────────────────────────────────────────── */
+.rs-page {
+  background: #faf3e8;
+  min-height: 60vh;
+  padding: 48px 24px 80px;
+}
+
+.rs-container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Confirmation banner ─────────────────────────────── */
+.rs-banner {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.rs-banner__icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+
+.rs-banner__body h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #166534;
+  margin: 0 0 4px 0;
+}
+
+.rs-banner__body p {
+  font-size: 14px;
+  color: #15803d;
+  margin: 0;
+}
+
+/* ── Detail card ─────────────────────────────────────── */
+.rs-card {
+  background: #fff8f0;
+  border: 1px solid #e8d9c4;
+  border-radius: 14px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.rs-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: #b46b29;
+  margin: 0 0 16px 0;
+}
+
+.rs-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid #e8d9c4;
+  font-size: 14px;
+}
+
+.rs-detail-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+.rs-detail-row dt {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.rs-detail-row dd {
+  color: #1a2a3a;
+  font-weight: 600;
+  margin: 0;
+  text-align: right;
+}
+
+/* ── Fee total ───────────────────────────────────────── */
+.rs-fee-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: #1a2a3a;
+  border-radius: 14px;
+  margin-bottom: 28px;
+}
+
+.rs-fee-total__lbl { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.8); }
+.rs-fee-total__val { font-size: 24px; font-weight: 800; color: #fff; }
+
+/* ── Action buttons ──────────────────────────────────── */
+.rs-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rs-btn {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+}
+
+.rs-btn--outline {
+  border: 2px solid #1a2a3a;
+  background: transparent;
+  color: #1a2a3a;
+}
+
+.rs-btn--outline:hover {
+  background: #1a2a3a;
+  color: #fff;
+}
+
+.rs-btn--primary {
+  background: #b46b29;
+  color: #fff;
+}
+
+.rs-btn--primary:hover { background: #9a5a22; }
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .rs-hero__content { padding: 24px 20px; }
+  .rs-hero__title   { font-size: 26px; }
+  .rs-page          { padding: 32px 16px 60px; }
+  .rs-actions       { flex-direction: column; }
+  .rs-btn           { flex: none; width: 100%; }
+}

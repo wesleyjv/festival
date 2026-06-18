@@ -6,7 +6,7 @@ namespace App\Services;
 class ImageUploadService
 {
     private const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    private const MAX_SIZE_BYTES     = 2 * 1024 * 1024; // 2 MB
+    private const MAX_SIZE_BYTES     = 20 * 1024 * 1024; // 20 MB
 
     private string $uploadDir;
     private string $uploadUrlPath;

@@ -48,6 +48,8 @@ class AdminYummyController
             $restaurant   = null;
             $menuItems    = [];
 
+            $selectedCuisineTagIds = [];
+
             if ($restaurantId !== null) {
                 $restaurant = $this->adminYummyService->findRestaurantById($restaurantId);
 
@@ -57,8 +59,11 @@ class AdminYummyController
                     return;
                 }
 
-                $menuItems = $this->adminYummyService->findMenuItemsByRestaurantId($restaurantId);
+                $menuItems             = $this->adminYummyService->findMenuItemsByRestaurantId($restaurantId);
+                $selectedCuisineTagIds = $this->adminYummyService->findCuisineTagIdsForRestaurant($restaurantId);
             }
+
+            $cuisineTags = $this->adminYummyService->findAllCuisineTags();
 
             require __DIR__ . '/../views/admin/yummy/restaurant-edit.php';
         } catch (\Throwable $e) {
@@ -79,7 +84,8 @@ class AdminYummyController
         }
 
         try {
-            $this->adminYummyService->createRestaurant($_POST);
+            $restaurantId = $this->adminYummyService->createRestaurant($_POST);
+            $this->adminYummyService->setCuisineTagsForRestaurant($restaurantId, $this->parseCuisineTagIds($_POST));
         } catch (\Throwable $e) {
             error_log('AdminYummyController::createRestaurant — ' . $e->getMessage());
             header('Location: /admin/yummy/restaurants/create?yummy_error=' . rawurlencode($e->getMessage()));
@@ -109,6 +115,7 @@ class AdminYummyController
 
         try {
             $this->adminYummyService->updateRestaurant($restaurantId, $_POST);
+            $this->adminYummyService->setCuisineTagsForRestaurant($restaurantId, $this->parseCuisineTagIds($_POST));
         } catch (\Throwable $e) {
             error_log('AdminYummyController::updateRestaurant — ' . $e->getMessage());
             header('Location: /admin/yummy/restaurants/edit?id=' . $restaurantId . '&yummy_error=' . rawurlencode($e->getMessage()));
@@ -275,6 +282,18 @@ class AdminYummyController
 
         header('Location: /admin/yummy/restaurants/edit?id=' . $restaurantId . '#menu-items');
         exit;
+    }
+
+    /** Converts the posted cuisine_tags[] field into a list of positive integer tag IDs. */
+    private function parseCuisineTagIds(array $postData): array
+    {
+        $raw = $postData['cuisine_tags'] ?? [];
+
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('intval', $raw), static fn (int $id): bool => $id > 0));
     }
 
     /** Redirects unauthenticated or non-admin users to the login page. */

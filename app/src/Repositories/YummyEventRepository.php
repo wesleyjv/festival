@@ -207,11 +207,12 @@ class YummyEventRepository implements IYummyRepository
 	{
 		$stmt = $this->connection->prepare("
 			INSERT INTO tickets (event_id, name, price, order_id, user_id, ticket_code, is_scanned)
-			VALUES (0, :name, :price, NULL, NULL, '', 0)
+			VALUES (0, :name, :price, NULL, NULL, :ticket_code, 0)
 		");
 
-		$stmt->bindValue(':name',  $ticketData['name'],  PDO::PARAM_STR);
-		$stmt->bindValue(':price', $ticketData['price']); // PDO casts float correctly
+		$stmt->bindValue(':name',        $ticketData['name'],  PDO::PARAM_STR);
+		$stmt->bindValue(':price',       $ticketData['price']); // PDO casts float correctly
+		$stmt->bindValue(':ticket_code', 'YMY-' . strtoupper(bin2hex(random_bytes(6))), PDO::PARAM_STR);
 		$stmt->execute();
 
 		return (int) $this->connection->lastInsertId();
@@ -229,6 +230,29 @@ class YummyEventRepository implements IYummyRepository
 		$stmt->bindValue(':ticketId',      $ticketId,      PDO::PARAM_INT);
 		$stmt->bindValue(':reservationId', $reservationId, PDO::PARAM_INT);
 		$stmt->execute();
+	}
+
+	/**
+	 * Returns SUM(adults + children) across non-cancelled reservations for the given
+	 * restaurant/date/session. Returns 0 when there are none.
+	 */
+	public function countReservedSeatsForSession(int $restaurantId, string $festivalDate, int $sessionNumber): int
+	{
+		$stmt = $this->connection->prepare("
+			SELECT COALESCE(SUM(adults + children), 0)
+			FROM yummy_reservations
+			WHERE restaurant_id = :restaurant_id
+			  AND festival_date = :festival_date
+			  AND session_number = :session_number
+			  AND status != 'cancelled'
+		");
+
+		$stmt->bindValue(':restaurant_id',  $restaurantId,  PDO::PARAM_INT);
+		$stmt->bindValue(':festival_date',  $festivalDate,  PDO::PARAM_STR);
+		$stmt->bindValue(':session_number', $sessionNumber, PDO::PARAM_INT);
+		$stmt->execute();
+
+		return (int) $stmt->fetchColumn();
 	}
 
 	// ── Private helpers ───────────────────────────────────────────────────────

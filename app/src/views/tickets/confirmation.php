@@ -205,8 +205,13 @@ require __DIR__ . '/../partials/header.php';
             <div class="email-notification">
                 <i class="bi bi-envelope-check"></i>
                 <p>
-                    A confirmation email with your tickets has been sent to<br>
-                    <strong><?= htmlspecialchars($viewModel->userEmail) ?></strong>
+                    <?php if ($viewModel->emailSent): ?>
+                        A confirmation email with your tickets has been sent to<br>
+                        <strong><?= htmlspecialchars($viewModel->userEmail) ?></strong>
+                    <?php else: ?>
+                        Your order is confirmed, but we could not send your ticket email right now.<br>
+                        Please try the resend button from <strong>My Orders</strong>.
+                    <?php endif; ?>
                 </p>
             </div>
 

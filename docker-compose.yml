@@ -17,6 +17,51 @@ services:
             dockerfile: PHP.Dockerfile
         volumes:
             - ./app:/app
-        # This loads the credentials from your .env file into the container
+            - ./.env:/app/.env
         env_file:
             - .env
+        depends_on:
+            mysql:
+                condition: service_healthy
+            mailpit:
+                condition: service_started
+
+    mysql:
+        image: mysql:8.0
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: festival_local
+            MYSQL_DATABASE: defaultdb
+        volumes:
+            - mysql_data:/var/lib/mysql
+            - ./database.sql:/docker-entrypoint-initdb.d/database.sql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pfestival_local"]
+            interval: 5s
+            timeout: 10s
+            retries: 15
+            start_period: 30s
+
+    phpmyadmin:
+        image: phpmyadmin:latest
+        restart: unless-stopped
+        ports:
+            - "8082:80"
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            PMA_USER: root
+            PMA_PASSWORD: festival_local
+        depends_on:
+            mysql:
+                condition: service_healthy
+
+    mailpit:
+        image: axllent/mailpit:latest
+        restart: unless-stopped
+        ports:
+            - "8025:8025"   # web UI
+            - "1025:1025"   # SMTP
+
+volumes:
+    mysql_data:

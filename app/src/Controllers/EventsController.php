@@ -48,6 +48,7 @@ class EventsController
     {
         try {
             $events = $this->eventRepository->getHistoryEvents();
+            $historyContent = $this->contentService->getPageContent('history');
             require __DIR__ . '/../views/events/history/overview.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
@@ -219,6 +220,8 @@ class EventsController
             $viewModel = $this->yummyService->buildReservationOverviewViewModel($_GET);
 
             require __DIR__ . '/../views/events/yummy/reservation-overview.php';
+        } catch (\InvalidArgumentException $e) {
+            $this->redirectToRestaurantWithError($_GET['restaurant_id'] ?? null, $e->getMessage());
         } catch (Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
@@ -245,6 +248,8 @@ class EventsController
 
             header('Location: /cart');
             exit;
+        } catch (\InvalidArgumentException $e) {
+            $this->redirectToRestaurantWithError($_POST['restaurant_id'] ?? null, $e->getMessage());
         } catch (Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
@@ -272,5 +277,51 @@ class EventsController
             $this->logControllerThrowable($e);
             $this->respondWithServerError();
         }
+    }
+
+    /**
+     * GET /api/yummy/availability — returns remaining seats for a restaurant/date/session
+     * as JSON, using the same 90% capacity rule enforced by the reservation flow.
+     */
+    public function apiAvailability(): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+
+        try {
+            $restaurantId  = isset($_GET['restaurant_id'])  ? (int) $_GET['restaurant_id']  : 0;
+            $sessionNumber = isset($_GET['session_number']) ? (int) $_GET['session_number'] : 0;
+            $festivalDate  = $_GET['festival_date'] ?? '';
+
+            $remaining = $this->yummyService->getRemainingSeats($restaurantId, $festivalDate, $sessionNumber);
+
+            echo json_encode([
+                'remaining' => $remaining,
+                'available' => $remaining > 0,
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError(true);
+        }
+    }
+
+    /**
+     * Redirects back to the restaurant detail page's reservation section with a
+     * friendly error message, used when reservation validation fails (e.g. the
+     * session is fully booked).
+     */
+    private function redirectToRestaurantWithError($restaurantId, string $message): void
+    {
+        $slug = $restaurantId !== null ? $this->yummyService->getRestaurantSlugById((int) $restaurantId) : null;
+
+        if ($slug === null) {
+            header('Location: /events/yummy');
+            exit;
+        }
+
+        header('Location: /events/yummy/restaurant/' . rawurlencode($slug) . '?error=' . rawurlencode($message) . '#reserve');
+        exit;
     }
 }

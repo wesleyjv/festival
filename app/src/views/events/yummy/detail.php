@@ -42,17 +42,6 @@ $childPriceFormatted = $restaurant->childPriceCents !== null
 $adultPriceCents = $restaurant->adultPriceCents ?? 0;
 $childPriceCents = $restaurant->childPriceCents ?? 0;
 
-/* --- About paragraphs --- */
-$aboutParagraphs = [];
-if (!empty($restaurant->about)) {
-    $parts = preg_split('/\n\s*\n/', trim($restaurant->about), 2);
-    foreach ($parts as $p) {
-        $trimmed = trim($p);
-        if ($trimmed !== '') {
-            $aboutParagraphs[] = $trimmed;
-        }
-    }
-}
 
 /* --- Duration display --- */
 $durationDisplay = null;
@@ -66,570 +55,8 @@ require __DIR__ . '/../../partials/header.php';
 
 <link rel="stylesheet" href="/assets/yummy/css/globals.css" />
 <link rel="stylesheet" href="/assets/yummy/css/styleguide.css" />
-<link rel="stylesheet" href="/assets/yummy/css/style.css" />
+<link rel="stylesheet" href="/assets/yummy/css/yummy-detail.css" />
 
-<style>
-  /* ── Shared tokens ─────────────────────────────────────── */
-  :root {
-    --dk:   #1a2a3a;
-    --acc:  #b46b29;
-    --red:  #d94c2a;
-    --tag:  #e0c4a4;
-    --card: #f5efe7;
-    --bg:   #faf8f5;
-    --muted:#4b5563;
-  }
-
-  /* ── HERO ──────────────────────────────────────────────── */
-  .d-hero {
-    position: relative;
-    width: 100%;
-    min-height: 480px;
-    display: flex;
-    align-items: flex-end;
-    overflow: hidden;
-    background-color: #1a2a3a;
-  }
-
-  .d-hero__img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-  }
-
-  .d-hero__overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.25) 55%, transparent 100%);
-  }
-
-  .d-hero__breadcrumb {
-    position: relative;
-    padding: 40px 48px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    color: rgba(255,255,255,0.75);
-    flex-wrap: wrap;
-  }
-
-  .d-hero__breadcrumb a {
-    color: rgba(255,255,255,0.75);
-    text-decoration: none;
-  }
-
-  .d-hero__breadcrumb a:hover { color: #fff; }
-
-  .d-hero__breadcrumb .sep     { color: rgba(255,255,255,0.45); }
-  .d-hero__breadcrumb .current { color: #fff; font-weight: 600; }
-
-  /* ── ABOUT ─────────────────────────────────────────────── */
-  .d-about {
-    background: #fff;
-    padding: 80px 48px;
-  }
-
-  .d-about__inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 1fr 420px;
-    gap: 64px;
-    align-items: center;
-  }
-
-  .d-about__heading {
-    font-size: 36px;
-    font-weight: 800;
-    color: #1a2a3a;
-    margin: 0 0 20px 0;
-    line-height: 1.15;
-  }
-
-  .d-about__text {
-    color: #4b5563;
-    font-size: 16px;
-    line-height: 1.75;
-    margin: 0 0 16px 0;
-  }
-
-  .d-about__text:last-of-type { margin-bottom: 32px; }
-
-  .d-about__pills {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .d-about__pill {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 14px 22px;
-    border-radius: 999px;
-    background: #f5efe7;
-    border: 1px solid #e0c4a4;
-    min-width: 100px;
-  }
-
-  .d-about__pill-val {
-    font-size: 22px;
-    font-weight: 800;
-    color: #1a2a3a;
-    line-height: 1;
-  }
-
-  .d-about__pill-lbl {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: #4b5563;
-    margin-top: 4px;
-  }
-
-  .d-about__img {
-    width: 100%;
-    height: 380px;
-    object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  }
-
-  .d-about__img-placeholder {
-    width: 100%;
-    height: 380px;
-    border-radius: 16px;
-    background: #f5efe7;
-  }
-
-  /* ── RESERVATION ───────────────────────────────────────── */
-  .d-reserve {
-    background: #faf8f5;
-    padding: 80px 48px;
-  }
-
-  .d-reserve__inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 420px 1fr;
-    gap: 64px;
-    align-items: start;
-  }
-
-  .d-reserve__img-wrap {
-    position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    height: 520px;
-    background: #e0c4a4;
-  }
-
-  .d-reserve__img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .d-reserve__img-label {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 20px 24px;
-    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%);
-    color: #fff;
-    font-size: 20px;
-    font-weight: 700;
-  }
-
-  .d-reserve__heading {
-    font-size: 32px;
-    font-weight: 800;
-    color: #1a2a3a;
-    margin: 0 0 8px 0;
-  }
-
-  .d-reserve__sub {
-    color: #4b5563;
-    font-size: 15px;
-    margin: 0 0 28px 0;
-    line-height: 1.55;
-  }
-
-  .d-section-label {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: #b46b29;
-    margin: 0 0 10px 0;
-  }
-
-  /* Date pills */
-  .d-date-pills {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 28px;
-  }
-
-  .d-date-pill {
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 2px solid #e0c4a4;
-    background: #fff;
-    color: #1a2a3a;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .15s, border-color .15s, color .15s;
-  }
-
-  .d-date-pill.active,
-  .d-date-pill:hover {
-    background: #1a2a3a;
-    border-color: #1a2a3a;
-    color: #fff;
-  }
-
-  /* Session cards */
-  .d-sessions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 28px;
-  }
-
-  .d-session-card {
-    display: grid;
-    grid-template-columns: auto 1fr auto auto;
-    gap: 16px;
-    align-items: center;
-    padding: 14px 18px;
-    border-radius: 12px;
-    border: 2px solid #e5e7eb;
-    background: #fff;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-
-  .d-session-card.active {
-    border-color: #1a2a3a;
-    background: #f0f4f8;
-  }
-
-  .d-session-card:hover:not(.active) {
-    border-color: #b46b29;
-    background: #fdf7f2;
-  }
-
-  .d-session-num {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #4b5563;
-    white-space: nowrap;
-  }
-
-  .d-session-time {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a2a3a;
-  }
-
-  .d-session-seats {
-    font-size: 13px;
-    color: #4b5563;
-    white-space: nowrap;
-  }
-
-  .d-session-price {
-    text-align: right;
-    white-space: nowrap;
-  }
-
-  .d-session-price span {
-    display: block;
-    font-size: 13px;
-    color: #1a2a3a;
-    font-weight: 600;
-  }
-
-  .d-session-price span.child {
-    font-size: 11px;
-    color: #4b5563;
-    font-weight: 400;
-  }
-
-  /* Guest counter */
-  .d-guests {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  .d-guest-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 10px 14px;
-    flex: 1;
-    min-width: 160px;
-  }
-
-  .d-guest-lbl {
-    flex: 1;
-  }
-
-  .d-guest-lbl strong {
-    display: block;
-    font-size: 14px;
-    color: #1a2a3a;
-  }
-
-  .d-guest-lbl span {
-    font-size: 11px;
-    color: #4b5563;
-  }
-
-  .d-counter {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .d-counter button {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid #1a2a3a;
-    background: #fff;
-    color: #1a2a3a;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background .12s, color .12s;
-  }
-
-  .d-counter button:hover {
-    background: #1a2a3a;
-    color: #fff;
-  }
-
-  .d-counter__val {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1a2a3a;
-    min-width: 20px;
-    text-align: center;
-  }
-
-  /* Total */
-  .d-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 18px;
-    background: #1a2a3a;
-    color: #fff;
-    border-radius: 12px;
-    margin-bottom: 20px;
-  }
-
-  .d-total__lbl { font-size: 14px; font-weight: 600; }
-  .d-total__val { font-size: 22px; font-weight: 800; }
-
-  /* Special request */
-  .d-textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    font-size: 14px;
-    resize: vertical;
-    font-family: inherit;
-    color: #1a2a3a;
-    background: #fff;
-    margin-bottom: 20px;
-    box-sizing: border-box;
-  }
-
-  .d-textarea:focus {
-    outline: none;
-    border-color: #b46b29;
-  }
-
-  .d-cta-btn {
-    display: block;
-    width: 100%;
-    padding: 16px;
-    border-radius: 999px;
-    background: #1a2a3a;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 700;
-    border: none;
-    cursor: pointer;
-    text-align: center;
-    transition: background .15s, opacity .15s;
-  }
-
-  .d-cta-btn:hover:not(:disabled) {
-    background: #2d3f52;
-  }
-
-  .d-cta-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-
-  /* ── CHEF ──────────────────────────────────────────────── */
-  .d-chef {
-    background: #fff;
-    padding: 80px 48px;
-  }
-
-  .d-chef__inner {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: 380px 1fr;
-    gap: 64px;
-    align-items: center;
-  }
-
-  .d-chef__img {
-    width: 100%;
-    height: 440px;
-    object-fit: cover;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  }
-
-  .d-chef__bubble {
-    background: #f5efe7;
-    border-radius: 16px;
-    padding: 40px;
-    position: relative;
-  }
-
-  .d-chef__bubble::before {
-    content: '';
-    position: absolute;
-    left: -20px;
-    top: 60px;
-    width: 0;
-    height: 0;
-    border-top: 14px solid transparent;
-    border-bottom: 14px solid transparent;
-    border-right: 20px solid #f5efe7;
-  }
-
-  .d-chef__name  { font-size: 26px; font-weight: 800; color: #1a2a3a; margin: 0 0 4px 0; }
-  .d-chef__title {
-    font-size: 14px;
-    font-weight: 600;
-    color: #b46b29;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    margin: 0 0 20px 0;
-  }
-
-  .d-chef__bio { color: #4b5563; font-size: 15px; line-height: 1.75; margin: 0 0 14px 0; }
-
-  .d-chef__badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
-
-  .d-chef__badge {
-    padding: 6px 14px;
-    border-radius: 999px;
-    background: #1a2a3a;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: .03em;
-  }
-
-  /* ── MENU ──────────────────────────────────────────────── */
-  .d-menu {
-    background: #faf8f5;
-    padding: 80px 48px;
-  }
-
-  .d-menu__inner { max-width: 1200px; margin: 0 auto; }
-
-  .d-menu__heading { font-size: 32px; font-weight: 800; color: #1a2a3a; margin: 0 0 32px 0; }
-
-  .d-menu__grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-
-  .d-menu-card {
-    background: #fff;
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-  }
-
-  .d-menu-card__img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    display: block;
-  }
-
-  .d-menu-card__img-placeholder {
-    width: 100%;
-    height: 200px;
-    background: #e0c4a4;
-    display: block;
-  }
-
-  .d-menu-card__body  { padding: 18px 20px; }
-  .d-menu-card__name  { font-size: 17px; font-weight: 700; color: #1a2a3a; margin: 0 0 6px 0; }
-  .d-menu-card__desc  { font-size: 14px; color: #4b5563; line-height: 1.6; margin: 0; }
-
-  /* ── Mobile ────────────────────────────────────────────── */
-  @media (max-width: 768px) {
-    .d-hero { min-height: 300px; }
-    .d-hero__breadcrumb { padding: 24px 20px; }
-
-    .d-about { padding: 48px 20px; }
-    .d-about__inner { grid-template-columns: 1fr; gap: 36px; }
-    .d-about__img, .d-about__img-placeholder { height: 240px; order: -1; }
-    .d-about__heading { font-size: 26px; }
-
-    .d-reserve { padding: 48px 20px; }
-    .d-reserve__inner { grid-template-columns: 1fr; gap: 36px; }
-    .d-reserve__img-wrap { height: 260px; }
-    .d-session-card { grid-template-columns: auto 1fr; }
-    .d-session-seats { display: none; }
-
-    .d-chef { padding: 48px 20px; }
-    .d-chef__inner { grid-template-columns: 1fr; gap: 36px; }
-    .d-chef__img { height: 280px; }
-    .d-chef__bubble::before { display: none; }
-
-    .d-menu { padding: 48px 20px; }
-    .d-menu__grid { grid-template-columns: 1fr; }
-  }
-</style>
 
 <!-- HERO -->
 <section class="d-hero">
@@ -659,10 +86,8 @@ require __DIR__ . '/../../partials/header.php';
     <div>
       <h2 class="d-about__heading">About <?= htmlspecialchars($restaurant->restaurantName, ENT_QUOTES) ?></h2>
 
-      <?php if (!empty($aboutParagraphs)): ?>
-        <?php foreach ($aboutParagraphs as $para): ?>
-          <p class="d-about__text"><?= nl2br(htmlspecialchars($para, ENT_QUOTES)) ?></p>
-        <?php endforeach; ?>
+      <?php if (!empty($restaurant->about)): ?>
+        <div class="d-about__text"><?= $restaurant->about ?></div>
       <?php elseif (!empty($restaurant->shortDescription)): ?>
         <p class="d-about__text"><?= nl2br(htmlspecialchars($restaurant->shortDescription, ENT_QUOTES)) ?></p>
       <?php endif; ?>
@@ -732,6 +157,12 @@ require __DIR__ . '/../../partials/header.php';
       <h2 class="d-reserve__heading">Reserve Your Table</h2>
       <p class="d-reserve__sub">Choose your date, session, and guests to secure your Yummy dining experience.</p>
 
+      <?php if (!empty($_GET['error'])): ?>
+        <div class="d-reserve__error" style="background:#fdecea;border:1px solid #d94c2a;color:#d94c2a;border-radius:10px;padding:12px 16px;margin-bottom:20px;font-size:14px;font-weight:600;">
+          <?= htmlspecialchars($_GET['error'], ENT_QUOTES) ?>
+        </div>
+      <?php endif; ?>
+
       <!-- Date pills -->
       <p class="d-section-label">Select date</p>
       <div class="d-date-pills">
@@ -781,6 +212,7 @@ require __DIR__ . '/../../partials/header.php';
             </div>
           <?php endforeach; ?>
         </div>
+        <p class="d-session-seats" id="availability-msg" style="margin:-4px 0 20px;"></p>
       <?php endif; ?>
 
       <!-- Guest counter -->
@@ -859,17 +291,7 @@ require __DIR__ . '/../../partials/header.php';
       <?php endif; ?>
 
       <?php if (!empty($restaurant->chefBio)): ?>
-        <?php
-          $bioParagraphs = preg_split('/\n\s*\n/', trim($restaurant->chefBio), 2);
-          foreach ($bioParagraphs as $bp):
-            $bp = trim($bp);
-            if ($bp !== ''):
-        ?>
-          <p class="d-chef__bio"><?= nl2br(htmlspecialchars($bp, ENT_QUOTES)) ?></p>
-        <?php
-            endif;
-          endforeach;
-        ?>
+        <div class="d-chef__bio"><?= $restaurant->chefBio ?></div>
       <?php endif; ?>
 
       <div class="d-chef__badges">
@@ -903,7 +325,7 @@ require __DIR__ . '/../../partials/header.php';
           <div class="d-menu-card__body">
             <h3 class="d-menu-card__name"><?= htmlspecialchars($item->name, ENT_QUOTES) ?></h3>
             <?php if (!empty($item->description)): ?>
-              <p class="d-menu-card__desc"><?= htmlspecialchars($item->description, ENT_QUOTES) ?></p>
+              <div class="d-menu-card__desc"><?= $item->description ?></div>
             <?php endif; ?>
           </div>
         </div>
@@ -916,18 +338,64 @@ require __DIR__ . '/../../partials/header.php';
 
 <script>
   /* Price data from PHP */
-  const ADULT_CENTS = <?= (int) $adultPriceCents ?>;
-  const CHILD_CENTS = <?= (int) $childPriceCents ?>;
+  const ADULT_CENTS   = <?= (int) $adultPriceCents ?>;
+  const CHILD_CENTS   = <?= (int) $childPriceCents ?>;
+  const RESTAURANT_ID = <?= (int) $restaurant->id ?>;
 
   let adultsCount    = 0;
   let kidsCount      = 0;
   let selectedDate   = null;
   let selectedSession = null;
+  let remainingSeats = null;
 
   /* ── Helpers ─────────────────────────────────────────── */
   function checkReady() {
-    const ready = selectedDate !== null && selectedSession !== null && (adultsCount + kidsCount > 0);
+    const guests = adultsCount + kidsCount;
+    const capacityOk = remainingSeats === null || (remainingSeats > 0 && guests <= remainingSeats);
+    const ready = selectedDate !== null && selectedSession !== null && guests > 0 && capacityOk;
     document.getElementById('reservation-submit').disabled = !ready;
+  }
+
+  /* ── Live availability via /api/yummy/availability ────── */
+  function updateAvailability() {
+    const msg = document.getElementById('availability-msg');
+    if (!msg) {
+      return;
+    }
+
+    if (selectedDate === null || selectedSession === null) {
+      remainingSeats = null;
+      msg.textContent = '';
+      checkReady();
+      return;
+    }
+
+    const params = new URLSearchParams({
+      restaurant_id: RESTAURANT_ID,
+      festival_date: selectedDate,
+      session_number: selectedSession,
+    });
+
+    fetch('/api/yummy/availability?' + params.toString())
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (typeof data.remaining !== 'number') {
+          remainingSeats = null;
+          msg.textContent = '';
+          return;
+        }
+        remainingSeats = data.remaining;
+        msg.textContent = data.remaining > 0
+          ? '\u{1F465} ' + data.remaining + ' seat(s) left for this session'
+          : 'This session is fully booked';
+      })
+      .catch(function () {
+        remainingSeats = null;
+        msg.textContent = '';
+      })
+      .finally(function () {
+        checkReady();
+      });
   }
 
   function updateTotal() {
@@ -962,7 +430,7 @@ require __DIR__ . '/../../partials/header.php';
       this.classList.add('active');
       selectedDate = this.dataset.date;
       document.getElementById('input-festival-date').value = selectedDate;
-      checkReady();
+      updateAvailability();
     });
   });
 
@@ -977,7 +445,7 @@ require __DIR__ . '/../../partials/header.php';
       this.setAttribute('aria-pressed', 'true');
       selectedSession = this.dataset.session;
       document.getElementById('input-session-number').value = selectedSession;
-      checkReady();
+      updateAvailability();
     });
 
     card.addEventListener('keydown', function (e) {

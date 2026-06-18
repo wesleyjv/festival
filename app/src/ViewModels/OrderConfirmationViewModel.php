@@ -18,10 +18,13 @@ final readonly class OrderConfirmationViewModel
 
     public string $userEmail;
 
-    public function __construct(string $orderNumber, ?float $orderTotal, string $userEmail)
+    public bool $emailSent;
+
+    public function __construct(string $orderNumber, ?float $orderTotal, string $userEmail, bool $emailSent = false)
     {
         $this->orderNumber = $orderNumber;
         $this->orderTotal = $orderTotal;
         $this->userEmail = $userEmail;
+        $this->emailSent = $emailSent;
     }
 }
