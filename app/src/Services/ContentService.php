@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Config\CmsPageDefinitions;
 use App\Repositories\JazzContentRepository;
+use App\Services\Interfaces\IContentService;
 
 /**
  * Editable page sections: JSON files under app/storage/content,
@@ -13,7 +14,7 @@ use App\Repositories\JazzContentRepository;
  * - `jazz` — Jazz homepage
  * - `jazz_{eventId}` — Overrides for a jazz artist detail page
  */
-final class ContentService
+final class ContentService implements IContentService
 {
     private string $storageDir;
     private JazzContentRepository $jazzContentRepo;

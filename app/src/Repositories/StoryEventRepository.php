@@ -5,16 +5,46 @@ namespace App\Repositories;
 use App\DB;
 use DateTime;
 
-/**
- * Repository for storytelling events backed by the story_event table.
- */
+/** Repository for storytelling events backed by the story_event table. */
 class StoryEventRepository
 {
-    /** @var array<int,array<string,mixed>>|null In-request row cache to avoid repeated identical queries. */
+    /** Sentinel event_date for events not pinned to a concrete calendar date. */
+    private const UNSCHEDULED_DATE = '<last weekend of July>';
+
+    /** Time-of-day buckets keyed by filter value: [startHour, endHour] inclusive. */
+    private const TIME_RANGES = [
+        'morning'   => [6, 11],
+        'afternoon' => [12, 17],
+        'evening'   => [18, 23],
+    ];
+
+    private const SELECT_COLUMNS = '
+        story_event_id AS id,
+        event_date,
+        day,
+        time_slot,
+        location,
+        age_group,
+        title,
+        language,
+        price,
+        category
+    ';
+
+    /** @var array<int,array<string,mixed>>|null In-request row cache. */
     private ?array $cachedRows = null;
 
+    private ?\PDO $db = null;
+
+    /** One lazily-acquired PDO handle, reused by every query in this instance. */
+    private function db(): \PDO
+    {
+        return $this->db ??= DB::getConnection();
+    }
+
     /**
-     * Fetch all rows from story_event, caching the result for the lifetime of this instance.
+     * All story_event rows, cached for the instance. Every read path filters this
+     * single result set in PHP, so a request issues at most one query.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -24,23 +54,10 @@ class StoryEventRepository
             return $this->cachedRows;
         }
 
-        $db = DB::getConnection();
+        $db = $this->db();
 
-        $sql = "
-            SELECT
-                story_event_id AS id,
-                event_date,
-                day,
-                time_slot,
-                location,
-                age_group,
-                title,
-                language,
-                price,
-                category
-            FROM story_event
-            ORDER BY event_date, time_slot, story_event_id
-        ";
+        $sql = 'SELECT ' . self::SELECT_COLUMNS
+            . ' FROM story_event ORDER BY event_date, time_slot, story_event_id';
 
         try {
             $stmt = $db->prepare($sql);
@@ -54,325 +71,182 @@ class StoryEventRepository
         return $this->cachedRows;
     }
 
-    /**
-     * Return raw story_event rows for admin CRUD screens.
-     *
-     * @return array<int,array<string,mixed>>
-     */
+    /** @return array<int,array<string,mixed>> Raw rows for admin CRUD screens. */
     public function getAllForAdmin(): array
     {
         return $this->fetchRows();
     }
 
-    /**
-     * Get all storytelling events.
-     */
     public function getEvents(): array
     {
-        $events = [];
-        foreach ($this->fetchRows() as $row) {
-            $events[] = $this->formatEvent($row);
-        }
-
-        return $events;
+        return $this->getFilteredEvents();
     }
 
     /**
-     * Get storytelling events filtered by date (Y-m-d).
-     */
-    public function getEventsByDate(string $date): array
-    {
-        $events = [];
-        foreach ($this->fetchRows() as $row) {
-            if ($this->getDateKeyFromRow($row) === $date) {
-                $events[] = $this->formatEvent($row);
-            }
-        }
-
-        return $events;
-    }
-
-    /**
-     * Get storytelling events filtered by day of week / day label.
+     * Events matching every supplied filter (AND); null filters are ignored.
+     * Day and location match case-insensitively; timeOfDay is morning|afternoon|evening.
      *
-     * This compares the case-insensitive value of the "day" column
-     * from the story_event table with the requested day, so there is
-     * no hardcoded mapping to calendar dates.
+     * @return array<int,array<string,mixed>>
      */
-    public function getEventsByDay(string $day): array
-    {
+    public function getFilteredEvents(
+        ?string $day = null,
+        ?string $date = null,
+        ?string $timeOfDay = null,
+        ?string $location = null
+    ): array {
         $events = [];
-        $needle = strtolower($day);
 
         foreach ($this->fetchRows() as $row) {
-            $rowDay = strtolower($row['day'] ?? '');
-            if ($rowDay === $needle) {
-                $events[] = $this->formatEvent($row);
+            if ($day !== null && strtolower((string) ($row['day'] ?? '')) !== strtolower($day)) {
+                continue;
             }
-        }
+            if ($date !== null && $this->dateKey($row) !== $date) {
+                continue;
+            }
+            if ($timeOfDay !== null && !$this->matchesTimeOfDay($row, $timeOfDay)) {
+                continue;
+            }
+            if ($location !== null
+                && strtolower(trim((string) ($row['location'] ?? ''))) !== strtolower(trim($location))) {
+                continue;
+            }
 
-        return $events;
-    }
-
-    /**
-     * Get storytelling events filtered by time of day.
-     * morning: 06–11, afternoon: 12–17, evening: 18–23.
-     */
-    public function getEventsByTime(string $timeOfDay): array
-    {
-        $ranges = [
-            'morning'   => [6,  11],
-            'afternoon' => [12, 17],
-            'evening'   => [18, 23],
-        ];
-
-        if (!isset($ranges[$timeOfDay])) {
-            return [];
-        }
-
-        [$hourStart, $hourEnd] = $ranges[$timeOfDay];
-
-        $db = DB::getConnection();
-
-        $sql = "
-            SELECT
-                story_event_id AS id,
-                event_date,
-                day,
-                time_slot,
-                location,
-                age_group,
-                title,
-                language,
-                price,
-                category
-            FROM story_event
-            WHERE CAST(SUBSTRING_INDEX(time_slot, ':', 1) AS UNSIGNED) BETWEEN :hour_start AND :hour_end
-            ORDER BY event_date, time_slot, story_event_id
-        ";
-
-        try {
-            $stmt = $db->prepare($sql);
-            $stmt->execute([':hour_start' => $hourStart, ':hour_end' => $hourEnd]);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log('Error fetching story_event rows by time: ' . $e->getMessage());
-            return [];
-        }
-
-        $events = [];
-        foreach ($rows as $row) {
             $events[] = $this->formatEvent($row);
         }
+
         return $events;
     }
 
     /**
-     * Get storytelling events filtered by location name.
+     * Single event by id with the detail-only language/category fields, or null.
+     *
+     * @return array<string,mixed>|null
      */
-    public function getEventsByLocation(string $locationName): array
+    public function getEventById(int $id): ?array
     {
-        $db = DB::getConnection();
+        foreach ($this->fetchRows() as $row) {
+            if ((int) ($row['id'] ?? 0) === $id) {
+                $event = $this->formatEvent($row);
+                $event['language'] = $row['language'] ?? '';
+                $event['category'] = $row['category'] ?? '';
 
-        $sql = "
-            SELECT
-                story_event_id AS id,
-                event_date,
-                day,
-                time_slot,
-                location,
-                age_group,
-                title,
-                language,
-                price,
-                category
-            FROM story_event
-            WHERE location = :location
-            ORDER BY event_date, time_slot, story_event_id
-        ";
-
-        try {
-            $stmt = $db->prepare($sql);
-            $stmt->execute([':location' => $locationName]);
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log('Error fetching story_event rows by location: ' . $e->getMessage());
-            return [];
-        }
-
-        $events = [];
-        foreach ($rows as $row) {
-            $events[] = $this->formatEvent($row);
-        }
-        return $events;
-    }
-
-    /**
-     * Get distinct locations for filter buttons.
-     */
-    public function getLocations(): array
-    {
-        $db = DB::getConnection();
-
-        try {
-            $stmt = $db->query(
-                "SELECT DISTINCT location FROM story_event WHERE location IS NOT NULL AND location != '' ORDER BY location"
-            );
-            $names = $stmt->fetchAll(\PDO::FETCH_COLUMN);
-        } catch (\PDOException $e) {
-            error_log('Error fetching story_event locations: ' . $e->getMessage());
-            $names = [];
-        }
-
-        $byName = [];
-        foreach ($names as $name) {
-            $byName[] = ['id' => $name, 'name' => $name];
-        }
-
-        return $byName;
-    }
-
-    /**
-     * Use the first storytelling event as the "featured" storyteller block.
-     */
-    public function getFeatured(): ?array
-    {
-        $db = DB::getConnection();
-
-        $sql = "
-            SELECT
-                story_event_id AS id,
-                event_date,
-                day,
-                time_slot,
-                location,
-                age_group,
-                title,
-                language,
-                price,
-                category
-            FROM story_event
-            ORDER BY event_date, time_slot, story_event_id
-            LIMIT 1
-        ";
-
-        try {
-            $stmt = $db->prepare($sql);
-            $stmt->execute();
-            $first = $stmt->fetch(\PDO::FETCH_ASSOC);
-        } catch (\PDOException $e) {
-            error_log('Error fetching featured story_event: ' . $e->getMessage());
-            return null;
-        }
-
-        if (!$first) {
-            return null;
-        }
-
-        return [
-            'id'          => (int)($first['id'] ?? 0),
-            'title'       => $first['title'] ?? '',
-            'description' => $first['category'] ?? '',
-            'image'       => $first['image'] ?? '',
-            'guide_name'  => $first['location'] ?? '',
-            'language'    => $first['language'] ?? '',
-        ];
-    }
-
-    /**
-     * Map a story_event row to the array used by the storytelling view.
-     */
-    private function formatEvent(array $row): array
-    {
-        $dateDisplay = '';
-        $dateKey = '';
-        $dayOfWeek = $row['day'] ?? '';
-
-        if (!empty($row['event_date']) && $row['event_date'] !== '<last weekend of July>') {
-            try {
-                $dt = new DateTime($row['event_date']);
-                $dateDisplay = $dt->format('l, F j, Y');
-                $dateKey = $dt->format('Y-m-d');
-                $dayOfWeek = $dt->format('l');
-            } catch (\Exception $e) {
-                $dateDisplay = $row['day'] ?? '';
-                $dateKey = (string)($row['event_date'] ?? ($row['day'] ?? ''));
-            }
-        } else {
-            // When event_date is not a concrete calendar date (e.g. "<last weekend of July>"),
-            // just use the raw values from the row as-is so there is no hardcoded mapping
-            // to specific festival years here.
-            $dateDisplay = $row['day'] ?? (string)($row['event_date'] ?? '');
-            $dateKey     = (string)($row['event_date'] ?? ($row['day'] ?? ''));
-        }
-
-        $timeSlot = $row['time_slot'] ?? '';
-
-        $rawPrice = $row['price'] ?? '';
-        if (is_numeric($rawPrice)) {
-            $formattedPrice = number_format((float)$rawPrice, 2);
-        } else {
-            $formattedPrice = $rawPrice;
-        }
-
-        return [
-            'id'               => (int)($row['id'] ?? 0),
-            'title'            => $row['title'] ?? '',
-            'description'      => $row['category'] ?? '',
-            'image'            => $row['image'] ?? '',
-            'guide_name'       => $row['guide_name'] ?? '',
-            'language'         => $row['language'] ?? '',
-            'session_id'       => (int)($row['id'] ?? 0),
-            'date'             => $dateDisplay,
-            'time'             => $timeSlot,
-            'end_time'         => '',
-            'price'            => $formattedPrice,
-            'location_name'    => $row['location'] ?? '',
-            'location_address' => $row['location_address'] ?? '',
-            'day_of_week'      => $dayOfWeek,
-            'date_key'         => $dateKey,
-        ];
-    }
-
-    /**
-     * Normalized Y-m-d key for a story_event row.
-     */
-    private function getDateKeyFromRow(array $row): string
-    {
-        if (!empty($row['event_date']) && $row['event_date'] !== '<last weekend of July>') {
-            try {
-                $dt = new DateTime($row['event_date']);
-                return $dt->format('Y-m-d');
-            } catch (\Exception $e) {
-                return (string)$row['event_date'];
+                return $event;
             }
         }
 
-        // For non-concrete values like "<last weekend of July>", just return
-        // whatever is stored without mapping to hardcoded calendar dates.
-        return (string)($row['event_date'] ?? '');
-    }
-
-    /**
-     * Extract starting hour (0–23) from a time_slot like "16:00-17:00".
-     */
-    private function getStartHourFromRow(array $row): ?int
-    {
-        $slot = $row['time_slot'] ?? '';
-        if (preg_match('/^(\d{1,2}):\d{2}/', $slot, $m)) {
-            return (int)$m[1];
-        }
         return null;
     }
 
+    /** @return array<int,array{id:string,name:string}> Distinct locations for filter buttons. */
+    public function getLocations(): array
+    {
+        $names = [];
+        foreach ($this->fetchRows() as $row) {
+            $location = trim((string) ($row['location'] ?? ''));
+            if ($location !== '') {
+                $names[$location] = true;
+            }
+        }
+
+        $names = array_keys($names);
+        sort($names);
+
+        return array_map(static fn (string $name): array => ['id' => $name, 'name' => $name], $names);
+    }
+
+    public function getFeatured(): ?array
+    {
+        $rows = $this->fetchRows();
+        if ($rows === []) {
+            return null;
+        }
+
+        // The table has no storyteller/image columns, so only the title is real; the
+        // rest are null so the view falls back to its curated CMS defaults.
+        return [
+            'title'       => $rows[0]['title'] ?? '',
+            'description' => null,
+            'image'       => null,
+            'guide_name'  => null,
+        ];
+    }
+
+    /** Maps a row to the array consumed by the view + ticket mapping (only fields actually read). */
+    private function formatEvent(array $row): array
+    {
+        [$dateDisplay, , $dayOfWeek] = $this->parseDate($row);
+
+        $rawPrice = $row['price'] ?? '';
+        $formattedPrice = is_numeric($rawPrice) ? number_format((float) $rawPrice, 2) : $rawPrice;
+
+        return [
+            'id'            => (int) ($row['id'] ?? 0),
+            'title'         => $row['title'] ?? '',
+            'description'   => $row['category'] ?? '',
+            'age_group'     => $row['age_group'] ?? '',
+            'date'          => $dateDisplay,
+            'time'          => $row['time_slot'] ?? '',
+            'price'         => $formattedPrice,
+            'location_name' => $row['location'] ?? '',
+            'day_of_week'   => $dayOfWeek,
+        ];
+    }
+
     /**
-     * Create a new story_event row.
-     *
-     * @param array<string,mixed> $data
+     * @return array{0:string,1:string,2:string} [display, dateKey, dayOfWeek].
+     *         Unscheduled dates keep their raw stored values instead of a real date.
      */
+    private function parseDate(array $row): array
+    {
+        $rawDate = (string) ($row['event_date'] ?? '');
+        $day     = (string) ($row['day'] ?? '');
+
+        if ($rawDate !== '' && $rawDate !== self::UNSCHEDULED_DATE) {
+            try {
+                $dt = new DateTime($rawDate);
+                return [$dt->format('l, F j, Y'), $dt->format('Y-m-d'), $dt->format('l')];
+            } catch (\Exception $e) {
+                // Not a parseable date — fall through to raw values.
+            }
+        }
+
+        $display = $day !== '' ? $day : $rawDate;
+        $key     = $rawDate !== '' ? $rawDate : $day;
+
+        return [$display, $key, $day];
+    }
+
+    private function dateKey(array $row): string
+    {
+        return $this->parseDate($row)[1];
+    }
+
+    private function matchesTimeOfDay(array $row, string $timeOfDay): bool
+    {
+        $range = self::TIME_RANGES[$timeOfDay] ?? null;
+        if ($range === null) {
+            return false;
+        }
+
+        $hour = $this->startHour((string) ($row['time_slot'] ?? ''));
+
+        return $hour !== null && $hour >= $range[0] && $hour <= $range[1];
+    }
+
+    /** Starting hour (0–23) from a time_slot like "16:00-17:00". */
+    private function startHour(string $timeSlot): ?int
+    {
+        if (preg_match('/^(\d{1,2}):\d{2}/', $timeSlot, $m)) {
+            return (int) $m[1];
+        }
+
+        return null;
+    }
+
+    /** @param array<string,mixed> $data */
     public function create(array $data): int
     {
-        $db = DB::getConnection();
+        $db = $this->db();
 
         $sql = "
             INSERT INTO story_event (event_date, day, time_slot, location, age_group, title, language, price, category)
@@ -395,15 +269,10 @@ class StoryEventRepository
         return (int)$db->lastInsertId();
     }
 
-    /**
-     * Update an existing story_event row.
-     *
-     * @param int $id story_event_id
-     * @param array<string,mixed> $data
-     */
+    /** @param array<string,mixed> $data */
     public function update(int $id, array $data): void
     {
-        $db = DB::getConnection();
+        $db = $this->db();
 
         $sql = "
             UPDATE story_event
@@ -434,14 +303,10 @@ class StoryEventRepository
         ]);
     }
 
-    /**
-     * Delete a story_event row.
-     */
     public function delete(int $id): void
     {
-        $db = DB::getConnection();
+        $db = $this->db();
         $stmt = $db->prepare('DELETE FROM story_event WHERE story_event_id = :id');
         $stmt->execute([':id' => $id]);
     }
 }
-

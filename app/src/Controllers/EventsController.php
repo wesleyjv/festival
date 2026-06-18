@@ -10,6 +10,7 @@ use App\Security\Csrf;
 use App\Services\ContentService;
 use App\Services\StoryEventService;
 use App\Services\TicketService;
+use App\Services\Interfaces\IStoryEventService;
 use App\Services\Interfaces\IYummyService;
 use App\Services\YummyService;
 
@@ -24,15 +25,19 @@ class EventsController
     use HandlesControllerErrors;
 
     private EventRepository $eventRepository;
-    private StoryEventService $storyEventService;
+    private IStoryEventService $storyEventService;
     private IYummyService $yummyService;
     private ContentService $contentService;
+    private TicketService $ticketService;
 
     public function __construct()
     {
         $this->eventRepository   = new EventRepository();
-        $this->storyEventService = new StoryEventService();
         $this->contentService    = new ContentService();
+        $this->ticketService     = new TicketService();
+        $this->storyEventService = new StoryEventService(
+            contentService: $this->contentService
+        );
         $this->yummyService      = new YummyService(
             new YummyEventRepository(),
             $this->contentService
@@ -118,7 +123,7 @@ class EventsController
         }
     }
 
-    public function stories($vars = [])
+    public function stories(array $vars = []): void
     {
         try {
             $filters = [
@@ -131,10 +136,33 @@ class EventsController
             $viewModel      = $this->storyEventService->getStoriesOverviewViewModel($filters);
             $events         = $viewModel->events;
 
-            $ticketService  = new TicketService();
-            $storyTicketIds = $ticketService->getStoryTicketIdMap($events);
+            $storyTicketIds = $this->ticketService->getStoryTicketIdMap($events);
 
             require __DIR__ . '/../views/events/stories/overview.php';
+        } catch (\Throwable $e) {
+            $this->logControllerThrowable($e);
+            $this->respondWithServerError();
+        }
+    }
+
+    /** Renders the detail page for a single story event; 404 when the id is unknown. */
+    public function storyDetail(array $vars = []): void
+    {
+        try {
+            $id    = (int) ($vars['id'] ?? 0);
+            $event = $this->storyEventService->getEventDetail($id);
+
+            if ($event === null) {
+                http_response_code(404);
+                require __DIR__ . '/../views/errors/404.php';
+                return;
+            }
+
+            $storyTicketIds = $this->ticketService->getStoryTicketIdMap([$event]);
+            $ticketId       = $storyTicketIds[$event['id']] ?? null;
+            $storiesContent = $this->contentService->getPageContent('stories');
+
+            require __DIR__ . '/../views/events/stories/detail.php';
         } catch (\Throwable $e) {
             $this->logControllerThrowable($e);
             $this->respondWithServerError();

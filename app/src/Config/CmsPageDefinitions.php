@@ -20,6 +20,7 @@ final class CmsPageDefinitions
                 'label' => 'Homepage',
                 'storage' => 'json',
                 'fields' => [
+                    ['name' => 'hero_image', 'label' => 'Hero background image URL', 'type' => 'image'],
                     ['name' => 'hero_title', 'label' => 'Hero title (supports HTML)', 'type' => 'wysiwyg', 'rows' => 3],
                     ['name' => 'hero_subtitle', 'label' => 'Hero subtitle', 'type' => 'wysiwyg', 'rows' => 3],
                     ['name' => 'cta_heading', 'label' => 'CTA heading', 'type' => 'wysiwyg', 'rows' => 2],
@@ -82,6 +83,7 @@ final class CmsPageDefinitions
     {
         $defaults = [
             'homepage' => [
+                'hero_image' => '/img/hero-homepage-haarlem.png',
                 'hero_title' => "Welcome to<br>The Haarlem Festival",
                 'hero_subtitle' => 'Discover the best of food, music, stories, and history in the heart of Haarlem.',
                 'cta_heading' => 'Ready to experience Haarlem?',
@@ -91,8 +93,8 @@ final class CmsPageDefinitions
                 'hero_title' => 'The Art of <span class="highlight">Storytelling</span>',
                 'hero_description' => 'Experience the magic of oral tradition as master storytellers weave tales that transport you through time and imagination. From ancient myths to contemporary narratives, discover the power of stories that connect us all.',
                 'info_paragraph' => 'All storytelling events are suitable for ages 12 and above unless specifically marked as children\'s events. Tickets can be purchased online or at the venue 30 minutes before each performance. In case of rain, outdoor events will be moved to covered locations nearby.',
-                'hero_image' => '/img/storytelling-hero.jpg',
-                'featured_image' => '/img/featured-storyteller.jpg',
+                'hero_image' => '/img/hero-homepage-haarlem.png',
+                'featured_image' => '/img/about-haarlem-windmill-sunset.png',
             ],
             'yummy' => [
                 'hero_date' => 'JULY 23-26, 2026',

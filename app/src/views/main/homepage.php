@@ -5,6 +5,7 @@ $heroBlurb = trim(strip_tags($hc['hero_subtitle'] ?? ''));
 if ($heroBlurb === '') {
     $heroBlurb = 'Celebrate music, flavour, heritage, and live stories across Haarlem\'s canals, squares, and hidden venues.';
 }
+$heroImage = trim((string) ($hc['hero_image'] ?? '')) ?: '/img/hero-homepage-haarlem.png';
 require __DIR__ . '/../partials/header.php';
 ?>
 
@@ -42,7 +43,7 @@ require __DIR__ . '/../partials/header.php';
     inset: 0;
     background:
         linear-gradient(180deg, rgba(21, 37, 53, 0.45) 0%, rgba(21, 37, 53, 0.75) 100%),
-        url('/img/hero-homepage-haarlem.png') center/cover no-repeat;
+        var(--hp-hero-img, url('/img/hero-homepage-haarlem.png')) center/cover no-repeat;
 }
 .hp-hero__inner {
     position: relative;
@@ -696,7 +697,7 @@ require __DIR__ . '/../partials/header.php';
 <section class="hp">
 <!-- Hero -->
 <section class="hp-hero" aria-label="Festival hero">
-    <div class="hp-hero__bg" role="presentation"></div>
+    <div class="hp-hero__bg" role="presentation" style="--hp-hero-img: url('<?= htmlspecialchars($heroImage, ENT_QUOTES, 'UTF-8') ?>');"></div>
     <div class="hp-hero__inner">
         <p class="hp-hero__eyebrow">A Haarlem Festival Experience</p>
         <h1 class="hp-hero__title">The Haarlem Festival</h1>

@@ -4,11 +4,15 @@ $ticketId = $storyTicketIds[$eventId] ?? null;
 $eventDate = trim((string) ($event['date'] ?? ''));
 $eventTime = trim((string) ($event['time'] ?? ''));
 $eventLocation = trim((string) ($event['location_name'] ?? ''));
+$eventAgeGroup = trim((string) ($event['age_group'] ?? ''));
+$detailUrl = '/events/stories/' . $eventId;
 ?>
 <article class="artist-card story-artist-card">
     <div class="artist-card__body">
         <div class="story-artist-card__head">
-            <h3 class="artist-card__name"><?php echo htmlspecialchars($event['title']); ?></h3>
+            <h3 class="artist-card__name">
+                <a class="story-artist-card__title-link" href="<?= htmlspecialchars($detailUrl, ENT_QUOTES, 'UTF-8') ?>"><?php echo htmlspecialchars($event['title']); ?></a>
+            </h3>
             <span class="story-artist-card__price">EUR <?php echo htmlspecialchars($event['price']); ?></span>
         </div>
         <?php if ($eventDate !== ''): ?>
@@ -23,6 +27,9 @@ $eventLocation = trim((string) ($event['location_name'] ?? ''));
         <?php if ($eventLocation !== ''): ?>
             <p class="artist-card__day">Location: <strong><?php echo htmlspecialchars($eventLocation); ?></strong></p>
         <?php endif; ?>
+        <?php if ($eventAgeGroup !== ''): ?>
+            <p class="artist-card__day">Age group: <strong><?php echo htmlspecialchars($eventAgeGroup); ?></strong></p>
+        <?php endif; ?>
         <p class="artist-card__blurb"><?php echo htmlspecialchars($event['description']); ?></p>
         <div class="story-artist-card__actions">
             <?php if ($ticketId !== null): ?>
@@ -36,6 +43,7 @@ $eventLocation = trim((string) ($event['location_name'] ?? ''));
             <?php else: ?>
                 <span class="text-muted small">Tickets unavailable</span>
             <?php endif; ?>
+            <a class="story-artist-card__details-link" href="<?= htmlspecialchars($detailUrl, ENT_QUOTES, 'UTF-8') ?>">View details &rarr;</a>
         </div>
     </div>
 </article>
