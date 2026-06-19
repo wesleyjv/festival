@@ -8,7 +8,6 @@ use App\Services\AudioUploadService;
 use App\Services\ImageUploadService;
 use App\Services\Validator;
 use App\Config\CmsPageDefinitions;
-use App\Config\FestivalEventConfig;
 use App\Repositories\UserRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\HistoryTourRepository;
@@ -99,8 +98,6 @@ class AdminController
         if (!in_array($eventsTab, ['story', 'yummy', 'history', 'jazz'], true)) {
             $eventsTab = 'story';
         }
-
-        $festivalYummyEventId = FestivalEventConfig::yummyEventId();
 
         require __DIR__ . '/../views/admin/dashboard.php';
         } catch (\Throwable $e) {

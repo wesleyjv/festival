@@ -719,7 +719,7 @@ use App\Security\Csrf;
                 <div>
                     <h1 class="h4 page-title mb-1">Events</h1>
                     <p class="text-muted small mb-0">
-                        Manage Story, Yummy, History, and Jazz programme entries. Yummy uses festival event ID <span class="fw-semibold"><?= (int) $festivalYummyEventId ?></span> (set <code>YUMMY_EVENT_ID</code> or an <code>events.type = 'yummy'</code> row).
+                        Manage Story, Yummy, History, and Jazz programme entries.
                     </p>
                 </div>
             </div>
