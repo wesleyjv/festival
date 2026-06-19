@@ -161,17 +161,14 @@ class YummyService implements IYummyService
 	 */
 	public function createAndCartReservation(array $params): Ticket
 	{
-		// Validate params and compute formatted name parts.
 		$vm = $this->buildReservationOverviewViewModel($params);
 
 		// Re-check capacity right before persisting to close the gap between
 		// building the overview and confirming the reservation.
 		$this->ensureCapacityAvailable($vm->restaurant, $vm->sessionNumber, $vm->festivalDateRaw, $vm->adults, $vm->children);
 
-		// Persist the reservation row.
 		$reservationId = $this->saveReservation($params);
 
-		// Build a human-readable ticket name.
 		$ticketName = sprintf(
 			'Yummy – %s | %s | Session %d %s–%s',
 			$vm->restaurant->restaurantName,
@@ -181,16 +178,14 @@ class YummyService implements IYummyService
 			$vm->sessionEndTime
 		);
 
-		// Insert template ticket (event_id = 0, no order/user, empty code).
 		$ticketId = $this->yummyRepository->createReservationTicket([
 			'name'  => $ticketName,
 			'price' => $vm->reservationFeeCents / 100,
 		]);
 
-		// Link the ticket back to the reservation row.
 		$this->yummyRepository->updateReservationTicketId($reservationId, $ticketId);
 
-		// Load the full Ticket model so ShoppingCart has all properties populated.
+		// Re-fetch via TicketService so ShoppingCart gets a fully populated Ticket model.
 		$ticket = $this->ticketService->getTicketById($ticketId);
 
 		if ($ticket === null) {

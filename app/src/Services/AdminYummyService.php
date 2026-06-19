@@ -99,7 +99,7 @@ class AdminYummyService implements IAdminYummyService
         $this->adminYummyRepository->deleteMenuItem($menuItemId);
     }
 
-    /** Converts a restaurant name to a URL-safe slug. Used by createRestaurant and updateRestaurant. */
+    /** Converts a restaurant name to a URL-safe slug. */
     private function generateSlug(string $name): string
     {
         return trim(strtolower(preg_replace('/[^a-z0-9]+/i', '-', $name)), '-');
