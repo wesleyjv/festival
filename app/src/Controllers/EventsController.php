@@ -42,7 +42,7 @@ class EventsController
         $this->yummyService      = new YummyService(
             new YummyEventRepository(),
             $this->contentService,
-            new TicketService()
+            $this->ticketService
         );
     }
 
