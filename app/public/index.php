@@ -206,7 +206,11 @@ switch ($routeInfo[0]) {
             );
             $controller = new $controllerClass($orderService);
         } elseif ($controllerClass === App\Controllers\AdminYummyController::class) {
-            $controller = new $controllerClass(new App\Services\AdminYummyService());
+            $controller = new $controllerClass(
+                new App\Services\AdminYummyService(
+                    new App\Repositories\AdminYummyRepository()
+                )
+            );
         } elseif ($controllerClass === App\Controllers\AdminController::class) {
             $orderRepository = new App\Repositories\OrderRepository();
             $stripeService = new App\Services\StripeService();

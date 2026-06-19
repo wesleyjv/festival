@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use Throwable;
 
+use App\Models\ShoppingCart;
 use App\Repositories\EventRepository;
 use App\Repositories\YummyEventRepository;
 use App\Security\Csrf;
@@ -40,7 +41,8 @@ class EventsController
         );
         $this->yummyService      = new YummyService(
             new YummyEventRepository(),
-            $this->contentService
+            $this->contentService,
+            new TicketService()
         );
     }
 
@@ -243,8 +245,11 @@ class EventsController
             $params            = $_POST;
             $params['user_id'] = $_SESSION['user_id'] ?? null;
 
-            // Validates all params, persists reservation + ticket, and pushes to cart.
-            $this->yummyService->createAndCartReservation($params);
+            $ticket = $this->yummyService->createAndCartReservation($params);
+
+            $cart = $_SESSION['cart'] ?? new ShoppingCart();
+            $cart->addItem($ticket, 1);
+            $_SESSION['cart'] = $cart;
 
             header('Location: /cart');
             exit;

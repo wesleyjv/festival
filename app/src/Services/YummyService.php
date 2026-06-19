@@ -3,7 +3,8 @@
 namespace App\Services;
 
 use App\Enums\CuisineType;
-use App\Models\ShoppingCart;
+use App\Enums\FestivalDate;
+use App\Models\Ticket;
 use App\Repositories\Interfaces\IYummyRepository;
 use App\Services\Interfaces\IYummyService;
 use App\ViewModels\ReservationOverviewViewModel;
@@ -13,14 +14,6 @@ use App\ViewModels\YummyOverviewViewModel;
 /** Assembles the view models needed by the public Yummy event pages. */
 class YummyService implements IYummyService
 {
-	/** ISO date values accepted for festival_date, mapped to their display labels. */
-	private const FESTIVAL_DATES = [
-		'2026-07-23' => 'Wed 23 July',
-		'2026-07-24' => 'Thu 24 July',
-		'2026-07-25' => 'Fri 25 July',
-		'2026-07-26' => 'Sat 26 July',
-	];
-
 	/** Reservation fee in cents charged per person regardless of age. */
 	private const RESERVATION_FEE_CENTS_PER_PERSON = 1000;
 
@@ -30,7 +23,8 @@ class YummyService implements IYummyService
 
 	public function __construct(
 		private readonly IYummyRepository $yummyRepository,
-		private readonly ContentService $contentService
+		private readonly ContentService $contentService,
+		private readonly TicketService $ticketService
 	) {
 	}
 
@@ -68,13 +62,11 @@ class YummyService implements IYummyService
 			return null;
 		}
 
-		$menuItems   = $this->yummyRepository->findMenuItemsByRestaurantId($restaurant->id);
-		$pageContent = $this->contentService->getPageContent('yummy');
+		$menuItems = $this->yummyRepository->findMenuItemsByRestaurantId($restaurant->id);
 
 		return new YummyDetailViewModel(
 			restaurant: $restaurant,
-			menuItems: $menuItems,
-			pageContent: $pageContent
+			menuItems: $menuItems
 		);
 	}
 
@@ -95,7 +87,7 @@ class YummyService implements IYummyService
 		if (!in_array($sessionNumber, [1, 2, 3], true)) {
 			throw new \InvalidArgumentException('Invalid session number. Choose 1, 2, or 3.');
 		}
-		if (!array_key_exists($festivalDate, self::FESTIVAL_DATES)) {
+		if (FestivalDate::tryFrom($festivalDate) === null) {
 			throw new \InvalidArgumentException('Invalid festival date.');
 		}
 
@@ -115,25 +107,15 @@ class YummyService implements IYummyService
 	 */
 	public function buildReservationOverviewViewModel(array $params): ReservationOverviewViewModel
 	{
-		$restaurantId  = isset($params['restaurant_id'])  ? (int) $params['restaurant_id']  : 0;
-		$sessionNumber = isset($params['session_number']) ? (int) $params['session_number'] : 0;
-		$adults        = isset($params['adults'])         ? (int) $params['adults']         : 0;
-		$children      = isset($params['children'])       ? (int) $params['children']       : 0;
-		$specialRequest = trim($params['special_request'] ?? '');
-		$festivalDateRaw = $params['festival_date'] ?? '';
-
-		if ($restaurantId <= 0) {
-			throw new \InvalidArgumentException('Invalid restaurant.');
-		}
-		if (!in_array($sessionNumber, [1, 2, 3], true)) {
-			throw new \InvalidArgumentException('Invalid session number. Choose 1, 2, or 3.');
-		}
-		if ($adults + $children <= 0) {
-			throw new \InvalidArgumentException('At least one guest is required.');
-		}
-		if (!array_key_exists($festivalDateRaw, self::FESTIVAL_DATES)) {
-			throw new \InvalidArgumentException('Invalid festival date.');
-		}
+		$v = $this->validateReservationParams($params);
+		[
+			'restaurantId'    => $restaurantId,
+			'sessionNumber'   => $sessionNumber,
+			'adults'          => $adults,
+			'children'        => $children,
+			'festivalDateRaw' => $festivalDateRaw,
+			'specialRequest'  => $specialRequest,
+		] = $v;
 
 		$restaurant = $this->yummyRepository->findRestaurantById($restaurantId);
 		if ($restaurant === null) {
@@ -152,7 +134,7 @@ class YummyService implements IYummyService
 		return new ReservationOverviewViewModel(
 			restaurant:           $restaurant,
 			sessionNumber:        $sessionNumber,
-			festivalDate:         self::FESTIVAL_DATES[$festivalDateRaw],
+			festivalDate:         FestivalDate::from($festivalDateRaw)->label(),
 			festivalDateRaw:      $festivalDateRaw,
 			adults:               $adults,
 			children:             $children,
@@ -169,20 +151,71 @@ class YummyService implements IYummyService
 	}
 
 	/**
-	 * Validates all reservation parameters, calculates the fee, and persists the
-	 * reservation via the repository.
+	 * Validates params, saves the reservation, creates a template ticket row, links it
+	 * to the reservation, and returns the loaded Ticket so the caller can add it to cart.
 	 *
-	 * @return int The newly inserted reservation's primary key.
-	 * @throws \InvalidArgumentException for any invalid or missing parameter.
+	 * Calling buildReservationOverviewViewModel() first ensures all validation
+	 * runs before any writes happen — same guard used by the controller.
+	 *
+	 * @throws \InvalidArgumentException when any required parameter is invalid.
 	 */
-	public function saveReservation(array $params): int
+	public function createAndCartReservation(array $params): Ticket
 	{
-		$restaurantId  = isset($params['restaurant_id'])  ? (int) $params['restaurant_id']  : 0;
-		$sessionNumber = isset($params['session_number']) ? (int) $params['session_number'] : 0;
-		$adults        = isset($params['adults'])         ? (int) $params['adults']         : 0;
-		$children      = isset($params['children'])       ? (int) $params['children']       : 0;
+		// Validate params and compute formatted name parts.
+		$vm = $this->buildReservationOverviewViewModel($params);
+
+		// Re-check capacity right before persisting to close the gap between
+		// building the overview and confirming the reservation.
+		$this->ensureCapacityAvailable($vm->restaurant, $vm->sessionNumber, $vm->festivalDateRaw, $vm->adults, $vm->children);
+
+		// Persist the reservation row.
+		$reservationId = $this->saveReservation($params);
+
+		// Build a human-readable ticket name.
+		$ticketName = sprintf(
+			'Yummy – %s | %s | Session %d %s–%s',
+			$vm->restaurant->restaurantName,
+			$vm->festivalDate,
+			$vm->sessionNumber,
+			$vm->sessionStartTime,
+			$vm->sessionEndTime
+		);
+
+		// Insert template ticket (event_id = 0, no order/user, empty code).
+		$ticketId = $this->yummyRepository->createReservationTicket([
+			'name'  => $ticketName,
+			'price' => $vm->reservationFeeCents / 100,
+		]);
+
+		// Link the ticket back to the reservation row.
+		$this->yummyRepository->updateReservationTicketId($reservationId, $ticketId);
+
+		// Load the full Ticket model so ShoppingCart has all properties populated.
+		$ticket = $this->ticketService->getTicketById($ticketId);
+
+		if ($ticket === null) {
+			throw new \RuntimeException('Could not load the reservation ticket after insertion.');
+		}
+
+		return $ticket;
+	}
+
+	// ── Private helpers ───────────────────────────────────────────────────────
+
+	/**
+	 * Casts and validates the four parameters shared by buildReservationOverviewViewModel
+	 * and saveReservation. Throws InvalidArgumentException on the first failing check.
+	 *
+	 * @return array{restaurantId:int,sessionNumber:int,adults:int,children:int,festivalDateRaw:string,specialRequest:string,userId:int|null}
+	 */
+	private function validateReservationParams(array $params): array
+	{
+		$restaurantId    = isset($params['restaurant_id'])  ? (int) $params['restaurant_id']  : 0;
+		$sessionNumber   = isset($params['session_number']) ? (int) $params['session_number'] : 0;
+		$adults          = isset($params['adults'])         ? (int) $params['adults']         : 0;
+		$children        = isset($params['children'])       ? (int) $params['children']       : 0;
 		$festivalDateRaw = $params['festival_date'] ?? '';
-		$specialRequest  = trim($params['special_request'] ?? '') ?: null;
+		$specialRequest  = trim($params['special_request'] ?? '');
 		$userId          = isset($params['user_id']) && $params['user_id'] !== null
 		                   ? (int) $params['user_id'] : null;
 
@@ -190,28 +223,49 @@ class YummyService implements IYummyService
 			throw new \InvalidArgumentException('Invalid restaurant.');
 		}
 		if (!in_array($sessionNumber, [1, 2, 3], true)) {
-			throw new \InvalidArgumentException('Invalid session number.');
+			throw new \InvalidArgumentException('Invalid session number. Choose 1, 2, or 3.');
 		}
 		if ($adults + $children <= 0) {
 			throw new \InvalidArgumentException('At least one guest is required.');
 		}
-		if (!array_key_exists($festivalDateRaw, self::FESTIVAL_DATES)) {
+		if (FestivalDate::tryFrom($festivalDateRaw) === null) {
 			throw new \InvalidArgumentException('Invalid festival date.');
 		}
 
-		return $this->yummyRepository->saveReservation([
-			'restaurant_id'        => $restaurantId,
-			'session_number'       => $sessionNumber,
-			'festival_date'        => $festivalDateRaw,
-			'adults'               => $adults,
-			'children'             => $children,
-			'special_request'      => $specialRequest,
-			'reservation_fee_cents'=> ($adults + $children) * self::RESERVATION_FEE_CENTS_PER_PERSON,
-			'user_id'              => $userId,
-		]);
+		return compact('restaurantId', 'sessionNumber', 'adults', 'children', 'festivalDateRaw', 'specialRequest', 'userId');
 	}
 
-	// ── Private helpers ───────────────────────────────────────────────────────
+	/**
+	 * Validates all reservation parameters, calculates the fee, and persists the
+	 * reservation via the repository. Internal step — called only by createAndCartReservation.
+	 *
+	 * @return int The newly inserted reservation's primary key.
+	 */
+	private function saveReservation(array $params): int
+	{
+		$v = $this->validateReservationParams($params);
+		[
+			'restaurantId'    => $restaurantId,
+			'sessionNumber'   => $sessionNumber,
+			'adults'          => $adults,
+			'children'        => $children,
+			'festivalDateRaw' => $festivalDateRaw,
+			'specialRequest'  => $specialRequest,
+			'userId'          => $userId,
+		] = $v;
+		$specialRequest = $specialRequest ?: null;
+
+		return $this->yummyRepository->saveReservation([
+			'restaurant_id'         => $restaurantId,
+			'session_number'        => $sessionNumber,
+			'festival_date'         => $festivalDateRaw,
+			'adults'                => $adults,
+			'children'              => $children,
+			'special_request'       => $specialRequest,
+			'reservation_fee_cents' => ($adults + $children) * self::RESERVATION_FEE_CENTS_PER_PERSON,
+			'user_id'               => $userId,
+		]);
+	}
 
 	/**
 	 * Returns the number of seats still available for individual reservations in the
@@ -276,57 +330,5 @@ class YummyService implements IYummyService
 		}
 
 		return [$startDt->format('H:i'), $endDt->format('H:i')];
-	}
-
-	/**
-	 * Validates params, saves the reservation, creates a template ticket row,
-	 * links the ticket to the reservation, and pushes it into the session cart.
-	 *
-	 * Calling buildReservationOverviewViewModel() first ensures all validation
-	 * runs before any writes happen — same guard used by the controller.
-	 */
-	public function createAndCartReservation(array $params): void
-	{
-		// Validate params and compute formatted name parts.
-		$vm = $this->buildReservationOverviewViewModel($params);
-
-		// Re-check capacity right before persisting to close the gap between
-		// building the overview and confirming the reservation.
-		$this->ensureCapacityAvailable($vm->restaurant, $vm->sessionNumber, $vm->festivalDateRaw, $vm->adults, $vm->children);
-
-		// Persist the reservation row.
-		$reservationId = $this->saveReservation($params);
-
-		// Build a human-readable ticket name.
-		$ticketName = sprintf(
-			'Yummy – %s | %s | Session %d %s–%s',
-			$vm->restaurant->restaurantName,
-			$vm->festivalDate,
-			$vm->sessionNumber,
-			$vm->sessionStartTime,
-			$vm->sessionEndTime
-		);
-
-		// Insert template ticket (event_id = 0, no order/user, empty code).
-		$ticketId = $this->yummyRepository->createReservationTicket([
-			'name'  => $ticketName,
-			'price' => $vm->reservationFeeCents / 100,
-		]);
-
-		// Link the ticket back to the reservation row.
-		$this->yummyRepository->updateReservationTicketId($reservationId, $ticketId);
-
-		// Load the full Ticket model so ShoppingCart has all properties populated.
-		$ticketService = new TicketService();
-		$ticket        = $ticketService->getTicketById($ticketId);
-
-		if ($ticket === null) {
-			throw new \RuntimeException('Could not load the reservation ticket after insertion.');
-		}
-
-		// Add to session cart — quantity 1 (fee covers all guests).
-		$cart = $_SESSION['cart'] ?? new ShoppingCart();
-		$cart->addItem($ticket, 1);
-		$_SESSION['cart'] = $cart;
 	}
 }

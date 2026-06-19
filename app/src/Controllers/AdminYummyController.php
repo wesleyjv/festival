@@ -207,14 +207,7 @@ class AdminYummyController
             $menuItem = null;
 
             if ($itemId !== null) {
-                $items    = $this->adminYummyService->findMenuItemsByRestaurantId($restaurantId);
-                $menuItem = null;
-                foreach ($items as $item) {
-                    if ((int) $item['id'] === $itemId) {
-                        $menuItem = $item;
-                        break;
-                    }
-                }
+                $menuItem = $this->adminYummyService->findMenuItemById($itemId);
             }
 
             require __DIR__ . '/../views/admin/yummy/menu-item-edit.php';

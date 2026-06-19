@@ -8,11 +8,11 @@ use App\Services\AudioUploadService;
 use App\Services\ImageUploadService;
 use App\Services\Validator;
 use App\Config\CmsPageDefinitions;
-use App\Config\FestivalEventConfig;
 use App\Repositories\UserRepository;
 use App\Repositories\EventRepository;
 use App\Repositories\HistoryTourRepository;
 use App\Repositories\StoryEventRepository;
+use App\Repositories\AdminYummyRepository;
 use App\Services\AdminYummyService;
 
 use App\Services\OrderService;
@@ -85,7 +85,7 @@ class AdminController
         $storyError   = $_GET['story_error'] ?? '';
         $storySaved   = $_GET['story_saved'] ?? '';
 
-        $yummyRestaurants = (new AdminYummyService())->findAllRestaurantsForAdmin();
+        $yummyRestaurants = (new AdminYummyService(new AdminYummyRepository()))->findAllRestaurantsForAdmin();
         $yummyError       = isset($_GET['yummy_error']) ? (string) $_GET['yummy_error'] : '';
         $yummySaved       = isset($_GET['yummy_saved']) ? (string) $_GET['yummy_saved'] : '';
 
@@ -98,8 +98,6 @@ class AdminController
         if (!in_array($eventsTab, ['story', 'yummy', 'history', 'jazz'], true)) {
             $eventsTab = 'story';
         }
-
-        $festivalYummyEventId = FestivalEventConfig::yummyEventId();
 
         require __DIR__ . '/../views/admin/dashboard.php';
         } catch (\Throwable $e) {

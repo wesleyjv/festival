@@ -1,8 +1,10 @@
 <?php
+
+use App\Enums\FestivalDate;
+
 /** @var \App\ViewModels\YummyDetailViewModel $viewModel */
 $restaurant = $viewModel->restaurant;
 $menuItems  = $viewModel->menuItems;
-$content    = $viewModel->pageContent;
 
 /* --- Session time helpers --- */
 $sessions   = [];
@@ -166,10 +168,9 @@ require __DIR__ . '/../../partials/header.php';
       <!-- Date pills -->
       <p class="d-section-label">Select date</p>
       <div class="d-date-pills">
-        <button class="d-date-pill" type="button" data-date="2026-07-23">Wed 23 July</button>
-        <button class="d-date-pill" type="button" data-date="2026-07-24">Thu 24 July</button>
-        <button class="d-date-pill" type="button" data-date="2026-07-25">Fri 25 July</button>
-        <button class="d-date-pill" type="button" data-date="2026-07-26">Sat 26 July</button>
+        <?php foreach (FestivalDate::cases() as $festivalDate): ?>
+          <button class="d-date-pill" type="button" data-date="<?= htmlspecialchars($festivalDate->value, ENT_QUOTES) ?>"><?= htmlspecialchars($festivalDate->label(), ENT_QUOTES) ?></button>
+        <?php endforeach; ?>
       </div>
 
       <!-- Session cards -->

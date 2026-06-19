@@ -30,6 +30,13 @@ interface IAdminYummyService
      */
     public function findMenuItemsByRestaurantId(int $restaurantId): array;
 
+    /**
+     * Returns a single menu item row by its primary key, or null when not found.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findMenuItemById(int $itemId): ?array;
+
     /** Inserts a new menu item when formData has no item_id, otherwise updates the existing one. */
     public function saveMenuItem(int $restaurantId, array $formData): void;
 

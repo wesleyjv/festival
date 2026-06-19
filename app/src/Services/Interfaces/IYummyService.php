@@ -2,6 +2,7 @@
 
 namespace App\Services\Interfaces;
 
+use App\Models\Ticket;
 use App\ViewModels\ReservationOverviewViewModel;
 use App\ViewModels\YummyDetailViewModel;
 use App\ViewModels\YummyOverviewViewModel;
@@ -42,26 +43,13 @@ interface IYummyService
     public function buildReservationOverviewViewModel(array $params): ReservationOverviewViewModel;
 
     /**
-     * Validates all reservation parameters, calculates the reservation fee, and
-     * persists the reservation via the repository.
-     *
-     * Expected keys in $params: restaurant_id, session_number, festival_date,
-     * adults, children, special_request, user_id (nullable).
-     *
-     * @return int The newly created reservation's primary key.
-     * @throws \InvalidArgumentException when any required parameter is invalid.
-     */
-    public function saveReservation(array $params): int;
-
-    /**
-     * Full reservation + cart integration in one call:
-     * validates params, saves the reservation, creates a template ticket row,
-     * links it to the reservation, and adds it to $_SESSION['cart'].
+     * Validates params, saves the reservation, creates a template ticket row, links it
+     * to the reservation, and returns the loaded Ticket so the caller can add it to cart.
      *
      * Expected keys in $params: restaurant_id, session_number, festival_date,
      * adults, children, special_request, user_id (nullable).
      *
      * @throws \InvalidArgumentException when any required parameter is invalid.
      */
-    public function createAndCartReservation(array $params): void;
+    public function createAndCartReservation(array $params): Ticket;
 }
